@@ -11,7 +11,9 @@ import {
   Building2,
   Settings,
   LogOut,
-  ServerCog
+  ServerCog,
+  BarChart3,
+  LineChart
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -36,15 +38,18 @@ const mainItems = [
   { title: "Consultations", url: "/consultations", icon: Stethoscope },
   { title: "Rendez-vous", url: "/appointments", icon: Calendar },
   { title: "Hospitalisation", url: "/hospitalization", icon: BedDouble },
+  { title: "Rapports & Stats", url: "/reports", icon: LineChart },
 ];
 
 const serviceItems = [
   { title: "Laboratoire", url: "/laboratory", icon: FlaskConical },
   { title: "Pharmacie", url: "/pharmacy", icon: Pill },
   { title: "Facturation", url: "/billing", icon: Receipt },
+  { title: "Comptabilité", url: "/accounting", icon: BarChart3 },
 ];
 
 const adminItems = [
+  { title: "Planning des gardes", url: "/planning", icon: Calendar },
   { title: "Ressources humaines", url: "/hr", icon: UserCog },
   { title: "Établissements", url: "/facilities", icon: Building2 },
   { title: "Paramètres", url: "/settings", icon: Settings },

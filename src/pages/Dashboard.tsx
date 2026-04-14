@@ -1,7 +1,40 @@
-import { Users, Stethoscope, BedDouble, Receipt, Calendar, TrendingUp, Clock, Activity } from "lucide-react";
+import { useState, useEffect } from "react";
+import { 
+  Users, 
+  Stethoscope, 
+  BedDouble, 
+  Receipt, 
+  Calendar, 
+  TrendingUp, 
+  Clock, 
+  Activity,
+  PlusCircle,
+  FileText,
+  UserPlus,
+  ArrowRight,
+  ShieldAlert,
+  Zap,
+  Microscope,
+  Coins
+} from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  AreaChart, 
+  Area 
+} from "recharts";
+import { useAuth } from "@/hooks/useAuth";
+import { Patient, Appointment, Consultation } from "@/lib/mock-data";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const weeklyData = [
   { day: "Lun", consultations: 45, admissions: 12 },
@@ -13,218 +46,276 @@ const weeklyData = [
   { day: "Dim", consultations: 18, admissions: 4 },
 ];
 
-const revenueData = [
-  { month: "Jan", revenue: 4200 },
-  { month: "Fév", revenue: 4800 },
-  { month: "Mar", revenue: 5100 },
-  { month: "Avr", revenue: 4700 },
-  { month: "Mai", revenue: 5600 },
-  { month: "Jun", revenue: 6200 },
-];
-
-const departmentData = [
-  { name: "Médecine générale", value: 35, color: "hsl(199, 89%, 38%)" },
-  { name: "Pédiatrie", value: 20, color: "hsl(162, 63%, 41%)" },
-  { name: "Chirurgie", value: 18, color: "hsl(38, 92%, 50%)" },
-  { name: "Urgences", value: 15, color: "hsl(0, 72%, 51%)" },
-  { name: "Autres", value: 12, color: "hsl(215, 15%, 47%)" },
-];
-
-const recentPatients = [
-  { name: "Marie Dupont", type: "Consultation", time: "09:30", status: "En cours" },
-  { name: "Jean Koné", type: "Hospitalisation", time: "10:00", status: "Admis" },
-  { name: "Awa Traoré", type: "Laboratoire", time: "10:15", status: "En attente" },
-  { name: "Ibrahim Diallo", type: "Consultation", time: "11:00", status: "Planifié" },
-  { name: "Fatou Camara", type: "Pharmacie", time: "11:30", status: "Terminé" },
-];
-
-const appointments = [
-  { time: "09:00", patient: "A. Sanogo", doctor: "Dr. Keita", type: "Cardiologie" },
-  { time: "09:30", patient: "M. Dupont", doctor: "Dr. Coulibaly", type: "Générale" },
-  { time: "10:00", patient: "F. Bamba", doctor: "Dr. Diarra", type: "Pédiatrie" },
-  { time: "10:30", patient: "S. Touré", doctor: "Dr. Keita", type: "Cardiologie" },
-];
-
 export default function Dashboard() {
+  const { user, clinic } = useAuth();
+  const navigate = useNavigate();
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+
+  useEffect(() => {
+    if (user?.clinicId) {
+      const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
+      const allAppts: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
+      const allConsults: Consultation[] = JSON.parse(localStorage.getItem('kiam_consultations') || '[]');
+      
+      setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
+      setAppointments(allAppts.filter(a => a.clinicId === user.clinicId));
+      setConsultations(allConsults.filter(c => c.clinicId === user.clinicId));
+    }
+  }, [user]);
+
+  const consToday = consultations.filter(c => c.date === new Date().toISOString().split('T')[0]).length;
+
+  const quickActions = [
+    { label: "Nouveau Patient", icon: UserPlus, color: "bg-blue-500", url: "/patients" },
+    { label: "Nouvelle Consult.", icon: Stethoscope, color: "bg-orange-500", url: "/consultations" },
+    { label: "Nouveau RDV", icon: Calendar, color: "bg-emerald-500", url: "/appointments" },
+    { label: "Admission Hosp.", icon: BedDouble, color: "bg-rose-500", url: "/hospitalization" },
+    { label: "Encaisser Facture", icon: Coins, color: "bg-purple-600", url: "/billing" },
+    { label: "Résultats Labo", icon: Microscope, color: "bg-cyan-600", url: "/laboratory" },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Tableau de bord</h1>
-        <p className="text-muted-foreground">Vue d'ensemble de l'activité — Clinique Centrale</p>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+            Tableau de bord
+          </h1>
+          <p className="text-muted-foreground flex items-center gap-2 text-sm italic">
+            <span className="h-2 w-2 rounded-full bg-success animate-pulse"></span>
+            {clinic?.name || 'Établissement médical'} — {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
+        <div className="flex gap-2">
+           <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+             <Activity className="h-4 w-4" />
+             Rapports
+           </Button>
+           <Button size="sm" className="flex items-center gap-2" onClick={() => navigate('/consultations')}>
+             <PlusCircle className="h-4 w-4" />
+             Consultation Rapide
+           </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Patients aujourd'hui"
-          value="128"
-          change="+12% vs hier"
+          title="Total Patients"
+          value={String(patients.length)}
+          change={`${patients.filter(p => p.createdAt > new Date(Date.now() - 30*24*60*60*1000).toISOString()).length} ce mois`}
           changeType="positive"
           icon={Users}
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
         />
         <StatCard
           title="Consultations"
-          value="64"
-          change="+8% cette semaine"
-          changeType="positive"
+          value={String(consToday)}
+          change="Aujourd'hui"
+          changeType={consToday > 0 ? "positive" : "neutral"}
           icon={Stethoscope}
-          iconClassName="bg-accent/10 text-accent"
+          iconClassName="bg-primary/10 text-primary"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
         />
         <StatCard
-          title="Lits occupés"
-          value="42/60"
-          change="70% d'occupation"
+          title="Hospitalisés"
+          value={String(patients.filter(p => p.status === "Hospitalisé").length)}
+          change="Capacité: 0/20"
           changeType="neutral"
           icon={BedDouble}
-          iconClassName="bg-warning/10 text-warning"
+          iconClassName="bg-rose-100 text-rose-600"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
         />
         <StatCard
-          title="Revenus du mois"
-          value="6.2M FCFA"
-          change="+15% vs mois dernier"
+          title="Recettes"
+          value={`${(consToday * 5000).toLocaleString()} CFA`}
+          change="Estimation jour"
           changeType="positive"
           icon={Receipt}
-          iconClassName="bg-success/10 text-success"
+          iconClassName="bg-emerald-100 text-emerald-600"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Activity className="h-4 w-4 text-primary" />
-              Activité de la semaine
-            </CardTitle>
+      {/* Quick Actions - NEW */}
+      <Card className="border-none shadow-md bg-white">
+        <CardHeader className="py-4 px-6 border-b">
+          <CardTitle className="text-sm font-bold flex items-center gap-2 text-muted-foreground uppercase tracking-widest">
+            <Zap className="h-4 w-4 text-orange-500" />
+            Actions Rapides
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {quickActions.map((action) => (
+              <button
+                key={action.label}
+                onClick={() => navigate(action.url)}
+                className="flex flex-col items-center justify-center p-4 rounded-xl border border-transparent hover:border-muted group transition-all"
+              >
+                <div className={`${action.color} text-white p-3 rounded-2xl mb-3 shadow-lg shadow-black/5 group-hover:scale-110 transition-transform`}>
+                  <action.icon className="h-6 w-6" />
+                </div>
+                <span className="text-[11px] font-bold text-center text-muted-foreground leading-tight group-hover:text-foreground transition-colors px-1">
+                  {action.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2 border-none shadow-md bg-white overflow-hidden">
+          <CardHeader className="pb-2 border-b">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
+                <Activity className="h-4 w-4 text-primary" />
+                Activité des Consultations
+              </CardTitle>
+              <Button variant="ghost" size="sm" className="text-xs text-primary font-bold">Rapport annuel →</Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 90%)" />
-                <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="hsl(215, 15%, 47%)" />
-                <YAxis tick={{ fontSize: 12 }} stroke="hsl(215, 15%, 47%)" />
+          <CardContent className="pt-6">
+            <ResponsiveContainer width="100%" height={280}>
+              <AreaChart data={weeklyData}>
+                <defs>
+                  <linearGradient id="colorCons" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#1A56DB" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#1A56DB" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="day" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 11, fontWeight: 'bold', fill: '#9499AE' }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 11, fontWeight: 'bold', fill: '#9499AE' }}
+                />
                 <Tooltip
                   contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid hsl(214, 20%, 90%)",
+                    borderRadius: "12px",
+                    border: "none",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
                     fontSize: "12px",
                   }}
                 />
-                <Bar dataKey="consultations" fill="hsl(199, 89%, 38%)" radius={[4, 4, 0, 0]} name="Consultations" />
-                <Bar dataKey="admissions" fill="hsl(162, 63%, 41%)" radius={[4, 4, 0, 0]} name="Admissions" />
-              </BarChart>
+                <Area 
+                  type="monotone" 
+                  dataKey="consultations" 
+                  stroke="#1A56DB" 
+                  strokeWidth={3}
+                  fillOpacity={1} 
+                  fill="url(#colorCons)" 
+                  name="Consultations"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Répartition par service</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={departmentData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
-                  {departmentData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-1.5 mt-2">
-              {departmentData.map((d) => (
-                <div key={d.name} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                    <span className="text-muted-foreground">{d.name}</span>
+        {/* Next/Right column: Vitals Alerts or Notifications */}
+        <div className="flex flex-col gap-6">
+           <Card className="border-none shadow-md bg-primary text-primary-foreground overflow-hidden relative">
+              <div className="absolute -right-8 -top-8 h-32 w-32 bg-white/10 rounded-full blur-2xl"></div>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">Gardes du jour</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
+                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">SK</div>
+                    <div>
+                      <p className="text-xs font-bold">Dr. Keita</p>
+                      <p className="text-[10px] opacity-70 italic">Quart du Matin</p>
+                    </div>
                   </div>
-                  <span className="font-medium">{d.value}%</span>
+                  <div className="flex items-center gap-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
+                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">DM</div>
+                    <div>
+                      <p className="text-xs font-bold">Dr. Marion</p>
+                      <p className="text-[10px] opacity-70 italic">Quart de Nuit</p>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <Button variant="ghost" className="w-full mt-4 h-8 text-[11px] text-white hover:bg-white/10 font-bold uppercase tracking-wider">
+                  Planning complet →
+                </Button>
+              </CardContent>
+           </Card>
+
+           <Card className="border-none shadow-md bg-white flex-1">
+              <CardHeader className="py-4 border-b">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-emerald-500" />
+                  Prochains RDV
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                 {appointments.length === 0 ? (
+                   <p className="text-center py-4 text-xs italic text-muted-foreground">Aucun rendez-vous</p>
+                 ) : (
+                   appointments.slice(0, 4).map(a => (
+                     <div key={a.id} className="flex items-center gap-3 border-b border-muted/30 pb-3 last:border-0 last:pb-0 group cursor-pointer">
+                        <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 flex flex-col items-center justify-center shrink-0">
+                          <span className="text-[10px] font-bold leading-none uppercase">{new Date().toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                          <span className="text-lg font-extrabold leading-none">{new Date().getDate()}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold group-hover:text-primary transition-colors">{a.patient}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{a.time} — {a.doctor}</p>
+                        </div>
+                     </div>
+                   ))
+                 )}
+              </CardContent>
+           </Card>
+        </div>
       </div>
 
-      {/* Revenue + Recent */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-success" />
-              Revenus mensuels
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(214, 20%, 90%)" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(215, 15%, 47%)" />
-                <YAxis tick={{ fontSize: 12 }} stroke="hsl(215, 15%, 47%)" />
-                <Tooltip />
-                <Line type="monotone" dataKey="revenue" stroke="hsl(162, 63%, 41%)" strokeWidth={2} dot={{ fill: "hsl(162, 63%, 41%)" }} name="Revenus (k FCFA)" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              Rendez-vous à venir
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {appointments.map((a, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm">
-                  <span className="text-xs font-mono text-muted-foreground w-12 shrink-0">{a.time}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{a.patient}</p>
-                    <p className="text-xs text-muted-foreground">{a.doctor} · {a.type}</p>
+      {/* Footer Row: Recent Patients */}
+      <Card className="border-none shadow-md bg-white">
+        <CardHeader className="flex flex-row items-center justify-between border-b py-4">
+          <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary" />
+            Derniers Patients Enregistrés
+          </CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/patients')} className="text-primary font-bold text-xs uppercase">Tout voir →</Button>
+        </CardHeader>
+        <CardContent className="p-0">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-x divide-y md:divide-y-0">
+              {patients.slice(0, 4).map((p) => (
+                <div 
+                  key={p.id} 
+                  className="p-4 hover:bg-muted/30 transition-colors cursor-pointer flex items-center gap-3"
+                  onClick={() => navigate(`/patients/${p.id}`)}
+                >
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 font-bold ${p.gender === 'F' ? 'bg-rose-100 text-rose-600' : 'bg-blue-100 text-blue-600'}`}>
+                    {p.name?.[0] || '?'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold truncate leading-none mb-1">{p.name}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono">{p.id}</p>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <Badge variant="outline" className="h-4 text-[9px] px-1 font-mono">{p.bloodGroup || '?'}</Badge>
+                      <span className="text-[10px] text-muted-foreground">{p.city}</span>
+                    </div>
                   </div>
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Patients récents
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentPatients.map((p, i) => (
-                <div key={i} className="flex items-center justify-between text-sm">
-                  <div>
-                    <p className="font-medium">{p.name}</p>
-                    <p className="text-xs text-muted-foreground">{p.type} · {p.time}</p>
-                  </div>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      p.status === "En cours"
-                        ? "bg-primary/10 text-primary"
-                        : p.status === "Terminé"
-                        ? "bg-success/10 text-success"
-                        : p.status === "Admis"
-                        ? "bg-accent/10 text-accent"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {p.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              {patients.length === 0 && <div className="col-span-4 p-8 text-center text-muted-foreground italic">Aucun patient enregistré</div>}
+           </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

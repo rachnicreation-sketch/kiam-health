@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Clinic, User } from "@/lib/mock-data";
+import { Clinic, User, resetSystemData } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Building2, Plus, Users } from "lucide-react";
+import { Building2, Plus, Users, Lock, ShieldAlert, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ export default function SaaSAdminDashboard() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newClinicName, setNewClinicName] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newAdminPassword, setNewAdminPassword] = useState("");
 
   useEffect(() => {
     loadData();
@@ -37,7 +38,7 @@ export default function SaaSAdminDashboard() {
 
   const handleAddClinic = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newClinicName || !newAdminEmail) return;
+    if (!newClinicName || !newAdminEmail || !newAdminPassword) return;
 
     // Ajouter la clinique
     const newClinicId = `c${Date.now()}`;
@@ -56,7 +57,7 @@ export default function SaaSAdminDashboard() {
     const newUser: User = {
       id: `u${Date.now()}`,
       email: newAdminEmail,
-      passwordHash: 'password', // mock
+      passwordHash: newAdminPassword, 
       role: 'clinic_admin',
       clinicId: newClinicId,
       name: `Admin ${newClinicName}`
@@ -67,6 +68,7 @@ export default function SaaSAdminDashboard() {
     setIsAddDialogOpen(false);
     setNewClinicName("");
     setNewAdminEmail("");
+    setNewAdminPassword("");
   };
 
   if (loading) return null;
@@ -101,10 +103,17 @@ export default function SaaSAdminDashboard() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cemail">Email du gestionnaire (mot de passe auto: 'password')</Label>
+                <Label htmlFor="cemail">Email du gestionnaire</Label>
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input id="cemail" required type="email" value={newAdminEmail} onChange={e => setNewAdminEmail(e.target.value)} className="pl-9" placeholder="admin@xyz.com" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cpass">Mot de passe initial</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="cpass" required type="password" value={newAdminPassword} onChange={e => setNewAdminPassword(e.target.value)} className="pl-9" placeholder="Choisir un mot de passe" />
                 </div>
               </div>
               <Button type="submit" className="w-full">Créer l'accès</Button>
@@ -149,6 +158,38 @@ export default function SaaSAdminDashboard() {
               ))}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card className="border-destructive/20 bg-destructive/5">
+        <CardHeader>
+          <CardTitle className="text-destructive flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5" />
+            Système & Maintenance
+          </CardTitle>
+          <CardDescription>
+            Actions irréversibles sur l'ensemble de la plateforme SaaS.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border border-destructive/20 rounded-lg bg-white">
+            <div className="space-y-1">
+              <p className="text-sm font-bold">Réinitialisation d'Usine</p>
+              <p className="text-xs text-muted-foreground">Efface toutes les données (patients, cliniques, consultations) et recharge les données par défaut.</p>
+            </div>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                if(confirm("ATTENTION: Toutes vos données locales seront supprimées définitivement. Continuer ?")) {
+                  resetSystemData();
+                }
+              }}
+              className="gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Réinitialiser tout le système
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
