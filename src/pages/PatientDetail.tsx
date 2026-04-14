@@ -35,7 +35,7 @@ export default function PatientDetail() {
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
-  const { user } = useAuth();
+  const { user, can } = useAuth();
 
   useEffect(() => {
     if (id && user?.clinicId) {
@@ -63,10 +63,12 @@ export default function PatientDetail() {
           </Button>
           <h1 className="text-2xl font-bold tracking-tight">Dossier Patient</h1>
         </div>
-        <Button className="gap-2" onClick={() => navigate(`/consultations?patientId=${patient.id}`)}>
-          <PlusCircle className="h-4 w-4" />
-          Démarrer une consultation
-        </Button>
+        {can('consultations', 'write') && (
+          <Button className="gap-2" onClick={() => navigate(`/consultations?patientId=${patient.id}`)}>
+            <PlusCircle className="h-4 w-4" />
+            Démarrer une consultation
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -125,24 +127,27 @@ export default function PatientDetail() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm bg-destructive/5 text-destructive border border-destructive/10">
-            <CardHeader className="py-3">
-              <CardTitle className="text-xs font-bold uppercase flex items-center gap-2">
-                <Droplet className="h-4 w-4" />
-                Détails Médicaux
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase opacity-70">Allergies</Label>
-                <p className="text-sm font-semibold">{patient.allergies || "Aucune connue"}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-[10px] uppercase opacity-70">Antécédents majeurs</Label>
-                <p className="text-xs">{patient.history || "N/A"}</p>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Medical history restricted to medical/nursing staff */}
+          {can('consultations', 'read') && !['medical_secretary', 'receptionist', 'nurse_aide'].includes(user?.role || '') && (
+            <Card className="border-none shadow-sm bg-destructive/5 text-destructive border border-destructive/10">
+              <CardHeader className="py-3">
+                <CardTitle className="text-xs font-bold uppercase flex items-center gap-2">
+                  <Droplet className="h-4 w-4" />
+                  Détails Médicaux Confidentiels
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase opacity-70">Allergies</Label>
+                  <p className="text-sm font-semibold">{patient.allergies || "Aucune connue"}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase opacity-70">Antécédents majeurs</Label>
+                  <p className="text-xs">{patient.history || "N/A"}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Right Column: History and Tabs */}
@@ -150,8 +155,12 @@ export default function PatientDetail() {
           <Tabs defaultValue="overview" className="border rounded-lg bg-white shadow-sm overflow-hidden">
             <TabsList className="w-full justify-start border-b rounded-none bg-muted/20 h-12 p-0">
               <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full border-r">Aperçu</TabsTrigger>
-              <TabsTrigger value="consultations" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full border-r">Consultations ({consultations.length})</TabsTrigger>
-              <TabsTrigger value="prescriptions" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full">Ordonnances</TabsTrigger>
+              {can('consultations', 'read') && !['receptionist', 'nurse_aide'].includes(user?.role || '') && (
+                <TabsTrigger value="consultations" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full border-r">Consultations ({consultations.length})</TabsTrigger>
+              )}
+              {can('pharmacy', 'read') && !['receptionist'].includes(user?.role || '') && (
+                <TabsTrigger value="prescriptions" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full">Ordonnances</TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="overview" className="p-6 m-0 space-y-6">

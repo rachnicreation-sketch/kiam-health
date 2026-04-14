@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Medication } from "@/lib/mock-data";
 
 export default function Pharmacy() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,49 +85,51 @@ export default function Pharmacy() {
           <p className="text-muted-foreground text-sm">Gestion des stocks spécifiques à votre clinique</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nouveau médicament
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Ajout Inventaire Pharmaceutique</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddMed} className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <Label htmlFor="mname">Nom du médicament</Label>
-                <div className="relative">
-                  <Pill className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="mname" required value={newName} onChange={e => setNewName(e.target.value)} className="pl-9" placeholder="ex: Paracétamol" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mcat">Catégorie</Label>
-                <Input id="mcat" value={newCat} onChange={e => setNewCat(e.target.value)} placeholder="Antibiotique, Antalgique..." />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+        {can('pharmacy', 'write') && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nouveau médicament
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Ajout Inventaire Pharmaceutique</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleAddMed} className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="mstock">Stock Initial</Label>
+                  <Label htmlFor="mname">Nom du médicament</Label>
                   <div className="relative">
-                    <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="mstock" type="number" required value={newStock} onChange={e => setNewStock(e.target.value)} className="pl-9" />
+                    <Pill className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="mname" required value={newName} onChange={e => setNewName(e.target.value)} className="pl-9" placeholder="ex: Paracétamol" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="mprice">Prix Unitaire (FCFA)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="mprice" type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} className="pl-9" />
+                  <Label htmlFor="mcat">Catégorie</Label>
+                  <Input id="mcat" value={newCat} onChange={e => setNewCat(e.target.value)} placeholder="Antibiotique, Antalgique..." />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="mstock">Stock Initial</Label>
+                    <div className="relative">
+                      <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="mstock" type="number" required value={newStock} onChange={e => setNewStock(e.target.value)} className="pl-9" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mprice">Prix Unitaire (FCFA)</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input id="mprice" type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} className="pl-9" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <Button type="submit" className="w-full">Enregistrer en stock</Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <Button type="submit" className="w-full">Enregistrer en stock</Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

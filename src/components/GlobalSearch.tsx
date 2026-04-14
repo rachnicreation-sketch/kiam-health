@@ -7,7 +7,7 @@ import {
   FlaskConical,
   X,
   ChevronRight,
-  TrendingRight
+  TrendingUp
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -183,7 +183,7 @@ export function GlobalSearch() {
 
               <div className="p-2 mt-2 border-t bg-muted/20">
                  <p className="text-[9px] text-muted-foreground flex items-center gap-1.5 uppercase font-bold tracking-tighter">
-                   <TrendingRight className="h-3 w-3" /> Tapez au moins 2 caractères pour lancer la recherche intelligente.
+                   <TrendingUp className="h-3 w-3" /> Tapez au moins 2 caractères pour lancer la recherche intelligente.
                  </p>
               </div>
             </CommandList>

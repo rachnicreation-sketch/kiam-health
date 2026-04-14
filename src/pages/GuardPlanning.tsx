@@ -38,7 +38,7 @@ const QUARTS: { id: ShiftQuart; label: string; time: string; icon: any; color: s
 ];
 
 export default function GuardPlanning() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [guards, setGuards] = useState<GuardShift[]>([]);
   const [staff, setStaff] = useState<User[]>([]);
@@ -157,7 +157,7 @@ export default function GuardPlanning() {
                             return (
                               <div key={g.id} className={`group flex items-center justify-between p-2 rounded-md border text-xs font-medium shadow-sm transition-all hover:shadow-md ${quart.color}`}>
                                 <span className="truncate">{staffMember?.name || 'Inconnu'}</span>
-                                {user?.role === 'clinic_admin' && (
+                                {can('planning', 'write') && (
                                   <button onClick={() => removeGuard(g.id)} className="opacity-0 group-hover:opacity-100 transition-opacity ml-1">
                                     <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                                   </button>
@@ -166,7 +166,7 @@ export default function GuardPlanning() {
                             );
                           })}
                           
-                          {user?.role === 'clinic_admin' && (
+                          {can('planning', 'write') && (
                             <Button 
                               variant="ghost" 
                               className="mt-auto w-full h-8 border-dashed border-2 text-muted-foreground hover:text-primary hover:border-primary opacity-40 hover:opacity-100"

@@ -40,7 +40,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Patients() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -157,205 +157,207 @@ export default function Patients() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Users className="h-6 w-6 text-primary" />
-            Gestion des Patients
-          </h1>
-          <p className="text-muted-foreground text-sm">Consultez et gérez les dossiers médicaux complets</p>
-        </div>
-
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <UserPlus className="h-4 w-4" />
-              Nouveau Dossier
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                Inscription Patient : <span className="text-primary">{getNextPatientId()}</span>
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-              {/* Section 1: Etat Civil */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-primary border-b pb-1">
-                  <UserIcon className="h-4 w-4" />
-                  <h3 className="font-bold text-xs uppercase tracking-wider">1. État civil & Famille</h3>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Nom *</Label>
-                    <Input 
-                      placeholder="EX: NGOMA" 
-                      value={newPatient.name} 
-                      onChange={e => setNewPatient({...newPatient, name: e.target.value})} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Prénoms</Label>
-                    <Input 
-                      placeholder="EX: Marie" 
-                      value={newPatient.firstName} 
-                      onChange={e => setNewPatient({...newPatient, firstName: e.target.value})} 
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Date de Naissance</Label>
-                    <Input 
-                      type="date" 
-                      value={newPatient.dob} 
-                      onChange={e => setNewPatient({...newPatient, dob: e.target.value})} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Sexe</Label>
-                    <Select value={newPatient.gender} onValueChange={v => setNewPatient({...newPatient, gender: v as 'M' | 'F'})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="M">Masculin</SelectItem>
-                        <SelectItem value="F">Féminin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Identité (CNI / Passport)</Label>
-                  <div className="relative">
-                  <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      className="pl-9"
-                      placeholder="N° de pièce" 
-                      value={newPatient.idNumber} 
-                      onChange={e => setNewPatient({...newPatient, idNumber: e.target.value})} 
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Contact */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-primary border-b pb-1">
-                  <Phone className="h-4 w-4" />
-                  <h3 className="font-bold text-xs uppercase tracking-wider">2. Coordonnées & Urgence</h3>
-                </div>
-                <div className="space-y-2">
-                  <Label>Numéro de Téléphone *</Label>
-                  <Input 
-                    placeholder="+242 ..." 
-                    value={newPatient.phone} 
-                    onChange={e => setNewPatient({...newPatient, phone: e.target.value})} 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Ville</Label>
-                    <Input 
-                      value={newPatient.city} 
-                      onChange={e => setNewPatient({...newPatient, city: e.target.value})} 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                     <Label>Adresse</Label>
-                     <Input 
-                      placeholder="Rue, Quartier"
-                      value={newPatient.address} 
-                      onChange={e => setNewPatient({...newPatient, address: e.target.value})} 
-                    />
-                  </div>
-                </div>
-                <div className="bg-destructive/5 p-3 rounded-lg border border-destructive/20 relative pt-7">
-                  <div className="absolute top-2 left-3 flex items-center gap-1.5 text-destructive text-[10px] font-bold uppercase">
-                    <ShieldAlert className="h-3 w-3" />
-                    🚨 Contact d'urgence
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input 
-                      placeholder="Nom" 
-                      className="h-8 text-xs bg-white" 
-                      value={newPatient.emergencyContactName}
-                      onChange={e => setNewPatient({...newPatient, emergencyContactName: e.target.value})}
-                    />
-                    <Input 
-                      placeholder="Tél" 
-                      className="h-8 text-xs bg-white" 
-                      value={newPatient.emergencyContactPhone}
-                      onChange={e => setNewPatient({...newPatient, emergencyContactPhone: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 3: Medical */}
-              <div className="md:col-span-2 space-y-4 mt-2">
-                <div className="flex items-center gap-2 text-primary border-b pb-1">
-                  <Droplet className="h-4 w-4" />
-                  <h3 className="font-bold text-xs uppercase tracking-wider">3. Infos Administratives & Médicales</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Groupe Sanguin</Label>
-                    <Select value={newPatient.bloodGroup} onValueChange={v => setNewPatient({...newPatient, bloodGroup: v})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Inconnu">Inconnu</SelectItem>
-                        <SelectItem value="A+">A+</SelectItem><SelectItem value="A-">A-</SelectItem>
-                        <SelectItem value="B+">B+</SelectItem><SelectItem value="B-">B-</SelectItem>
-                        <SelectItem value="AB+">AB+</SelectItem><SelectItem value="AB-">AB-</SelectItem>
-                        <SelectItem value="O+">O+</SelectItem><SelectItem value="O-">O-</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="md:col-span-2 space-y-2">
-                    <Label>Assurance / Mutuelle</Label>
-                    <Input 
-                      placeholder="EX: NSIA, COSFIEF..." 
-                      value={newPatient.assurance} 
-                      onChange={e => setNewPatient({...newPatient, assurance: e.target.value})} 
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Allergies</Label>
-                    <Textarea 
-                      placeholder="Pénicilline, Aspirine..." 
-                      className="h-20"
-                      value={newPatient.allergies}
-                      onChange={e => setNewPatient({...newPatient, allergies: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Antécédents majeurs</Label>
-                    <Textarea 
-                      placeholder="Diabète, Hypertension..." 
-                      className="h-20"
-                      value={newPatient.history}
-                      onChange={e => setNewPatient({...newPatient, history: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-6 border-top pt-4">
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-              <Button onClick={handleAddPatient} className="px-8 bg-primary">
-                Créer le dossier patient
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Users className="h-6 w-6 text-primary" />
+              Gestion des Patients
+            </h1>
+            <p className="text-muted-foreground text-sm">Consultez et gérez les dossiers médicaux complets</p>
+          </div>
       </div>
+
+          {can('patients', 'write') && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Nouveau Dossier
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Inscription Patient : <span className="text-primary">{getNextPatientId()}</span>
+                  </DialogTitle>
+                </DialogHeader>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                  {/* Section 1: Etat Civil */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary border-b pb-1">
+                      <UserIcon className="h-4 w-4" />
+                      <h3 className="font-bold text-xs uppercase tracking-wider">1. État civil & Famille</h3>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>Nom *</Label>
+                        <Input 
+                          placeholder="EX: NGOMA" 
+                          value={newPatient.name} 
+                          onChange={e => setNewPatient({...newPatient, name: e.target.value})} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Prénoms</Label>
+                        <Input 
+                          placeholder="EX: Marie" 
+                          value={newPatient.firstName} 
+                          onChange={e => setNewPatient({...newPatient, firstName: e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>Date de Naissance</Label>
+                        <Input 
+                          type="date" 
+                          value={newPatient.dob} 
+                          onChange={e => setNewPatient({...newPatient, dob: e.target.value})} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Sexe</Label>
+                        <Select value={newPatient.gender} onValueChange={v => setNewPatient({...newPatient, gender: v as 'M' | 'F'})}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="M">Masculin</SelectItem>
+                            <SelectItem value="F">Féminin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Identité (CNI / Passport)</Label>
+                      <div className="relative">
+                      <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          className="pl-9"
+                          placeholder="N° de pièce" 
+                          value={newPatient.idNumber} 
+                          onChange={e => setNewPatient({...newPatient, idNumber: e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Contact */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary border-b pb-1">
+                      <Phone className="h-4 w-4" />
+                      <h3 className="font-bold text-xs uppercase tracking-wider">2. Coordonnées & Urgence</h3>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Numéro de Téléphone *</Label>
+                      <Input 
+                        placeholder="+242 ..." 
+                        value={newPatient.phone} 
+                        onChange={e => setNewPatient({...newPatient, phone: e.target.value})} 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <Label>Ville</Label>
+                        <Input 
+                          value={newPatient.city} 
+                          onChange={e => setNewPatient({...newPatient, city: e.target.value})} 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                         <Label>Adresse</Label>
+                         <Input 
+                          placeholder="Rue, Quartier"
+                          value={newPatient.address} 
+                          onChange={e => setNewPatient({...newPatient, address: e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="bg-destructive/5 p-3 rounded-lg border border-destructive/20 relative pt-7">
+                      <div className="absolute top-2 left-3 flex items-center gap-1.5 text-destructive text-[10px] font-bold uppercase">
+                        <ShieldAlert className="h-3 w-3" />
+                        🚨 Contact d'urgence
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input 
+                          placeholder="Nom" 
+                          className="h-8 text-xs bg-white" 
+                          value={newPatient.emergencyContactName}
+                          onChange={e => setNewPatient({...newPatient, emergencyContactName: e.target.value})}
+                        />
+                        <Input 
+                          placeholder="Tél" 
+                          className="h-8 text-xs bg-white" 
+                          value={newPatient.emergencyContactPhone}
+                          onChange={e => setNewPatient({...newPatient, emergencyContactPhone: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Medical */}
+                  <div className="md:col-span-2 space-y-4 mt-2">
+                    <div className="flex items-center gap-2 text-primary border-b pb-1">
+                      <Droplet className="h-4 w-4" />
+                      <h3 className="font-bold text-xs uppercase tracking-wider">3. Infos Administratives & Médicales</h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Groupe Sanguin</Label>
+                        <Select value={newPatient.bloodGroup} onValueChange={v => setNewPatient({...newPatient, bloodGroup: v})}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Inconnu">Inconnu</SelectItem>
+                            <SelectItem value="A+">A+</SelectItem><SelectItem value="A-">A-</SelectItem>
+                            <SelectItem value="B+">B+</SelectItem><SelectItem value="B-">B-</SelectItem>
+                            <SelectItem value="AB+">AB+</SelectItem><SelectItem value="AB-">AB-</SelectItem>
+                            <SelectItem value="O+">O+</SelectItem><SelectItem value="O-">O-</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <Label>Assurance / Mutuelle</Label>
+                        <Input 
+                          placeholder="EX: NSIA, COSFIEF..." 
+                          value={newPatient.assurance} 
+                          onChange={e => setNewPatient({...newPatient, assurance: e.target.value})} 
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Allergies</Label>
+                        <Textarea 
+                          placeholder="Pénicilline, Aspirine..." 
+                          className="h-20"
+                          value={newPatient.allergies}
+                          onChange={e => setNewPatient({...newPatient, allergies: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Antécédents majeurs</Label>
+                        <Textarea 
+                          placeholder="Diabète, Hypertension..." 
+                          className="h-20"
+                          value={newPatient.history}
+                          onChange={e => setNewPatient({...newPatient, history: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6 border-top pt-4">
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
+                  <Button onClick={handleAddPatient} className="px-8 bg-primary">
+                    Créer le dossier patient
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
 
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="bg-muted/30 pb-4">

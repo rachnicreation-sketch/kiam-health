@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { HashRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SaaSAdminDashboard from "./pages/SaaSAdminDashboard";
@@ -20,6 +21,7 @@ import Appointments from "./pages/Appointments";
 import Billing from "./pages/Billing";
 import Accounting from "./pages/Accounting";
 import Reports from "./pages/Reports";
+import Catalogs from "./pages/Catalogs";
 import SettingsPage from "./pages/Settings";
 import ClinicLanding from "./pages/ClinicLanding";
 import PatientPortal from "./pages/PatientPortal";
@@ -35,7 +37,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
@@ -45,26 +47,27 @@ const App = () => (
             <Route path="/patient/:clinicId/login" element={<PatientPortal />} />
 
             <Route element={<AppLayout />}>
-              <Route path="/saas/dashboard" element={<SaaSAdminDashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/patients/:id" element={<PatientDetail />} />
-              <Route path="/planning" element={<GuardPlanning />} />
-              <Route path="/consultations" element={<Consultations />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/hospitalization" element={<Hospitalization />} />
-              <Route path="/laboratory" element={<Laboratory />} />
-              <Route path="/pharmacy" element={<Pharmacy />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/accounting" element={<Accounting />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/hr" element={<HumanResources />} />
-              <Route path="/facilities" element={<ModulePlaceholder title="Établissements" description="Gestion multi-établissements" icon={Building2} />} />
-              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/saas/dashboard" element={<ProtectedRoute module="saas"><SaaSAdminDashboard /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
+              <Route path="/patients" element={<ProtectedRoute module="patients"><Patients /></ProtectedRoute>} />
+              <Route path="/patients/:id" element={<ProtectedRoute module="patients"><PatientDetail /></ProtectedRoute>} />
+              <Route path="/planning" element={<ProtectedRoute module="planning"><GuardPlanning /></ProtectedRoute>} />
+              <Route path="/consultations" element={<ProtectedRoute module="consultations"><Consultations /></ProtectedRoute>} />
+              <Route path="/appointments" element={<ProtectedRoute module="appointments"><Appointments /></ProtectedRoute>} />
+              <Route path="/hospitalization" element={<ProtectedRoute module="hospitalization"><Hospitalization /></ProtectedRoute>} />
+              <Route path="/laboratory" element={<ProtectedRoute module="laboratory"><Laboratory /></ProtectedRoute>} />
+              <Route path="/pharmacy" element={<ProtectedRoute module="pharmacy"><Pharmacy /></ProtectedRoute>} />
+              <Route path="/billing" element={<ProtectedRoute module="billing"><Billing /></ProtectedRoute>} />
+              <Route path="/accounting" element={<ProtectedRoute module="accounting"><Accounting /></ProtectedRoute>} />
+              <Route path="/reports" element={<ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
+              <Route path="/hr" element={<ProtectedRoute module="hr"><HumanResources /></ProtectedRoute>} />
+              <Route path="/catalogs" element={<ProtectedRoute module="catalogs"><Catalogs /></ProtectedRoute>} />
+              <Route path="/facilities" element={<ProtectedRoute module="facilities"><ModulePlaceholder title="Établissements" description="Gestion multi-établissements" icon={Building2} /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute module="settings"><SettingsPage /></ProtectedRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>

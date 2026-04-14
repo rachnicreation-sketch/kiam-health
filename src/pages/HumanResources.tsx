@@ -65,8 +65,15 @@ export default function HumanResources() {
     switch (role) {
       case 'clinic_admin': return <Badge variant="default">Administrateur</Badge>;
       case 'doctor': return <Badge variant="outline" className="border-primary text-primary">Médecin</Badge>;
+      case 'nurse': return <Badge variant="outline" className="border-blue-500 text-blue-500">Infirmier</Badge>;
+      case 'lab_tech': return <Badge variant="outline" className="border-purple-500 text-purple-500">Tech Lab</Badge>;
       case 'pharmacist': return <Badge variant="outline" className="border-success text-success">Pharmacien</Badge>;
-      case 'receptionist': return <Badge variant="outline" className="border-warning text-warning">Réceptionniste</Badge>;
+      case 'receptionist': return <Badge variant="outline" className="border-amber-500 text-amber-500">Réception</Badge>;
+      case 'medical_secretary': return <Badge variant="outline" className="border-emerald-500 text-emerald-500">Secrétaire Méd.</Badge>;
+      case 'hr': return <Badge variant="outline" className="border-pink-500 text-pink-500">RH</Badge>;
+      case 'inventory_manager': return <Badge variant="outline" className="border-gray-500 text-gray-500">Logistique</Badge>;
+      case 'nurse_aide': return <Badge variant="outline" className="border-cyan-500 text-cyan-500">Aide-Soignant</Badge>;
+      case 'agent': return <Badge variant="outline" className="border-slate-500 text-slate-500">Agent</Badge>;
       default: return <Badge variant="secondary">{role}</Badge>;
     }
   };
@@ -113,9 +120,16 @@ export default function HumanResources() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="doctor">Médecin</SelectItem>
+                    <SelectItem value="nurse">Infirmier / Infirmière</SelectItem>
+                    <SelectItem value="lab_tech">Technicien de Laboratoire</SelectItem>
                     <SelectItem value="pharmacist">Pharmacien</SelectItem>
-                    <SelectItem value="receptionist">Réceptionniste</SelectItem>
-                    <SelectItem value="clinic_admin">Administrateur Adjoint</SelectItem>
+                    <SelectItem value="nurse_aide">Aide-Soignant</SelectItem>
+                    <SelectItem value="receptionist">Réception / Accueil</SelectItem>
+                    <SelectItem value="medical_secretary">Secrétaire Médicale</SelectItem>
+                    <SelectItem value="hr">Ressources Humaines</SelectItem>
+                    <SelectItem value="inventory_manager">Logistique / Stocks</SelectItem>
+                    <SelectItem value="agent">Agent (Entretien/Standard/Ambulancier)</SelectItem>
+                    <SelectItem value="clinic_admin">Direction / Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

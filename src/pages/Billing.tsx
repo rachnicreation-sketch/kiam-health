@@ -20,8 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/StatCard";
-import { useAuth } from "@/hooks/useAuth";
-import { Patient, Invoice, Transaction, Clinic } from "@/lib/mock-data";
+import { Patient, Invoice, Transaction, Clinic, MedicalAct } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { 
@@ -42,11 +41,12 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
 export default function Billing() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [acts, setActs] = useState<MedicalAct[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
@@ -72,11 +72,13 @@ export default function Billing() {
     const allInvoices: Invoice[] = JSON.parse(localStorage.getItem('kiam_invoices') || '[]');
     const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
     const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
+    const allActs: MedicalAct[] = JSON.parse(localStorage.getItem('kiam_medical_acts') || '[]');
     
     if (user?.clinicId) {
       setInvoices(allInvoices.filter(i => i.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
       setClinic(allClinics.find(c => c.id === user.clinicId) || null);
+      setActs(allActs.filter(a => a.clinicId === user.clinicId));
     }
   };
 
@@ -92,7 +94,19 @@ export default function Billing() {
 
   const updateItem = (index: number, field: 'description' | 'amount', value: any) => {
     const newItems = [...form.items];
-    newItems[index] = { ...newItems[index], [field]: field === 'amount' ? Number(value) : value };
+    
+    if (field === 'description') {
+      // Check if value matches an act name
+      const foundAct = acts.find(a => a.name === value);
+      if (foundAct) {
+        newItems[index] = { ...newItems[index], description: foundAct.name, amount: foundAct.price };
+      } else {
+        newItems[index] = { ...newItems[index], description: value };
+      }
+    } else {
+      newItems[index] = { ...newItems[index], amount: Number(value) };
+    }
+    
     setForm({...form, items: newItems});
   };
 
@@ -184,23 +198,24 @@ export default function Billing() {
           <p className="text-muted-foreground text-sm">Gestion des règlements et honoraires</p>
         </div>
         
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Émettre une Facture
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                Nouvelle Pièce de Caisse
-              </DialogTitle>
-              <CardDescription>Sélectionnez un patient et détaillez la prestation</CardDescription>
-            </DialogHeader>
+        {can('billing', 'write') && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Émettre une Facture
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Nouvelle Pièce de Caisse
+                </DialogTitle>
+                <CardDescription>Sélectionnez un patient et détaillez la prestation</CardDescription>
+              </DialogHeader>
 
-            <div className="space-y-5 pt-4">
+              <div className="space-y-5 pt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Patient *</Label>
@@ -237,16 +252,33 @@ export default function Billing() {
                   </Button>
                 </div>
                 
-                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2">
                   {form.items.map((item, index) => (
-                    <div key={index} className="flex gap-2 items-end group">
+                    <div key={index} className="flex gap-2 items-end group bg-muted/20 p-3 rounded-lg border border-transparent hover:border-primary/20 transition-all">
                       <div className="flex-1 space-y-1">
-                        <Input 
-                          placeholder="Ex: Consultation, Examen Bio..." 
-                          className="h-9"
-                          value={item.description}
-                          onChange={e => updateItem(index, 'description', e.target.value)}
-                        />
+                        <Label className="text-[10px]">Prestation</Label>
+                        <Select 
+                          value={item.description} 
+                          onValueChange={v => updateItem(index, 'description', v)}
+                        >
+                          <SelectTrigger className="h-9 bg-white">
+                            <SelectValue placeholder="Choisir un acte ou saisir..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Custom">-- Saisie Manuelle --</SelectItem>
+                            {acts.map(a => (
+                              <SelectItem key={a.id} value={a.name}>{a.name} ({a.price.toLocaleString()} CFA)</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {(!acts.find(a => a.name === item.description) || item.description === "Custom") && (
+                          <Input 
+                            placeholder="Description personnalisée..." 
+                            className="h-8 mt-2 text-xs"
+                            value={item.description === "Custom" ? "" : item.description}
+                            onChange={e => updateItem(index, 'description', e.target.value)}
+                          />
+                        )}
                       </div>
                       <div className="w-32 space-y-1">
                         <Input 
@@ -310,7 +342,8 @@ export default function Billing() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      )}
+    </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard title="Recettes Encaissées" value={`${totalPaid.toLocaleString()} CFA`} icon={TrendingUp} iconClassName="bg-emerald-100 text-emerald-600" changeType="positive" change="Mois en cours" />

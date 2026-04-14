@@ -18,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Patient, LabTest, User, Clinic } from "@/lib/mock-data";
+import { Patient, LabTest, User, Clinic, LabService } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { 
@@ -35,15 +35,14 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-
 export default function Laboratory() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { toast } = useToast();
   const [tests, setTests] = useState<LabTest[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<User[]>([]);
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [labServices, setLabServices] = useState<LabService[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -73,11 +72,13 @@ export default function Laboratory() {
     const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
     const allUsers: User[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
     const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
+    const allLabServices: LabService[] = JSON.parse(localStorage.getItem('kiam_lab_services') || '[]');
     
     setTests(allTests.filter(t => t.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
     setDoctors(allUsers.filter(u => u.clinicId === user.clinicId && u.role === 'doctor'));
     setClinic(allClinics.find(c => c.id === user.clinicId) || null);
+    setLabServices(allLabServices.filter(l => l.clinicId === user.clinicId));
   };
 
   const handleCreateTest = () => {
@@ -168,75 +169,91 @@ export default function Laboratory() {
           <p className="text-muted-foreground text-sm">Gestion des prélèvements et résultats biologiques</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Demande d'Examen
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Nouvelle prescription d'analyse</DialogTitle>
-              <CardDescription>Remplissez les détails pour lancer le prélèvement</CardDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Patient *</Label>
-                <Select value={form.patientId} onValueChange={v => setForm({...form, patientId: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir un patient" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name} {p.firstName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Médecin Prescripteur *</Label>
-                <Select value={form.doctorId} onValueChange={v => setForm({...form, doctorId: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir le médecin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {doctors.map(d => (
-                      <SelectItem key={d.id} value={d.id}>Dr {d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Examen / Analyse *</Label>
-                <Select 
-                   value={form.testName} 
-                   onValueChange={v => {
-                     const ct = commonTests.find(t => t.name === v);
-                     setForm({...form, testName: v, category: ct?.cat || "Général"});
-                   }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {commonTests.map(t => (
-                      <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>
-                    ))}
-                    <SelectItem value="Autre">Autre examen...</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {form.testName === "Autre" && (
+        {can('laboratory', 'write') && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Demande d'Examen
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Nouvelle prescription d'analyse</DialogTitle>
+                <CardDescription>Remplissez les détails pour lancer le prélèvement</CardDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label>Nom de l'examen</Label>
-                  <Input placeholder="Saisir le nom de l'examen" onChange={e => setForm({...form, testName: e.target.value})} />
+                  <Label>Patient *</Label>
+                  <Select value={form.patientId} onValueChange={v => setForm({...form, patientId: v})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un patient" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name} {p.firstName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-              <Button className="w-full" onClick={handleCreateTest}>Lancer la demande</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                <div className="space-y-2">
+                  <Label>Médecin Prescripteur *</Label>
+                  <Select value={form.doctorId} onValueChange={v => setForm({...form, doctorId: v})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir le médecin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {doctors.map(d => (
+                        <SelectItem key={d.id} value={d.id}>Dr {d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Examen / Analyse *</Label>
+                  <Select 
+                     value={form.testName} 
+                     onValueChange={v => {
+                       const ls = labServices.find(l => l.testName === v);
+                       if (ls) {
+                         setForm({
+                           ...form, 
+                           testName: ls.testName, 
+                           category: ls.category
+                         });
+                         // Auto-set the normative values if they exist in catalog
+                         setResultForm(prev => ({
+                           ...prev,
+                           unit: ls.unit || "",
+                           normativeValue: ls.normativeValue || ""
+                         }));
+                       } else {
+                         setForm({...form, testName: v});
+                       }
+                     }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {labServices.map(ls => (
+                        <SelectItem key={ls.id} value={ls.testName}>{ls.testName}</SelectItem>
+                      ))}
+                      <SelectItem value="Autre">Autre examen...</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {form.testName === "Autre" && (
+                  <div className="space-y-2">
+                    <Label>Nom de l'examen</Label>
+                    <Input placeholder="Saisir le nom de l'examen" onChange={e => setForm({...form, testName: e.target.value})} />
+                  </div>
+                )}
+                <Button className="w-full" onClick={handleCreateTest}>Lancer la demande</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -326,14 +343,18 @@ export default function Laboratory() {
                       </TableCell>
                       <TableCell className="text-right">
                         {t.status === 'pending' ? (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-8 text-xs text-primary gap-1"
-                            onClick={() => handleOpenResultDialog(t)}
-                          >
-                            <Beaker className="h-3.5 w-3.5" /> Saisir Résultats
-                          </Button>
+                          can('laboratory', 'write') ? (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-8 text-xs text-primary gap-1"
+                              onClick={() => handleOpenResultDialog(t)}
+                            >
+                              <Beaker className="h-3.5 w-3.5" /> Saisir Résultats
+                            </Button>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-muted-foreground italic">En attente labo</Badge>
+                          )
                         ) : (
                           <div className="flex justify-end gap-1">
                             <Button 

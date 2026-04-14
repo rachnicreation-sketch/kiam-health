@@ -36,7 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
 export default function Consultations() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const patientIdParam = searchParams.get('patientId');
@@ -150,14 +150,15 @@ export default function Consultations() {
           <p className="text-muted-foreground text-sm">Prise en charge des patients et prescriptions</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nouvelle Visite
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        {can('consultations', 'write') && (
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nouvelle Visite
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ClipboardCheck className="h-5 w-5 text-primary" />
@@ -304,7 +305,8 @@ export default function Consultations() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      )}
+    </div>
 
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="bg-muted/30">
@@ -384,3 +386,4 @@ export default function Consultations() {
     </div>
   );
 }
+

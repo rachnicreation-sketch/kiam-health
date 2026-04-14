@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Clinic, initializeStorage } from '@/lib/mock-data';
+import { canPerform, Module, Action } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -7,6 +8,7 @@ interface AuthContextType {
   login: (email: string, passwordHash: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isLoading: boolean;
+  can: (module: Module, action?: Action) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,8 +67,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('kiam_active_user');
   };
 
+  const can = (module: Module, action: Action = 'read'): boolean => {
+    if (!user) return false;
+    return canPerform(user.role, module, action);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, clinic, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, clinic, login, logout, isLoading, can }}>
       {children}
     </AuthContext.Provider>
   );

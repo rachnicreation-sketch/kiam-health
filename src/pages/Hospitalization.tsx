@@ -4,7 +4,7 @@ import {
   Plus, 
   Search, 
   UserPlus, 
-  DoorOut, 
+  DoorOpen, 
   LayoutGrid, 
   List, 
   AlertCircle,
@@ -245,7 +245,7 @@ export default function Hospitalization() {
                                <div className="absolute inset-0 bg-amber-600/90 hidden group-hover:flex flex-col items-center justify-center p-2 text-white">
                                   <p className="text-[10px] font-bold mb-2">Libérer le lit ?</p>
                                   <Button size="sm" variant="secondary" className="h-7 text-[10px] px-2" onClick={() => handleDischarge(activeAdmission!)}>
-                                    <DoorOut className="h-3 w-3 mr-1" /> Sortie
+                                    <DoorOpen className="h-3 w-3 mr-1" /> Sortie
                                   </Button>
                                </div>
                              )}
@@ -309,7 +309,7 @@ export default function Hospitalization() {
                               className="h-8 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                               onClick={() => handleDischarge(adm)}
                             >
-                              <DoorOut className="h-3.5 w-3.5 mr-1" /> Fin de séjour
+                              <DoorOpen className="h-3.5 w-3.5 mr-1" /> Fin de séjour
                             </Button>
                           </TableCell>
                         </TableRow>
