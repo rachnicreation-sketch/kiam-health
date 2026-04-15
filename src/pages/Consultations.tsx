@@ -379,6 +379,7 @@ export default function Consultations() {
           </DialogContent>
         </Dialog>
       )}
+      </div>
 
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="bg-muted/30">

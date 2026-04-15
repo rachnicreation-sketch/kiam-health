@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiam SaaS - Plateforme de Gestion Tout-en-un</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #050b14;
+      color: #f8fafc;
+    }
+
+    /* Custom Colors Configuration */
+    :root {
+      --navy: #0A1628;
+      --navy-light: #12233f;
+      --blue: #1E6FFF;
+      --blue-hover: #1557d1;
+      --green: #00D47E;
+    }
+
+    /* Glassmorphism Classes */
+    .glass {
+      background: rgba(18, 35, 63, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .glass-card {
+      background: linear-gradient(145deg, rgba(30, 111, 255, 0.05) 0%, rgba(10, 22, 40, 0.8) 100%);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(30, 111, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(30, 111, 255, 0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px -10px rgba(30, 111, 255, 0.2);
+    }
+
+    /* Animated background gradient */
+    .bg-gradient-animated {
+      background: radial-gradient(circle at 15% 50%, rgba(30, 111, 255, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 85% 30%, rgba(0, 212, 126, 0.1) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--navy); }
+    ::-webkit-scrollbar-thumb { background: #1e3a66; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blue); }
+
+    /* Utilities */
+    .text-gradient {
+      background: linear-gradient(to right, #ffffff, #8ba8d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .text-gradient-accent {
+      background: linear-gradient(to right, #1E6FFF, #00D47E);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .fade-in-up {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .fade-in-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Pricing Toggle Switch */
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #1E6FFF;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #1E6FFF;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy: '#0A1628',
+              blue: '#1E6FFF',
+              green: '#00D47E',
+              dark: '#050b14'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-dark min-h-screen font-sans antialiased bg-gradient-animated overflow-x-hidden text-slate-300">
+
+  <!-- Navbar -->
+  <nav id="navbar" class="fixed w-full z-50 transition-all duration-300 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex items-center justify-between glass rounded-2xl px-6 py-3">
+      <div class="flex items-center gap-2">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-blue to-blue-800 flex items-center justify-center font-bold text-xl text-white shadow-[0_0_15px_rgba(30,111,255,0.4)]">K</div>
+        <span class="text-xl font-bold text-white tracking-tight">Kiam SaaS</span>
+      </div>
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+        <a href="#solutions" class="hover:text-brand-blue transition-colors">Solutions</a>
+        <a href="#pourquoi" class="hover:text-brand-blue transition-colors">Fonctionnalités</a>
+        <a href="#pricing" class="hover:text-brand-blue transition-colors">Tarifs</a>
+        <a href="#demo" class="hover:text-brand-blue transition-colors">Démo</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="dist/#/login" class="hidden md:block text-sm font-medium hover:text-white transition-colors">Se connecter</a>
+        <a href="#pricing" class="bg-brand-blue hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-[0_0_15px_rgba(30,111,255,0.3)] hover:shadow-[0_0_25px_rgba(30,111,255,0.5)]">Essai Gratuit</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative pt-40 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden">
+    <!-- Abstract Shapes behind hero -->
+    <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -z-10 w-[800px] h-[500px] bg-brand-blue/20 blur-[120px] rounded-full pointer-events-none"></div>
+    
+    <div class="max-w-5xl mx-auto text-center relative z-10 fade-in-up">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass border border-brand-green/30 text-brand-green text-xs font-semibold mb-8">
+        <span class="w-2 h-2 rounded-full bg-brand-green animate-pulse"></span>
+        Kiam Suite 2026 : Disponible dès maintenant
+      </div>
+      
+      <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight mb-6 text-white leading-[1.1]">
+        Gérez tout. <br />
+        <span class="text-gradient-accent">Depuis une seule plateforme.</span>
+      </h1>
+      
+      <p class="text-lg lg:text-xl text-slate-400 mb-10 max-w-3xl mx-auto leading-relaxed">
+        L'écosystème de logiciels métier conçu pour les entreprises africaines. Hôpitaux, Pharmacies, Entreprises et Magasins : centralisez vos opérations en toute sécurité.
+      </p>
+      
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#pricing" class="w-full sm:w-auto bg-brand-blue hover:bg-blue-600 text-white px-8 py-4 rounded-xl text-lg font-bold transition-all shadow-[0_0_20px_rgba(30,111,255,0.4)] flex items-center justify-center gap-2">
+          Démarrer gratuitement <i data-lucide="arrow-right" class="w-5 h-5"></i>
+        </a>
+        <a href="#demo" class="w-full sm:w-auto glass hover:bg-white/5 text-white px-8 py-4 rounded-xl text-lg font-medium transition-all flex items-center justify-center gap-2">
+          <i data-lucide="play-circle" class="w-5 h-5"></i> Voir la démo
+        </a>
+      </div>
+      <p class="mt-4 text-xs text-slate-500">Sans carte bancaire • Déploiement en 48h</p>
+
+      <!-- Dashboard Mockup Preview -->
+      <div class="mt-20 relative mx-auto max-w-5xl rounded-2xl overflow-hidden glass border border-slate-700/50 shadow-2xl shadow-brand-blue/10 transform perspective-1000 rotate-x-[5deg] hover:rotate-x-0 transition-transform duration-700">
+        <div class="h-8 bg-brand-navy border-b border-slate-800 flex items-center px-4 gap-2">
+          <div class="w-3 h-3 rounded-full bg-rose-500"></div><div class="w-3 h-3 rounded-full bg-amber-500"></div><div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80" alt="Kiam Dashboard Preview" class="w-full h-auto opacity-80 mix-blend-screen" />
+        <div class="absolute inset-0 bg-gradient-to-t from-brand-dark via-transparent to-transparent"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Video Demos -->
+  <section id="demo" class="py-24 px-6 relative z-10">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 fade-in-up">
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">Voir l'écosystème en action</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">Découvrez comment nos modules s'adaptent à la réalité de votre secteur d'activité, de la salle d'attente à l'entrepôt.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Video 1 -->
+        <div class="group relative rounded-2xl overflow-hidden glass-card cursor-pointer fade-in-up">
+          <div class="aspect-video relative overflow-hidden bg-slate-900">
+             <img src="https://images.unsplash.com/photo-1507206130118-b5907f817163?auto=format&fit=crop&w=600&q=80" alt="Kiam Overview" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700">
+             <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-brand-blue/90 flex items-center justify-center text-white backdrop-blur-md shadow-lg group-hover:bg-brand-blue transition-colors">
+                   <i data-lucide="play" class="w-6 h-6 ml-1"></i>
+                </div>
+             </div>
+          </div>
+          <div class="p-6">
+             <h3 class="text-lg font-bold text-white mb-2">Découvrir Kiam SaaS</h3>
+             <p class="text-sm text-slate-400">Une vue à 360° de la plateforme et de la gestion multi-modules.</p>
+          </div>
+        </div>
+
+        <!-- Video 2 -->
+        <div class="group relative rounded-2xl overflow-hidden glass-card cursor-pointer fade-in-up" style="transition-delay: 100ms;">
+          <div class="aspect-video relative overflow-hidden bg-slate-900">
+             <img src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=600&q=80" alt="Kiam Health" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700">
+             <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-brand-green/90 flex items-center justify-center text-white backdrop-blur-md shadow-lg group-hover:bg-brand-green transition-colors">
+                   <i data-lucide="play" class="w-6 h-6 ml-1"></i>
+                </div>
+             </div>
+          </div>
+          <div class="p-6">
+             <h3 class="text-lg font-bold text-white mb-2">Démonstration Kiam Health</h3>
+             <p class="text-sm text-slate-400">Le parcours médical complet : patient, labo, pharmacie et facturation.</p>
+          </div>
+        </div>
+
+        <!-- Video 3 -->
+        <div class="group relative rounded-2xl overflow-hidden glass-card cursor-pointer fade-in-up" style="transition-delay: 200ms;">
+          <div class="aspect-video relative overflow-hidden bg-slate-900">
+             <img src="https://images.unsplash.com/photo-1586528116311-ad8ed7c83a54?auto=format&fit=crop&w=600&q=80" alt="Kiam ERP" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700">
+             <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-brand-blue/90 flex items-center justify-center text-white backdrop-blur-md shadow-lg group-hover:bg-brand-blue transition-colors">
+                   <i data-lucide="play" class="w-6 h-6 ml-1"></i>
+                </div>
+             </div>
+          </div>
+          <div class="p-6">
+             <h3 class="text-lg font-bold text-white mb-2">Aperçu Kiam ERP/WMS</h3>
+             <p class="text-sm text-slate-400">Gestion des entrepôts, comptabilité et ressources humaines centralisées.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solutions/Modules -->
+  <section id="solutions" class="py-24 px-6 relative bg-brand-navy/50 border-y border-slate-800">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 fade-in-up">
+         <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">Nos Solutions Métier</h2>
+         <p class="text-slate-400 max-w-2xl mx-auto">Des modules spécialisés, interconnectables selon la taille et les besoins de votre structure.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         <!-- Module Health -->
+         <div class="glass-card p-8 rounded-2xl relative overflow-hidden group fade-in-up">
+            <div class="absolute top-0 right-0 p-4 opacity-10 text-brand-green group-hover:scale-110 transition-transform"><i data-lucide="activity" class="w-32 h-32"></i></div>
+            <div class="w-12 h-12 rounded-lg bg-brand-green/20 text-brand-green flex items-center justify-center mb-6 border border-brand-green/30">
+               <i data-lucide="heart-pulse" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+               <h3 class="text-xl font-bold text-white">Kiam Health</h3>
+               <span class="text-[10px] uppercase font-bold bg-brand-green/20 text-brand-green px-2 py-0.5 rounded border border-brand-green/30">Disponible</span>
+            </div>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">Plateforme complète de gestion hospitalière. Dossiers patients, consultations, lits, laboratoire, facturation automatisée et pharmacie interne.</p>
+            <a href="#" class="text-brand-green text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">Découvrir le module <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+         </div>
+
+         <!-- Module ERP -->
+         <div class="glass-card p-8 rounded-2xl relative overflow-hidden group fade-in-up" style="transition-delay: 50ms;">
+            <div class="absolute top-0 right-0 p-4 opacity-10 text-brand-blue group-hover:scale-110 transition-transform"><i data-lucide="building-2" class="w-32 h-32"></i></div>
+            <div class="w-12 h-12 rounded-lg bg-brand-blue/20 text-brand-blue flex items-center justify-center mb-6 border border-brand-blue/30">
+               <i data-lucide="boxes" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+               <h3 class="text-xl font-bold text-white">Kiam ERP & WMS</h3>
+               <span class="text-[10px] uppercase font-bold bg-brand-blue/20 text-brand-blue px-2 py-0.5 rounded border border-brand-blue/30">Disponible</span>
+            </div>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">Le cœur logistique et financier. Gestion multi-entrepôts, achats, ventes, ressources humaines (paie), et comptabilité intégrée.</p>
+            <a href="#" class="text-brand-blue text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">Découvrir le module <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+         </div>
+
+         <!-- Module Pharma -->
+         <div class="glass-card p-8 rounded-2xl relative overflow-hidden group fade-in-up" style="transition-delay: 100ms;">
+            <div class="absolute top-0 right-0 p-4 opacity-10 text-teal-400 group-hover:scale-110 transition-transform"><i data-lucide="pill" class="w-32 h-32"></i></div>
+            <div class="w-12 h-12 rounded-lg bg-teal-400/20 text-teal-400 flex items-center justify-center mb-6 border border-teal-400/30">
+               <i data-lucide="cross" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+               <h3 class="text-xl font-bold text-white">Kiam Pharma</h3>
+               <span class="text-[10px] uppercase font-bold bg-teal-400/20 text-teal-400 px-2 py-0.5 rounded border border-teal-400/30">Disponible</span>
+            </div>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">Gestion fine des pharmacies d'officine. Suivi des lots, alertes péremption, caisse (POS) rapide, ordonnancier électronique.</p>
+            <a href="#" class="text-teal-400 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">Découvrir le module <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+         </div>
+
+         <!-- Module Store -->
+         <div class="glass-card p-8 rounded-2xl relative overflow-hidden group fade-in-up">
+            <div class="absolute top-0 right-0 p-4 opacity-5 text-orange-400 group-hover:scale-110 transition-transform"><i data-lucide="shopping-basket" class="w-32 h-32"></i></div>
+            <div class="w-12 h-12 rounded-lg bg-orange-400/20 text-orange-400 flex items-center justify-center mb-6 border border-orange-400/30">
+               <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+               <h3 class="text-xl font-bold text-white">Kiam Store</h3>
+               <span class="text-[10px] uppercase font-bold bg-orange-400/20 text-orange-400 px-2 py-0.5 rounded border border-orange-400/30">Disponible</span>
+            </div>
+            <p class="text-slate-400 text-sm leading-relaxed mb-6">Pour les supermarchés et boutiques. Terminal point de vente (POS), suivi d'inventaire en temps réel, gestion de la fidélité client.</p>
+            <a href="#" class="text-orange-400 text-sm font-semibold flex items-center gap-1 hover:gap-2 transition-all">Découvrir le module <i data-lucide="arrow-right" class="w-4 h-4"></i></a>
+         </div>
+
+         <!-- Module School -->
+         <div class="glass-card p-8 rounded-2xl relative overflow-hidden group fade-in-up border-dashed" style="transition-delay: 50ms;">
+            <div class="w-12 h-12 rounded-lg bg-slate-700/20 text-slate-500 flex items-center justify-center mb-6 border border-slate-700/30">
+               <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+               <h3 class="text-xl font-bold text-slate-300">Kiam School</h3>
+               <span class="text-[10px] uppercase font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">T3 2026</span>
+            </div>
+            <p class="text-slate-500 text-sm leading-relaxed">Gestion des établissements scolaires. Frais de scolarité, emplois du temps, notes, bulletins et portail parents/élèves.</p>
+         </div>
+
+         <!-- Module Hotel -->
+         <div class="glass-card p-8 rounded-2xl relative overflow-hidden group fade-in-up border-dashed" style="transition-delay: 100ms;">
+            <div class="w-12 h-12 rounded-lg bg-slate-700/20 text-slate-500 flex items-center justify-center mb-6 border border-slate-700/30">
+               <i data-lucide="bed-double" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center gap-3 mb-2">
+               <h3 class="text-xl font-bold text-slate-300">Kiam Hotel</h3>
+               <span class="text-[10px] uppercase font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">Bientôt</span>
+            </div>
+            <p class="text-slate-500 text-sm leading-relaxed">Système PMS de réservation, gestion des chambres, facturation client, room service et inventaire restaurant.</p>
+         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pourquoi Kiam -->
+  <section id="pourquoi" class="py-24 px-6 relative">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 fade-in-up">
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">Pourquoi choisir Kiam ?</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">Pensé pour éliminer la paperasse, sécuriser vos opérations et réduire les fuites de revenus.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="flex items-start gap-4 fade-in-up">
+          <div class="w-12 h-12 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue shrink-0 shadow-[0_0_15px_rgba(30,111,255,0.2)]">
+            <i data-lucide="rocket" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-2">Déploiement en 48h</h4>
+            <p class="text-sm text-slate-400">Pas de serveurs à installer. Vous souscrivez, nous vous livrons votre instance prête à l'emploi.</p>
+          </div>
+        </div>
+        
+        <div class="flex items-start gap-4 fade-in-up" style="transition-delay: 50ms;">
+          <div class="w-12 h-12 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green shrink-0 shadow-[0_0_15px_rgba(0,212,126,0.2)]">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-2">Données hyper-sécurisées</h4>
+            <p class="text-sm text-slate-400">Chiffrement de bout en bout, sauvegardes automatiques tri-quotidiennes, conformité locale et internationale.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 fade-in-up" style="transition-delay: 100ms;">
+          <div class="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 shrink-0 shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+            <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-2">Vision 360° en temps réel</h4>
+            <p class="text-sm text-slate-400">Des tableaux de bord interactifs pour piloter vos revenus, vos stocks et vos équipes depuis votre smartphone.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 fade-in-up" style="transition-delay: 150ms;">
+          <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+            <i data-lucide="globe-2" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-2">Adapté au contexte local</h4>
+            <p class="text-sm text-slate-400">Support des monnaies locales, gestion des contraintes fiscales africaines (TVA réele), connexion Mobile Money.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 fade-in-up" style="transition-delay: 200ms;">
+          <div class="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-400 shrink-0 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+            <i data-lucide="link" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-2">Zéro double saisie</h4>
+            <p class="text-sm text-slate-400">L'information circule nativement entre la consultation, la pharmacie et la caisse. Fini le papier volant.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-4 fade-in-up" style="transition-delay: 250ms;">
+          <div class="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400 shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+            <i data-lucide="headphones" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-2">Support Dédié 24/7</h4>
+            <p class="text-sm text-slate-400">Une équipe technique experte joignable directement depuis le logiciel pour vous assister au quotidien.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Image Gallery (Mockups) -->
+  <section class="py-24 px-6 bg-slate-900 border-y border-slate-800">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 fade-in-up">
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">Aperçu des interfaces</h2>
+        <p class="text-slate-400">Un design clair et moderne (mode sombre et clair) pour un apprentissage express du personnel.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6 fade-in-up">
+        <div class="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in border border-slate-700">
+          <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500&q=80" alt="Dashboard" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 mix-blend-screen">
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+             <p class="text-white font-bold text-sm">Tableau de Bord KPI</p>
+          </div>
+        </div>
+        <div class="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in border border-slate-700">
+          <img src="https://images.unsplash.com/photo-1587560699334-bea5356ac8ce?auto=format&fit=crop&w=500&q=80" alt="ERP Stock" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 mix-blend-screen">
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+             <p class="text-white font-bold text-sm">Contrôle des Stocks ERP</p>
+          </div>
+        </div>
+        <div class="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in border border-slate-700">
+          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=500&q=80" alt="Health Consultation" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 mix-blend-screen">
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+             <p class="text-white font-bold text-sm">Dossier Médical Étendu</p>
+          </div>
+        </div>
+        <div class="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in border border-slate-700">
+          <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&q=80" alt="Finance" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 mix-blend-screen">
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+             <p class="text-white font-bold text-sm">Rapports Financiers & Caisses</p>
+          </div>
+        </div>
+        <div class="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in border border-slate-700">
+          <img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=500&q=80" alt="POS Store" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 mix-blend-screen">
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+             <p class="text-white font-bold text-sm">Interface Caisse Enregistreuse (POS)</p>
+          </div>
+        </div>
+        <div class="aspect-[4/3] rounded-xl overflow-hidden relative group cursor-zoom-in border border-slate-700">
+          <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80" alt="Pharma Lab" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 mix-blend-screen">
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 p-4 translate-y-full group-hover:translate-y-0 transition-transform">
+             <p class="text-white font-bold text-sm">Labo & Officine Pharma</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="py-24 px-6 relative">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12 fade-in-up">
+        <h2 class="text-3xl lg:text-4xl font-bold text-white mb-4">Abonnements sur mesure</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto mb-8">Choisissez la solution qui vous correspond, sans coûts cachés ni installation de serveurs onéreux.</p>
+
+        <!-- Product Selector (Tabs) -->
+        <div class="inline-flex bg-slate-800/50 p-1.5 rounded-xl border border-slate-700 mb-8 overflow-x-auto w-full md:w-auto">
+          <button class="px-5 py-2.5 rounded-lg text-sm font-semibold bg-brand-blue text-white shadow-lg whitespace-nowrap transition-colors" id="btn-health">Kiam Health</button>
+          <button class="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap transition-colors" id="btn-erp">Kiam ERP</button>
+          <button class="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap transition-colors" id="btn-pharma">Kiam Pharma</button>
+          <button class="px-5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/50 whitespace-nowrap transition-colors" id="btn-store">Kiam Store</button>
+        </div>
+
+        <!-- Billing Toggle -->
+        <div class="flex items-center justify-center gap-4 text-sm font-medium">
+          <span class="text-slate-400" id="label-monthly">Mensuel</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="billingToggle" class="sr-only peer" checked>
+            <div class="w-12 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-blue shadow-inner"></div>
+          </label>
+          <span class="text-white" id="label-yearly">Annuel <span class="bg-brand-green/20 text-brand-green text-[10px] px-2 py-0.5 rounded-full ml-1 font-bold">-20%</span></span>
+        </div>
+      </div>
+
+      <!-- Pricing Cards Layer -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-in-up items-end">
+        
+        <!-- Starter Plan -->
+        <div class="glass-card rounded-2xl p-8 border border-slate-700 md:h-[500px] flex flex-col">
+          <h3 class="text-xl font-bold text-white mb-2">Starter</h3>
+          <p class="text-sm text-slate-400 mb-6 flex-1">Pour les petites cliniques ou cabinets nécessitant l'essentiel.</p>
+          <div class="mb-6">
+             <span class="text-4xl font-extrabold text-white price-display" data-monthly="29,000" data-yearly="23,200">23 200</span>
+             <span class="text-slate-400 text-sm">XAF / mois</span>
+          </div>
+          <ul class="space-y-3 mb-8 text-sm text-slate-300 flex-1">
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> 1 à 3 Utilisateurs</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> 5 Go de stockage (Cloud sécurisé)</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Mises à jour incluses</li>
+             <li class="flex items-center gap-3 text-slate-500"><i data-lucide="circle" class="w-4 h-4"></i> Support Email Uniquement</li>
+          </ul>
+          <a href="#" class="w-full text-center bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold transition-colors">Essai Gratuit</a>
+        </div>
+
+        <!-- Pro Plan (Popular) -->
+        <div class="glass-card rounded-2xl p-8 border border-brand-blue relative transform md:-translate-y-4 md:h-[530px] flex flex-col shadow-[0_0_30px_rgba(30,111,255,0.15)] bg-brand-navy/60">
+          <div class="absolute top-0 inset-x-0 transform -translate-y-1/2 flex justify-center">
+             <span class="bg-gradient-to-r from-brand-blue to-blue-500 text-white text-[10px] uppercase font-bold px-3 py-1 rounded-full shadow-lg border border-blue-400/30 tracking-wider">Le plus populaire ⭐</span>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Professionnel</h3>
+          <p class="text-sm text-slate-400 mb-6 flex-1">L'expérience complète pour les hôpitaux de taille moyenne.</p>
+          <div class="mb-6">
+             <span class="text-4xl font-extrabold text-white price-display text-transparent text-gradient" data-monthly="69,000" data-yearly="55,200">55 200</span>
+             <span class="text-slate-400 text-sm">XAF / mois</span>
+          </div>
+          <ul class="space-y-3 mb-8 text-sm text-slate-200 flex-1">
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Jusqu'à 15 Utilisateurs</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> 50 Go de stockage protégé</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Fonctionnalités Avancées (Labo, Paie)</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Support Chat & Email prioritaire</li>
+          </ul>
+          <a href="#" class="w-full text-center bg-brand-blue hover:bg-blue-600 shadow-[0_0_15px_rgba(30,111,255,0.5)] text-white py-3 rounded-xl font-bold transition-colors">Souscrire au plan Pro</a>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="glass-card rounded-2xl p-8 border border-slate-700 md:h-[500px] flex flex-col">
+          <h3 class="text-xl font-bold text-white mb-2">Entreprise</h3>
+          <p class="text-sm text-slate-400 mb-6 flex-1">Des limites repoussées pour les larges institutions et groupes.</p>
+          <div class="mb-6">
+             <span class="text-4xl font-extrabold text-white">Sur Devis</span>
+          </div>
+          <ul class="space-y-3 mb-8 text-sm text-slate-300 flex-1">
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Utilisateurs Illimités</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Stockage Illimité</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Accès API & Multi-sites</li>
+             <li class="flex items-center gap-3"><i data-lucide="check" class="w-4 h-4 text-brand-green"></i> Responsable dédié & Support 24/7</li>
+          </ul>
+          <a href="#" class="w-full text-center bg-transparent border border-brand-blue text-brand-blue hover:bg-brand-blue/10 py-3 rounded-xl font-bold transition-colors">Contacter les ventes</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials & FAQ Grid -->
+  <section class="py-24 px-6 border-t border-slate-800 bg-slate-900/50">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
+      
+      <!-- Testimonials -->
+      <div class="fade-in-up">
+        <h2 class="text-3xl font-bold text-white mb-8">Ce qu'en disent nos clients</h2>
+        <div class="space-y-6">
+          <div class="glass p-6 rounded-2xl">
+            <div class="flex gap-1 mb-3 text-amber-400"><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i></div>
+            <p class="text-slate-300 italic text-sm mb-4">"Kiam Health a transformé notre polyclinique. Nous n'avons plus de pertes de revenus à la pharmacie et le personnel s'y est adapté en moins de 3 jours !"</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold">SM</div>
+              <div>
+                 <h4 class="text-white text-sm font-bold">Dr. Serge MOUELÉ</h4>
+                 <p class="text-xs text-slate-500">Directeur Médical, Brazzaville</p>
+              </div>
+            </div>
+          </div>
+          <div class="glass p-6 rounded-2xl">
+            <div class="flex gap-1 mb-3 text-amber-400"><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i><i data-lucide="star" class="w-4 h-4 fill-current"></i></div>
+            <p class="text-slate-300 italic text-sm mb-4">"Le module ERP connecté à nos points de ventes (Kiam Store) nous donne une vision ultra-claire de la comptabilité en temps réel. Remarquable."</p>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full bg-blue-900 border border-blue-500 flex items-center justify-center text-white font-bold">AF</div>
+              <div>
+                 <h4 class="text-white text-sm font-bold">Alain FOUMBA</h4>
+                 <p class="text-xs text-slate-500">DG Groupe Logistique, Kinshasa</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Accordion -->
+      <div class="fade-in-up" style="transition-delay: 100ms;">
+        <h2 class="text-3xl font-bold text-white mb-8">Questions Fréquentes</h2>
+        <div class="space-y-4" id="faq-container">
+          
+          <div class="glass rounded-xl overflow-hidden border border-slate-700 faq-item">
+            <button class="w-full text-left px-6 py-4 flex items-center justify-between font-bold text-white hover:bg-slate-800/50 transition-colors focus:outline-none">
+               <span>Puis-je combiner plusieurs modules Kiam ?</span>
+               <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transform transition-transform duration-300"></i>
+            </button>
+            <div class="px-6 py-0 max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-slate-900/50">
+               <p class="text-sm text-slate-400 pb-4 pt-1">Absolument. Kiam est conçu comme une suite logicielle (SaaS). Vous pouvez commencer avec Kiam Health, et activer Kiam ERP ou Pharma plus tard. Les données communiqueront nativement.</p>
+            </div>
+          </div>
+
+          <div class="glass rounded-xl overflow-hidden border border-slate-700 faq-item">
+            <button class="w-full text-left px-6 py-4 flex items-center justify-between font-bold text-white hover:bg-slate-800/50 transition-colors focus:outline-none">
+               <span>Mes données sont-elles sauvegardées automatiquement ?</span>
+               <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transform transition-transform duration-300"></i>
+            </button>
+            <div class="px-6 py-0 max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-slate-900/50">
+               <p class="text-sm text-slate-400 pb-4 pt-1">Oui. Vos données sont sauvegardées en temps réel sur le cloud, avec des redondances régionales effectuées plusieurs fois par jour pour prévenir toute perte.</p>
+            </div>
+          </div>
+
+          <div class="glass rounded-xl overflow-hidden border border-slate-700 faq-item active">
+            <button class="w-full text-left px-6 py-4 flex items-center justify-between font-bold text-white hover:bg-slate-800/50 transition-colors focus:outline-none">
+               <span>Comment migrer depuis mon ancien logiciel ?</span>
+               <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transform transition-transform duration-300 rotate-180"></i>
+            </button>
+            <div class="px-6 py-0 max-h-[200px] overflow-hidden transition-all duration-300 ease-in-out bg-slate-900/50">
+               <p class="text-sm text-slate-400 pb-4 pt-1">Nous proposons des outils d'import par fichiers CSV/Excel. Une équipe d'embarquement (onboarding) peut également se charger d'importer vos archives gratuitement pour les plans Pro et Enterprise.</p>
+            </div>
+          </div>
+
+          <div class="glass rounded-xl overflow-hidden border border-slate-700 faq-item">
+            <button class="w-full text-left px-6 py-4 flex items-center justify-between font-bold text-white hover:bg-slate-800/50 transition-colors focus:outline-none">
+               <span>Y a-t-il une version mobile ?</span>
+               <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transform transition-transform duration-300"></i>
+            </button>
+            <div class="px-6 py-0 max-h-0 overflow-hidden transition-all duration-300 ease-in-out bg-slate-900/50">
+               <p class="text-sm text-slate-400 pb-4 pt-1">Toutes nos interfaces web (Application Kiam SaaS) sont "Responsive Design" et fonctionnent parfaitement sur le navigateur de votre smartphone, tablette ou ordinateur.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section class="py-20 px-6">
+    <div class="max-w-5xl mx-auto rounded-3xl bg-gradient-to-br from-brand-blue to-blue-900 p-12 text-center relative overflow-hidden shadow-2xl fade-in-up border border-blue-400/30">
+      <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+      <h2 class="text-3xl lg:text-5xl font-extrabold text-white mb-6 relative z-10">Prêt à digitaliser votre entreprise ?</h2>
+      <p class="text-blue-100 mb-8 max-w-2xl mx-auto relative z-10 text-lg">Rejoignez la nouvelle génération d'institutions modernes africaines. Sans engagement. Essai de 14 jours totalement gratuit.</p>
+      <a href="#pricing" class="inline-block bg-white text-brand-blue hover:bg-slate-100 px-8 py-4 rounded-xl font-bold transition-all shadow-lg relative z-10 text-lg">Créer mon espace Kiam</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-[#03060C] pt-20 pb-10 px-6 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+      <div class="col-span-1 md:col-span-1">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center font-bold text-lg text-white">K</div>
+          <span class="text-xl font-bold text-white tracking-tight">Kiam SaaS</span>
+        </div>
+        <p class="text-slate-500 text-sm mb-6">Écosystème technologique d'excellence pour la gestion institutionnelle en Afrique.</p>
+        <div class="flex gap-4">
+          <a href="#" class="text-slate-400 hover:text-white"><i data-lucide="twitter" class="w-5 h-5"></i></a>
+          <a href="#" class="text-slate-400 hover:text-white"><i data-lucide="linkedin" class="w-5 h-5"></i></a>
+          <a href="#" class="text-slate-400 hover:text-white"><i data-lucide="facebook" class="w-5 h-5"></i></a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-white font-bold mb-4">Produits</h4>
+        <ul class="space-y-2 text-sm text-slate-400">
+          <li><a href="#" class="hover:text-brand-blue">Kiam Health</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Kiam ERP/WMS</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Kiam Pharma</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Kiam Store</a></li>
+          <li><a href="#" class="flex items-center gap-2 text-slate-600">Kiam School <span class="bg-slate-800 px-1.5 py-0.5 rounded text-[9px]">Bientôt</span></a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-bold mb-4">Ressources</h4>
+        <ul class="space-y-2 text-sm text-slate-400">
+          <li><a href="#" class="hover:text-brand-blue">Blog & Actualités</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Centre d'aide / FAQ</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Tutoriels vidéo</a></li>
+          <li><a href="#" class="hover:text-brand-blue">API Serveur</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white font-bold mb-4">Légal & Contact</h4>
+        <ul class="space-y-2 text-sm text-slate-400">
+          <li><a href="#" class="hover:text-brand-blue">Contactez-nous</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Conditions d'utilisation (CGU)</a></li>
+          <li><a href="#" class="hover:text-brand-blue">Politique de confidentialité</a></li>
+          <li><p class="mt-4 break-words">hello@matiaba.com</p></li>
+          <li><p>+242 06 000 00 00</p></li>
+        </ul>
+      </div>
+    </div>
+    <div class="max-w-7xl mx-auto border-t border-slate-800/80 pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-600">
+      <p>&copy; 2026 Kiam SaaS par Matiaba Firm. Tous droits réservés.</p>
+      <p class="mt-2 md:mt-0 items-center flex gap-1">Fait avec <i data-lucide="heart" class="w-3 h-3 text-rose-500 fill-current"></i> en République du Congo</p>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Scroll Animations (Intersection Observer)
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in-up').forEach((el) => observer.observe(el));
+
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 20) {
+         navbar.classList.add('backdrop-blur-md', 'bg-brand-dark/80', 'shadow-lg');
+      } else {
+         navbar.classList.remove('backdrop-blur-md', 'bg-brand-dark/80', 'shadow-lg');
+      }
+    });
+
+    // Pricing Logic
+    const toggle = document.getElementById('billingToggle');
+    const prices = document.querySelectorAll('.price-display');
+    const labelMonthly = document.getElementById('label-monthly');
+    const labelYearly = document.getElementById('label-yearly');
+
+    toggle.addEventListener('change', (e) => {
+      const isYearly = e.target.checked;
+      labelMonthly.classList.toggle('text-white', !isYearly);
+      labelMonthly.classList.toggle('text-slate-400', isYearly);
+      
+      labelYearly.classList.toggle('text-white', isYearly);
+      labelYearly.classList.toggle('text-slate-400', !isYearly);
+
+      prices.forEach(priceEl => {
+        if (!priceEl.classList.contains('text-transparent')) {
+            priceEl.textContent = isYearly ? priceEl.dataset.yearly : priceEl.dataset.monthly;
+        } else {
+            // Animating numbers is complex via innerText smoothly, we just swap
+            priceEl.textContent = isYearly ? priceEl.dataset.yearly : priceEl.dataset.monthly;
+        }
+      });
+    });
+
+    // FAQ Accordion Logic
+    const faqItems = document.querySelectorAll('.faq-item button');
+    faqItems.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.parentElement;
+        const icon = btn.querySelector('svg');
+        const content = item.querySelector('div');
+        
+        const isActive = item.classList.contains('active');
+        
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(other => {
+           other.classList.remove('active');
+           other.querySelector('svg').classList.remove('rotate-180');
+           other.querySelector('div').style.maxHeight = '0px';
+        });
+
+        if (!isActive) {
+           item.classList.add('active');
+           icon.classList.add('rotate-180');
+           content.style.maxHeight = content.scrollHeight + 'px';
+        }
+      });
+    });
+
+    // Subscriptions tabs logic (Simple UI toggling simulation)
+    const productBtns = ['health', 'erp', 'pharma', 'store'].map(id => document.getElementById(`btn-${id}`));
+    productBtns.forEach(btn => {
+      if (!btn) return;
+      btn.addEventListener('click', (e) => {
+         productBtns.forEach(b => {
+           b.classList.remove('bg-brand-blue', 'text-white', 'shadow-lg');
+           b.classList.add('text-slate-300', 'bg-transparent');
+         });
+         e.target.classList.add('bg-brand-blue', 'text-white', 'shadow-lg');
+         e.target.classList.remove('text-slate-300', 'bg-transparent');
+      });
+    });
+  </script>
+</body>
+</html>

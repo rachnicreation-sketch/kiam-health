@@ -1,5 +1,3 @@
 <?php
-// Redirection automatique pour WampServer
-header("Location: dist/");
-exit;
-?>
+// Affiche la landing page SaaS
+require "saas-presentation/landing.html";

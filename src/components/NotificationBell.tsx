@@ -64,6 +64,10 @@ export function NotificationBell() {
           type = 'info';
           icon = Calendar;
           path = '/appointments';
+        } else if (n.type === 'system') {
+          type = 'info';
+          icon = Bell;
+          path = '/dashboard';
         }
 
         return {

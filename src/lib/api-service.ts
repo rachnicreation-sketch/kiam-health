@@ -198,6 +198,10 @@ export const api = {
   },
   notifications: {
     list: (clinicId: string) => apiRequest(`notifications.php?clinicId=${clinicId}`),
+    create: (data: any) => apiRequest("notifications.php", {
+      method: "POST",
+      body: JSON.stringify(data)
+    })
   },
   search: {
     query: (clinicId: string, query: string) => apiRequest(`search.php?clinicId=${clinicId}&query=${query}`),
