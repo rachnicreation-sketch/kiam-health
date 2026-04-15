@@ -1,15 +1,18 @@
 import { useState, useEffect } from "react";
-import { Clinic, User, resetSystemData } from "@/lib/mock-data";
+import { Clinic, User } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Building2, Plus, Users, Lock, ShieldAlert, RotateCcw } from "lucide-react";
+import { Building2, Plus, Users, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { api } from "@/lib/api-service";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SaaSAdminDashboard() {
+  const { toast } = useToast();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -21,54 +24,61 @@ export default function SaaSAdminDashboard() {
     loadData();
   }, []);
 
-  const loadData = () => {
-    const data = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-    setClinics(data);
-    setLoading(false);
+  const loadData = async () => {
+    try {
+      const data = await api.clinics.list();
+      setClinics(data);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les cliniques." });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleClinicStatus = (clinicId: string, currentStatus: string) => {
+  const toggleClinicStatus = async (clinicId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
-    const updatedClinics = clinics.map(c => 
-      c.id === clinicId ? { ...c, status: newStatus as any } : c
-    );
-    localStorage.setItem('kiam_clinics', JSON.stringify(updatedClinics));
-    setClinics(updatedClinics);
+    try {
+      await api.clinics.update({ id: clinicId, status: newStatus });
+      toast({ title: "Statut mis à jour", description: `La clinique est désormais ${newStatus}.` });
+      loadData();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de modifier le statut." });
+    }
   };
 
-  const handleAddClinic = (e: React.FormEvent) => {
+  const handleAddClinic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClinicName || !newAdminEmail || !newAdminPassword) return;
 
-    // Ajouter la clinique
-    const newClinicId = `c${Date.now()}`;
-    const newClinic: Clinic = {
-      id: newClinicId,
-      name: newClinicName,
-      status: 'active',
-      createdAt: new Date().toISOString()
-    };
+    try {
+      // 1. Ajouter la clinique
+      const clinicResponse = await api.clinics.create({
+        name: newClinicName,
+        status: 'active'
+      });
 
-    const updatedClinics = [...clinics, newClinic];
-    localStorage.setItem('kiam_clinics', JSON.stringify(updatedClinics));
+      if (clinicResponse.status === 'success') {
+        const newClinicId = clinicResponse.id;
 
-    // Ajouter l'utilisateur
-    const users: User[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      email: newAdminEmail,
-      passwordHash: newAdminPassword, 
-      role: 'clinic_admin',
-      clinicId: newClinicId,
-      name: `Admin ${newClinicName}`
-    };
-    localStorage.setItem('kiam_users', JSON.stringify([...users, newUser]));
+        // 2. Ajouter l'utilisateur admin pour cette clinique
+        await api.users.create({
+          email: newAdminEmail,
+          password: newAdminPassword,
+          role: 'clinic_admin',
+          clinicId: newClinicId,
+          name: `Admin ${newClinicName}`
+        });
 
-    setClinics(updatedClinics);
-    setIsAddDialogOpen(false);
-    setNewClinicName("");
-    setNewAdminEmail("");
-    setNewAdminPassword("");
+        toast({ title: "Succès", description: `La clinique ${newClinicName} et son administrateur ont été créés.` });
+        loadData();
+        setIsAddDialogOpen(false);
+        setNewClinicName("");
+        setNewAdminEmail("");
+        setNewAdminPassword("");
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur de création", description: error.message });
+    }
   };
 
   if (loading) return null;
@@ -161,36 +171,6 @@ export default function SaaSAdminDashboard() {
         </CardContent>
       </Card>
 
-      <Card className="border-destructive/20 bg-destructive/5">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center gap-2">
-            <ShieldAlert className="h-5 w-5" />
-            Système & Maintenance
-          </CardTitle>
-          <CardDescription>
-            Actions irréversibles sur l'ensemble de la plateforme SaaS.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border border-destructive/20 rounded-lg bg-white">
-            <div className="space-y-1">
-              <p className="text-sm font-bold">Réinitialisation d'Usine</p>
-              <p className="text-xs text-muted-foreground">Efface toutes les données (patients, cliniques, consultations) et recharge les données par défaut.</p>
-            </div>
-            <Button 
-              variant="destructive" 
-              onClick={() => {
-                if(confirm("ATTENTION: Toutes vos données locales seront supprimées définitivement. Continuer ?")) {
-                  resetSystemData();
-                }
-              }}
-              className="gap-2"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Réinitialiser tout le système
-            </Button>
-          </div>
-        </CardContent>
       </Card>
     </div>
   );

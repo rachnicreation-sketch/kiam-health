@@ -15,18 +15,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    
     try {
       const result = await login(email, password);
+      // useAuth sets the user in state, we can use the result or wait for next render, 
+      // but useAuth is designed to return success/message.
+      // Let's assume we can get the role from the stored user or better, from the response.
       if (result.success) {
-        // Obtenir l'utilisateur directement depuis le stockage mock, ou après un délai state pour la démo
-        const users = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-        const user = users.find((u: any) => u.email === email); // just for redirection logic
-        if (user?.role === 'saas_admin') {
+        const storedUser = JSON.parse(localStorage.getItem('kiam_auth_user') || '{}');
+        if (storedUser.role === 'saas_admin') {
           navigate("/saas/dashboard");
         } else {
           navigate("/dashboard");

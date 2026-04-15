@@ -26,7 +26,11 @@ export interface Permission {
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
-  'saas_admin': ['saas', 'settings'],
+  'saas_admin': [
+    'saas', 'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
+    'laboratory', 'pharmacy', 'billing', 'accounting', 'reports', 'hr', 
+    'planning', 'catalogs', 'facilities', 'settings'
+  ],
   'clinic_admin': [
     'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
     'laboratory', 'pharmacy', 'billing', 'accounting', 'reports', 'hr', 
@@ -34,13 +38,13 @@ export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
   ],
   'doctor': [
     'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
-    'laboratory', 'pharmacy', 'planning', 'catalogs'
+    'laboratory', 'pharmacy', 'planning', 'catalogs', 'billing'
   ],
   'nurse': [
-    'dashboard', 'patients', 'consultations', 'hospitalization', 'pharmacy', 'planning'
+    'dashboard', 'patients', 'consultations', 'hospitalization', 'pharmacy', 'planning', 'laboratory'
   ],
   'lab_tech': [
-    'dashboard', 'laboratory'
+    'dashboard', 'laboratory', 'patients', 'catalogs'
   ],
   'pharmacist': [
     'dashboard', 'pharmacy', 'billing', 'patients'
@@ -49,7 +53,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
     'dashboard', 'patients', 'appointments', 'billing'
   ],
   'medical_secretary': [
-    'dashboard', 'patients', 'appointments', 'reports', 'consultations'
+    'dashboard', 'patients', 'appointments', 'reports', 'consultations', 'billing'
   ],
   'hr': [
     'dashboard', 'hr'
@@ -69,8 +73,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
  * Checks if a role has access to a specific module
  */
 export function hasModuleAccess(role: UserRole, module: Module): boolean {
-  if (role === 'saas_admin' && module === 'saas') return true;
-  if (role === 'saas_admin' && module !== 'saas') return false;
+  if (role === 'saas_admin' && !['saas', 'settings'].includes(module)) return false;
   
   const permissions = ROLE_PERMISSIONS[role];
   if (!permissions) return false;

@@ -31,26 +31,45 @@ import {
 } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { Patient, Consultation, Invoice, Transaction } from "@/lib/mock-data";
+import { api } from "@/lib/api-service";
+import { useToast } from "@/hooks/use-toast";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function Reports() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
+    if (user?.clinicId) {
+      loadData();
+    }
   }, [user]);
 
-  const loadData = () => {
-    if (user?.clinicId) {
-      setPatients(JSON.parse(localStorage.getItem('kiam_patients') || '[]').filter((p: any) => p.clinicId === user.clinicId));
-      setConsultations(JSON.parse(localStorage.getItem('kiam_consultations') || '[]').filter((c: any) => c.clinicId === user.clinicId));
-      setInvoices(JSON.parse(localStorage.getItem('kiam_invoices') || '[]').filter((i: any) => i.clinicId === user.clinicId));
-      setTransactions(JSON.parse(localStorage.getItem('kiam_transactions') || '[]').filter((t: any) => t.clinicId === user.clinicId));
+  const loadData = async () => {
+    if (!user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const [pats, cons, invs, trans] = await Promise.all([
+        api.patients.list(user.clinicId),
+        api.consultations.list(user.clinicId),
+        api.invoices.list(user.clinicId),
+        api.transactions.list(user.clinicId)
+      ]);
+      
+      setPatients(pats);
+      setConsultations(cons);
+      setInvoices(invs);
+      setTransactions(trans);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Chargement des rapports échoué." });
+    } finally {
+      setIsLoading(false);
     }
   };
 

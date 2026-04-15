@@ -35,6 +35,8 @@ import { Patient, Appointment, Consultation } from "@/lib/mock-data";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api-service";
+import { useToast } from "@/hooks/use-toast";
 
 const weeklyData = [
   { day: "Lun", consultations: 45, admissions: 12 },
@@ -49,23 +51,39 @@ const weeklyData = [
 export default function Dashboard() {
   const { user, clinic } = useAuth();
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const { toast } = useToast();
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user?.clinicId) {
-      const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-      const allAppts: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
-      const allConsults: Consultation[] = JSON.parse(localStorage.getItem('kiam_consultations') || '[]');
-      
-      setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
-      setAppointments(allAppts.filter(a => a.clinicId === user.clinicId));
-      setConsultations(allConsults.filter(c => c.clinicId === user.clinicId));
+      loadStats();
     }
   }, [user]);
 
-  const consToday = consultations.filter(c => c.date === new Date().toISOString().split('T')[0]).length;
+  const loadStats = async () => {
+    if (!user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const data = await api.stats.get(user.clinicId);
+      setStats(data);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les statistiques." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!stats && isLoading) {
+    return <div className="flex items-center justify-center h-screen italic text-muted-foreground">Chargement du tableau de bord...</div>;
+  }
+
+  const patients = stats?.recentPatients || [];
+  const appointments = stats?.upcomingAppointments || [];
+  const consToday = stats?.consultationsToday || 0;
+  const totalPatients = stats?.totalPatients || 0;
+  const hospitalizedCount = stats?.hospitalizedCount || 0;
+  const revenueToday = stats?.revenueToday || 0;
 
   const quickActions = [
     { label: "Nouveau Patient", icon: UserPlus, color: "bg-blue-500", url: "/patients" },
@@ -89,7 +107,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-           <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2">
+           <Button variant="outline" size="sm" className="hidden sm:flex items-center gap-2" onClick={() => navigate('/reports')}>
              <Activity className="h-4 w-4" />
              Rapports
            </Button>
@@ -104,11 +122,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Patients"
-          value={String(patients.length)}
-          change={`${patients.filter(p => p.createdAt > new Date(Date.now() - 30*24*60*60*1000).toISOString()).length} ce mois`}
+          value={String(totalPatients)}
+          change="Total enregistrés"
           changeType="positive"
           icon={Users}
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer"
+          onClick={() => navigate('/patients')}
         />
         <StatCard
           title="Consultations"
@@ -117,25 +136,28 @@ export default function Dashboard() {
           changeType={consToday > 0 ? "positive" : "neutral"}
           icon={Stethoscope}
           iconClassName="bg-primary/10 text-primary"
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer"
+          onClick={() => navigate('/consultations')}
         />
         <StatCard
           title="Hospitalisés"
-          value={String(patients.filter(p => p.status === "Hospitalisé").length)}
-          change="Capacité: 0/20"
+          value={String(hospitalizedCount)}
+          change="En cours"
           changeType="neutral"
           icon={BedDouble}
           iconClassName="bg-rose-100 text-rose-600"
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer"
+          onClick={() => navigate('/hospitalization')}
         />
         <StatCard
           title="Recettes"
-          value={`${(consToday * 5000).toLocaleString()} CFA`}
-          change="Estimation jour"
+          value={`${Number(revenueToday).toLocaleString()} CFA`}
+          change="Aujourd'hui"
           changeType="positive"
           icon={Receipt}
           iconClassName="bg-emerald-100 text-emerald-600"
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform"
+          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer"
+          onClick={() => navigate('/billing')}
         />
       </div>
 
@@ -247,7 +269,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </div>
-                <Button variant="ghost" className="w-full mt-4 h-8 text-[11px] text-white hover:bg-white/10 font-bold uppercase tracking-wider">
+                <Button variant="ghost" onClick={() => navigate('/planning')} className="w-full mt-4 h-8 text-[11px] text-white hover:bg-white/10 font-bold uppercase tracking-wider">
                   Planning complet →
                 </Button>
               </CardContent>

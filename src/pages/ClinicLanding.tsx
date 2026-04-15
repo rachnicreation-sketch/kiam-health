@@ -40,38 +40,46 @@ export default function ClinicLanding() {
   });
 
   useEffect(() => {
-    const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-    const found = allClinics.find(c => c.id === clinicId);
-    if (found) {
-      setClinic(found);
+    if (clinicId) {
+      loadClinic();
     }
   }, [clinicId]);
 
-  const handleRequestRDV = (e: React.FormEvent) => {
+  const loadClinic = async () => {
+    if (!clinicId) return;
+    try {
+      const data = await api.clinics.get(clinicId);
+      setClinic(data);
+    } catch (error) {
+      console.error("Clinic load error:", error);
+    }
+  };
+
+  const handleRequestRDV = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.phone || !clinicId) {
       toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir votre nom et téléphone." });
       return;
     }
 
-    // Save as a pending appointment
-    const allApps: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
-    const newApp: Appointment = {
-      id: `PUB-${Date.now()}`,
-      clinicId: clinicId,
-      patientId: "NEW", // Public request
-      doctorId: "pending", 
-      date: form.date || new Date().toISOString().split('T')[0],
-      time: "08:00",
-      patient: form.name,
-      doctor: "À attribuer",
-      type: "Demande Web",
-      status: 'pending'
-    };
+    try {
+      await api.appointments.create({
+        clinicId: clinicId,
+        patientId: "PUBLIC", // Nouveau patient potentiel
+        doctorId: "pending", 
+        date: form.date || new Date().toISOString().split('T')[0],
+        time: "08:00",
+        patient: form.name,
+        doctor: "À attribuer",
+        type: "Demande Web",
+        status: 'pending'
+      });
 
-    localStorage.setItem('kiam_appointments', JSON.stringify([...allApps, newApp]));
-    toast({ title: "Demande envoyée !", description: "La clinique vous contactera sous peu pour confirmer votre créneau." });
-    setForm({ name: "", phone: "", reason: "", date: "" });
+      toast({ title: "Demande envoyée !", description: "La clinique vous contactera sous peu pour confirmer votre créneau." });
+      setForm({ name: "", phone: "", reason: "", date: "" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible d'envoyer votre demande." });
+    }
   };
 
   if (!clinic) return <div className="p-20 text-center">Clinique non trouvée</div>;

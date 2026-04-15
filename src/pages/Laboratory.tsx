@@ -12,6 +12,7 @@ import {
   Download,
   Printer
 } from "lucide-react";
+import { exportToCSV } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -35,13 +36,14 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { api } from "@/lib/api-service";
+import { Label } from "@/components/ui/label";
 export default function Laboratory() {
-  const { user, can } = useAuth();
+  const { user, clinic, can } = useAuth();
   const { toast } = useToast();
   const [tests, setTests] = useState<LabTest[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<User[]>([]);
-  const [clinic, setClinic] = useState<Clinic | null>(null);
   const [labServices, setLabServices] = useState<LabService[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isResultDialogOpen, setIsResultDialogOpen] = useState(false);
@@ -66,46 +68,63 @@ export default function Laboratory() {
     loadData();
   }, [user]);
 
-  const loadData = () => {
+  const loadData = async () => {
     if (!user?.clinicId) return;
-    const allTests: LabTest[] = JSON.parse(localStorage.getItem('kiam_lab_tests') || '[]');
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const allUsers: User[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-    const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-    const allLabServices: LabService[] = JSON.parse(localStorage.getItem('kiam_lab_services') || '[]');
-    
-    setTests(allTests.filter(t => t.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
-    setDoctors(allUsers.filter(u => u.clinicId === user.clinicId && u.role === 'doctor'));
-    setClinic(allClinics.find(c => c.id === user.clinicId) || null);
-    setLabServices(allLabServices.filter(l => l.clinicId === user.clinicId));
+    setIsLoading(true);
+    try {
+      const [testsData, patsData, docsData, servicesData] = await Promise.all([
+        api.lab.tests(user.clinicId),
+        api.patients.list(user.clinicId),
+        api.users.list(user.clinicId),
+        api.lab.services(user.clinicId)
+      ]);
+      
+      setTests(testsData);
+      setPatients(patsData);
+      setDoctors(docsData.filter((u: any) => u.role === 'doctor'));
+      setLabServices(servicesData);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Chargement des données échoué." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleCreateTest = () => {
+  const handleCreateTest = async () => {
     if (!form.patientId || !form.doctorId || !form.testName || !user?.clinicId) {
        toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir tous les champs obligatoires." });
        return;
     }
 
-    const allTests: LabTest[] = JSON.parse(localStorage.getItem('kiam_lab_tests') || '[]');
-    const newTest: LabTest = {
-      id: `LAB-${Date.now()}`,
-      clinicId: user.clinicId,
-      patientId: form.patientId,
-      doctorId: form.doctorId,
-      testName: form.testName,
-      category: form.category || "Général",
-      status: 'pending',
-      date: new Date().toISOString().split('T')[0]
-    };
+    try {
+      // 1. Créer le test labo
+      const response = await api.lab.createTest({
+        ...form,
+        clinicId: user.clinicId,
+        status: 'pending'
+      });
 
-    const updated = [...allTests, newTest];
-    localStorage.setItem('kiam_lab_tests', JSON.stringify(updated));
-    setTests(updated.filter(t => t.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setIsAddDialogOpen(false);
-    toast({ title: "Examen prescrit", description: "La demande d'analyse a été envoyée au laboratoire." });
-    
-    setForm({ patientId: "", doctorId: "", testName: "Hémogramme Complet (NFS)", category: "Hématologie" });
+      if (response.status === 'success') {
+        // 2. Facturation Automatique
+        const labSvc = labServices.find(l => l.testName === form.testName);
+        const price = labSvc ? Number(labSvc.price) : 5000;
+
+        await api.invoices.create({
+          clinicId: user.clinicId,
+          patientId: form.patientId,
+          items: [{ description: `Laboratoire: ${form.testName}`, amount: price }],
+          total: price,
+          status: 'pending'
+        });
+
+        toast({ title: "Examen prescrit", description: "Analyse envoyée et facture générée." });
+        loadData();
+        setIsAddDialogOpen(false);
+        setForm({ patientId: "", doctorId: "", testName: "Hémogramme Complet (NFS)", category: "Hématologie" });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
   const handleOpenResultDialog = (test: LabTest) => {
@@ -118,27 +137,23 @@ export default function Laboratory() {
     setIsResultDialogOpen(true);
   };
 
-  const handleSaveResult = () => {
+  const handleSaveResult = async () => {
     if (!selectedTest || !resultForm.result) return;
 
-    const allTests: LabTest[] = JSON.parse(localStorage.getItem('kiam_lab_tests') || '[]');
-    const updatedTests = allTests.map(t => {
-      if (t.id === selectedTest.id) {
-        return {
-          ...t,
-          result: resultForm.result,
-          unit: resultForm.unit,
-          normativeValue: resultForm.normativeValue,
-          status: 'completed' as const
-        };
-      }
-      return t;
-    });
+    try {
+      await api.lab.updateTest({
+        id: selectedTest.id,
+        result: resultForm.result,
+        unit: resultForm.unit,
+        normativeValue: resultForm.normativeValue
+      });
 
-    localStorage.setItem('kiam_lab_tests', JSON.stringify(updatedTests));
-    setTests(updatedTests.filter(t => t.clinicId === user?.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setIsResultDialogOpen(false);
-    toast({ title: "Résultats enregistrés", description: "L'examen a été marqué comme terminé." });
+      toast({ title: "Résultats enregistrés", description: "L'examen a été validé." });
+      loadData();
+      setIsResultDialogOpen(false);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
   const filteredTests = tests.filter(t => {
@@ -169,8 +184,19 @@ export default function Laboratory() {
           <p className="text-muted-foreground text-sm">Gestion des prélèvements et résultats biologiques</p>
         </div>
 
-        {can('laboratory', 'write') && (
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => {
+            if (tests.length === 0) {
+              toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucune donnée à exporter." });
+              return;
+            }
+            exportToCSV(tests, "Journal_Laboratoire");
+          }}>
+             <Download className="h-4 w-4" />
+             Exporter
+          </Button>
+          {can('laboratory', 'write') && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -255,6 +281,7 @@ export default function Laboratory() {
           </Dialog>
         )}
       </div>
+     </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-none shadow-sm bg-amber-50/50">

@@ -41,26 +41,47 @@ export default function PatientPortal() {
   const [previewType, setPreviewType] = useState<'prescription' | 'lab'>('prescription');
 
   useEffect(() => {
-    const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-    setClinic(allClinics.find(c => c.id === clinicId) || null);
+    if (clinicId) {
+      loadClinic();
+    }
   }, [clinicId]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const loadClinic = async () => {
+    if (!clinicId) return;
+    try {
+      const data = await api.clinics.get(clinicId);
+      setClinic(data);
+    } catch (error) {
+      console.error("Clinic load error:", error);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const found = allPatients.find(p => p.id === patientIdInput && p.clinicId === clinicId);
-    
-    if (found) {
-      setPatient(found);
-      const allConsultations: Consultation[] = JSON.parse(localStorage.getItem('kiam_consultations') || '[]');
-      const allLabTests: LabTest[] = JSON.parse(localStorage.getItem('kiam_lab_tests') || '[]');
+    if (!clinicId || !patientIdInput) return;
+
+    try {
+      const found = await api.patients.get(patientIdInput);
       
-      setConsultations(allConsultations.filter(c => c.patientId === found.id));
-      setLabTests(allLabTests.filter(t => t.patientId === found.id));
-      setIsLoggedIn(true);
-      toast({ title: "Connexion réussie", description: `Bienvenue dans votre espace, ${found.name}.` });
-    } else {
-      toast({ variant: "destructive", title: "Erreur", description: "Identifiant patient incorrect pour cet établissement." });
+      if (found && found.clinic_id === clinicId) {
+        setPatient(found);
+        const [consultsData, labsData] = await Promise.all([
+          api.consultations.list(clinicId, found.id),
+          api.lab.tests(clinicId, found.id)
+        ]);
+        
+        setConsultations(consultsData.map((c: any) => ({
+          ...c,
+          date: c.consultation_date
+        })));
+        setLabTests(labsData);
+        setIsLoggedIn(true);
+        toast({ title: "Connexion réussie", description: `Bienvenue dans votre espace, ${found.name}.` });
+      } else {
+        toast({ variant: "destructive", title: "Erreur", description: "Identifiant incorrect ou patient non rattaché à cet établissement." });
+      }
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de vérifier vos identifiants." });
     }
   };
 

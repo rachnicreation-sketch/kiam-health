@@ -23,6 +23,7 @@ import Accounting from "./pages/Accounting";
 import Reports from "./pages/Reports";
 import Catalogs from "./pages/Catalogs";
 import SettingsPage from "./pages/Settings";
+import Facilities from "./pages/Facilities";
 import ClinicLanding from "./pages/ClinicLanding";
 import PatientPortal from "./pages/PatientPortal";
 import { ModulePlaceholder } from "./pages/ModulePlaceholder";
@@ -62,7 +63,7 @@ const App = () => (
               <Route path="/reports" element={<ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
               <Route path="/hr" element={<ProtectedRoute module="hr"><HumanResources /></ProtectedRoute>} />
               <Route path="/catalogs" element={<ProtectedRoute module="catalogs"><Catalogs /></ProtectedRoute>} />
-              <Route path="/facilities" element={<ProtectedRoute module="facilities"><ModulePlaceholder title="Établissements" description="Gestion multi-établissements" icon={Building2} /></ProtectedRoute>} />
+              <Route path="/facilities" element={<ProtectedRoute module="facilities"><Facilities /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute module="settings"><SettingsPage /></ProtectedRoute>} />
             </Route>
             <Route path="*" element={<NotFound />} />

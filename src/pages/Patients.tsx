@@ -11,8 +11,10 @@ import {
   UserPlus,
   ShieldAlert,
   Droplet,
-  IdCard
+  IdCard,
+  Download
 } from "lucide-react";
+import { exportToCSV } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -38,6 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Patient } from "@/lib/mock-data";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-service";
 
 export default function Patients() {
   const { user, can } = useAuth();
@@ -46,6 +49,7 @@ export default function Patients() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [newPatient, setNewPatient] = useState<Partial<Patient>>({
     name: "",
@@ -66,23 +70,25 @@ export default function Patients() {
   });
 
   useEffect(() => {
-    loadPatients();
+    if (user?.clinicId) {
+      loadPatients();
+    }
   }, [user]);
 
-  const loadPatients = () => {
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    if (user?.clinicId) {
-      setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
+  const loadPatients = async () => {
+    if (!user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const data = await api.patients.list(user.clinicId);
+      setPatients(data);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur de chargement", description: error.message });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getNextPatientId = () => {
-    const year = new Date().getFullYear();
-    const count = patients.filter(p => p.id.startsWith(`PT-${year}`)).length;
-    return `PT-${year}-${(count + 1).toString().padStart(4, '0')}`;
-  };
-
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     if (!newPatient.name || !newPatient.phone || !user?.clinicId) {
       toast({
         variant: "destructive",
@@ -92,59 +98,54 @@ export default function Patients() {
       return;
     }
 
-    const patientsList: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const nextId = getNextPatientId();
-    
-    const patientToAdd: Patient = {
-      id: nextId,
-      clinicId: user.clinicId,
-      name: newPatient.name.toUpperCase(),
-      firstName: newPatient.firstName || "",
-      age: Number(newPatient.age || 0),
-      dob: newPatient.dob || "",
-      gender: (newPatient.gender as 'M' | 'F') || 'M',
-      phone: newPatient.phone,
-      address: newPatient.address || "",
-      city: newPatient.city || "",
-      idNumber: newPatient.idNumber || "",
-      bloodGroup: newPatient.bloodGroup || "Inconnu",
-      assurance: newPatient.assurance || "",
-      emergencyContactName: newPatient.emergencyContactName || "",
-      emergencyContactPhone: newPatient.emergencyContactPhone || "",
-      allergies: newPatient.allergies || "",
-      history: newPatient.history || "",
-      lastVisit: new Date().toISOString().split('T')[0],
-      status: "Actif",
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const patientToAdd = {
+        ...newPatient,
+        clinicId: user.clinicId,
+        name: newPatient.name.toUpperCase(),
+        age: Number(newPatient.age || 0),
+      };
 
-    const updatedPatients = [...patientsList, patientToAdd];
-    localStorage.setItem('kiam_patients', JSON.stringify(updatedPatients));
-    setPatients(updatedPatients.filter(p => p.clinicId === user.clinicId));
-    setIsAddDialogOpen(false);
-    
-    setNewPatient({
-      name: "",
-      firstName: "",
-      gender: "M",
-      phone: "",
-      age: 0,
-      dob: "",
-      bloodGroup: "Inconnu",
-      city: "Pointe-Noire",
-      address: "",
-      idNumber: "",
-      allergies: "",
-      history: "",
-      emergencyContactName: "",
-      emergencyContactPhone: "",
-      assurance: ""
-    });
+      const response = await api.patients.create(patientToAdd);
+      
+      if (response.status === 'success') {
+        toast({
+          title: "Dossier créé",
+          description: `Le patient ${newPatient.name} a été enregistré avec le numéro ${response.id}.`
+        });
+        
+        loadPatients();
+        setIsAddDialogOpen(false);
+        setNewPatient({
+          name: "",
+          firstName: "",
+          gender: "M",
+          phone: "",
+          age: 0,
+          dob: "",
+          bloodGroup: "Inconnu",
+          city: "Pointe-Noire",
+          address: "",
+          idNumber: "",
+          allergies: "",
+          history: "",
+          emergencyContactName: "",
+          emergencyContactPhone: "",
+          assurance: ""
+        });
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur d'enregistrement", description: error.message });
+    }
+  };
 
-    toast({
-      title: "Dossier créé",
-      description: `Le patient ${patientToAdd.name} a été enregistré avec le numéro ${nextId}.`
-    });
+  const handleExport = () => {
+    if (patients.length === 0) {
+      toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucun dossier patient à exporter." });
+      return;
+    }
+    exportToCSV(patients, "Liste_Patients_Kiam_Health");
+    toast({ title: "Export réussi", description: "Le fichier CSV a été téléchargé." });
   };
 
   const filteredPatients = patients.filter(patient =>
@@ -166,18 +167,23 @@ export default function Patients() {
       </div>
 
           {can('patients', 'write') && (
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Nouveau Dossier
-                </Button>
-              </DialogTrigger>
+            <div className="flex gap-2">
+              <Button variant="outline" className="gap-2" onClick={handleExport}>
+                <Download className="h-4 w-4" />
+                Exporter CSV
+              </Button>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Nouveau Dossier
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-xl flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
-                    Inscription Patient : <span className="text-primary">{getNextPatientId()}</span>
+                    Inscription Nouveau Patient
                   </DialogTitle>
                 </DialogHeader>
                 
@@ -357,6 +363,7 @@ export default function Patients() {
                 </div>
               </DialogContent>
             </Dialog>
+           </div>
           )}
 
       <Card className="border-none shadow-md overflow-hidden">

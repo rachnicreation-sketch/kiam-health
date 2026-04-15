@@ -13,14 +13,17 @@ import {
   Wallet,
   Building,
   CreditCard,
-  Trash2
+  Trash2,
+  Download
 } from "lucide-react";
+import { exportToCSV } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Transaction } from "@/lib/mock-data";
 import { StatCard } from "@/components/StatCard";
 import { 
@@ -38,14 +41,15 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-service";
 
 export default function Accounting() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [newTransaction, setNewTransaction] = useState<Partial<Transaction>>({
     type: 'expense',
@@ -56,17 +60,30 @@ export default function Accounting() {
   });
 
   useEffect(() => {
-    loadTransactions();
+    if (user?.clinicId) {
+      loadTransactions();
+    }
   }, [user]);
 
-  const loadTransactions = () => {
-    const allTransactions: Transaction[] = JSON.parse(localStorage.getItem('kiam_transactions') || '[]');
-    if (user?.clinicId) {
-      setTransactions(allTransactions.filter(t => t.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  const loadTransactions = async () => {
+    if (!user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const data = await api.transactions.list(user.clinicId);
+      // On convertit les noms de champs si nécessaire (trans_date -> date si besoin, 
+      // mais restons sur ce que l'API renvoie ou adaptons ici)
+      setTransactions(data.map((t: any) => ({
+        ...t,
+        date: t.transaction_date // Adaptation pour match les UI
+      })));
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger le journal." });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleAddTransaction = () => {
+  const handleAddTransaction = async () => {
     if (!newTransaction.amount || !newTransaction.description || !user?.clinicId) {
       toast({
         variant: "destructive",
@@ -76,35 +93,27 @@ export default function Accounting() {
       return;
     }
 
-    const allTransactions: Transaction[] = JSON.parse(localStorage.getItem('kiam_transactions') || '[]');
-    const transactionToAdd: Transaction = {
-      id: `TR-${Date.now()}`,
-      clinicId: user.clinicId,
-      type: newTransaction.type as 'income' | 'expense',
-      amount: Number(newTransaction.amount),
-      category: newTransaction.category || 'Autres',
-      date: new Date().toISOString().split('T')[0],
-      description: newTransaction.description,
-      paymentMethod: newTransaction.paymentMethod || 'cash'
-    };
+    try {
+      await api.transactions.create({
+        ...newTransaction,
+        clinicId: user.clinicId,
+        date: new Date().toISOString().split('T')[0]
+      });
 
-    const updatedTransactions = [...allTransactions, transactionToAdd];
-    localStorage.setItem('kiam_transactions', JSON.stringify(updatedTransactions));
-    setTransactions(updatedTransactions.filter(t => t.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setIsAddDialogOpen(false);
-    
-    setNewTransaction({
-      type: 'expense',
-      amount: 0,
-      category: 'Autres',
-      description: "",
-      paymentMethod: 'cash'
-    });
-
-    toast({
-      title: "Transaction enregistrée",
-      description: "Le journal comptable a été mis à jour."
-    });
+      toast({ title: "Transaction enregistrée", description: "Le journal comptable a été mis à jour." });
+      loadTransactions();
+      setIsAddDialogOpen(false);
+      
+      setNewTransaction({
+        type: 'expense',
+        amount: 0,
+        category: 'Autres',
+        description: "",
+        paymentMethod: 'cash'
+      });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -284,9 +293,11 @@ export default function Accounting() {
               <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Répartition par Catégorie</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {["Services Médicaux", "Salaires", "Loyers"].map(cat => {
+              {Array.from(new Set(transactions.map(t => t.category))).slice(0, 5).map(cat => {
                 const amount = transactions.filter(t => t.category === cat).reduce((acc, t) => acc + t.amount, 0);
-                const perc = totalIncome > 0 ? (amount / (totalIncome + totalExpense)) * 100 : 0;
+                const isIncome = transactions.find(t => t.category === cat)?.type === 'income';
+                const total = isIncome ? totalIncome : totalExpense;
+                const perc = total > 0 ? (amount / total) * 100 : 0;
                 return (
                   <div key={cat} className="space-y-1.5">
                     <div className="flex justify-between text-xs">
@@ -294,7 +305,7 @@ export default function Accounting() {
                       <span className="font-mono">{amount.toLocaleString()} CFA</span>
                     </div>
                     <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-primary" style={{ width: `${Math.max(10, perc)}%` }}></div>
+                      <div className={`h-full ${isIncome ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: `${Math.max(5, perc)}%` }}></div>
                     </div>
                   </div>
                 );
@@ -316,7 +327,10 @@ export default function Accounting() {
                <p className="text-[10px] opacity-70 italic border-t border-white/10 pt-4">
                  Ces données reflètent les encaissements réels et les dépenses déclarées.
                </p>
-               <Button variant="secondary" size="sm" className="w-full text-xs font-bold">Exporter Vers Excel</Button>
+               <Button variant="secondary" size="sm" className="w-full text-xs font-bold gap-2" onClick={() => exportToCSV(transactions, "Journal_Comptable_Kiam")}>
+                 <Download className="h-3 w-3" />
+                 Exporter CSV (Excel)
+               </Button>
             </CardContent>
           </Card>
         </div>

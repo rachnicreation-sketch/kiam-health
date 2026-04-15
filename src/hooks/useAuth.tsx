@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Clinic, initializeStorage } from '@/lib/mock-data';
+import { User, Clinic } from '@/lib/mock-data';
 import { canPerform, Module, Action } from '@/lib/permissions';
+import { api } from '@/lib/api-service';
 
 interface AuthContextType {
   user: User | null;
@@ -19,52 +20,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initializeStorage();
-    const storedUserId = localStorage.getItem('kiam_active_user');
-    if (storedUserId) {
-      const users: User[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-      const clinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-      const foundUser = users.find(u => u.id === storedUserId);
-      if (foundUser) {
+    const storedUser = localStorage.getItem('kiam_auth_user');
+    if (storedUser) {
+      try {
+        const foundUser: User = JSON.parse(storedUser);
         setUser(foundUser);
-        if (foundUser.clinicId) {
-          const foundClinic = clinics.find(c => c.id === foundUser.clinicId);
-          setClinic(foundClinic || null);
+        
+        // On pourrait refetcher les données cliniques si besoin
+        const storedClinic = localStorage.getItem('kiam_auth_clinic');
+        if (storedClinic) {
+          setClinic(JSON.parse(storedClinic));
         }
+      } catch (e) {
+        localStorage.removeItem('kiam_auth_user');
       }
     }
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, passwordHash: string) => {
-    const users: User[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-    const clinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-    
-    const foundUser = users.find(u => u.email === email && u.passwordHash === passwordHash);
-    
-    if (!foundUser) {
-      return { success: false, message: 'Identifiants incorrects' };
-    }
+    try {
+      const response = await api.auth.login({ email, password: passwordHash });
+      
+      if (response.status === 'success') {
+        const foundUser = response.user;
+        const foundClinic = response.clinic;
+        
+        setUser(foundUser);
+        localStorage.setItem('kiam_auth_user', JSON.stringify(foundUser));
+        
+        if (foundClinic) {
+          setClinic(foundClinic);
+          localStorage.setItem('kiam_auth_clinic', JSON.stringify(foundClinic));
+        }
 
-    if (foundUser.clinicId) {
-      const foundClinic = clinics.find(c => c.id === foundUser.clinicId);
-      if (foundClinic && foundClinic.status === 'blocked') {
-        return { success: false, message: 'Le compte de votre clinique a été bloqué par l\'administration.' };
+        return { success: true };
+      } else {
+        return { success: false, message: response.message || 'Identifiants incorrects' };
       }
-      setClinic(foundClinic || null);
-    } else {
-      setClinic(null);
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Erreur de connexion au serveur' };
     }
-
-    setUser(foundUser);
-    localStorage.setItem('kiam_active_user', foundUser.id);
-    return { success: true };
   };
 
   const logout = () => {
     setUser(null);
     setClinic(null);
-    localStorage.removeItem('kiam_active_user');
+    localStorage.removeItem('kiam_auth_user');
+    localStorage.removeItem('kiam_auth_clinic');
   };
 
   const can = (module: Module, action: Action = 'read'): boolean => {

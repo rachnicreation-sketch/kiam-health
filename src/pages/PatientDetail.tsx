@@ -26,31 +26,55 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { api } from "@/lib/api-service";
+import { useToast } from "@/hooks/use-toast";
 
 export default function PatientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [clinic, setClinic] = useState<Clinic | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<any>(null);
   const { user, can } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (id && user?.clinicId) {
-      const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-      const allConsultations: Consultation[] = JSON.parse(localStorage.getItem('kiam_consultations') || '[]');
-      const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-      
-      const foundPatient = allPatients.find(p => p.id === id && p.clinicId === user.clinicId);
-      if (foundPatient) {
-        setPatient(foundPatient);
-        setConsultations(allConsultations.filter(c => c.patientId === id && c.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-        setClinic(allClinics.find(c => c.id === user.clinicId) || null);
-      }
+      loadData();
     }
   }, [id, user]);
+
+  const loadData = async () => {
+    if (!id || !user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const [patData, consultsData, clinicData] = await Promise.all([
+        api.patients.get(id),
+        api.consultations.list(user.clinicId, id),
+        api.clinics.get(user.clinicId)
+      ]);
+      
+      setPatient(patData);
+      setClinic(clinicData);
+      setConsultations(consultsData.map((c: any) => ({
+        ...c,
+        date: c.consultation_date,
+        vitals: {
+          temp: c.temp,
+          bp: c.bp,
+          weight: c.weight,
+          hr: c.hr
+        }
+      })));
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Dossier patient introuvable." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!patient) return <div className="p-8 text-center">Chargement du dossier...</div>;
 

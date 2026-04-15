@@ -9,8 +9,11 @@ import {
   Pill, 
   ClipboardCheck,
   History,
-  Info
+  Info,
+  FlaskConical,
+  X
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,9 +34,10 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { Patient, Consultation, User as AppUser } from "@/lib/mock-data";
+import { Patient, Consultation, User as AppUser, LabService, LabTest } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api-service";
 
 export default function Consultations() {
   const { user, can } = useAuth();
@@ -44,7 +48,10 @@ export default function Consultations() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<AppUser[]>([]);
+  const [labServices, setLabServices] = useState<LabService[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedLabTests, setSelectedLabTests] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // New Consultation Form State
   const [form, setForm] = useState<Partial<Consultation>>({
@@ -63,25 +70,37 @@ export default function Consultations() {
   });
 
   useEffect(() => {
-    loadData();
+    if (user?.clinicId) {
+      loadData();
+    }
     if (patientIdParam) {
       setIsAddDialogOpen(true);
     }
   }, [user, patientIdParam]);
 
-  const loadData = () => {
-    const allConsultations: Consultation[] = JSON.parse(localStorage.getItem('kiam_consultations') || '[]');
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const allUsers: AppUser[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-
-    if (user?.clinicId) {
-      setConsultations(allConsultations.filter(c => c.clinicId === user.clinicId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
-      setDoctors(allUsers.filter(u => u.clinicId === user.clinicId && u.role === 'doctor'));
+  const loadData = async () => {
+    if (!user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const [consData, patsData, docsData, labsData] = await Promise.all([
+        api.consultations.list(user.clinicId),
+        api.patients.list(user.clinicId),
+        api.users.list(user.clinicId),
+        api.lab.services(user.clinicId)
+      ]);
+      
+      setConsultations(consData);
+      setPatients(patsData);
+      setDoctors(docsData.filter((u: any) => u.role === 'doctor'));
+      setLabServices(labsData);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Chargement des données échoué." });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleSaveConsultation = () => {
+  const handleSaveConsultation = async () => {
     if (!form.patientId || !form.reason || !form.diagnosis || !user?.clinicId) {
       toast({
         variant: "destructive",
@@ -91,52 +110,72 @@ export default function Consultations() {
       return;
     }
 
-    const allConsultations: Consultation[] = JSON.parse(localStorage.getItem('kiam_consultations') || '[]');
-    const newConsultation: Consultation = {
-      id: `CONS-${Date.now()}`,
-      clinicId: user.clinicId,
-      patientId: form.patientId,
-      doctorId: form.doctorId || user.id,
-      date: new Date().toISOString().split('T')[0],
-      reason: form.reason,
-      diagnosis: form.diagnosis,
-      prescription: form.prescription || "Aucune prescription",
-      notes: form.notes || "",
-      vitals: form.vitals,
-      status: 'completed'
-    };
+    try {
+      // 1. Enregistrer la consultation
+      const consResponse = await api.consultations.create({
+        ...form,
+        clinicId: user.clinicId,
+        doctorId: form.doctorId || user.id,
+        status: 'completed'
+      });
 
-    const updatedConsultations = [...allConsultations, newConsultation];
-    localStorage.setItem('kiam_consultations', JSON.stringify(updatedConsultations));
-    
-    // Update patient status/last visit
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const updatedPatients = allPatients.map(p => {
-      if (p.id === form.patientId) {
-        return { ...p, lastVisit: newConsultation.date, status: "Actif" };
+      if (consResponse.status === 'success') {
+        // 2. Créer les tests labo si nécessaires
+        if (selectedLabTests.length > 0) {
+          const labTestPromises = selectedLabTests.map(testId => {
+            const service = labServices.find(s => s.id === testId);
+            return api.lab.createTest({
+              clinicId: user.clinicId,
+              patientId: form.patientId,
+              doctorId: form.doctorId || user.id,
+              testName: service?.testName || "Examen",
+              category: service?.category || "Général",
+              status: 'pending'
+            });
+          });
+          await Promise.all(labTestPromises);
+
+          // 3. Facturation (Simplifiée: une seule facture pour tous les tests)
+          const labItems = selectedLabTests.map(testId => {
+            const service = labServices.find(s => s.id === testId);
+            return { description: `Lab: ${service?.testName}`, amount: service?.price || 0 };
+          });
+          const total = labItems.reduce((sum, item) => sum + item.amount, 0);
+
+          await api.invoices.create({
+            clinicId: user.clinicId,
+            patientId: form.patientId,
+            items: labItems,
+            total,
+            status: 'pending'
+          });
+        }
+
+        toast({
+          title: "Consultation enregistrée",
+          description: "Le dossier médical a été mis à jour avec succès."
+        });
+
+        loadData();
+        setIsAddDialogOpen(false);
+        resetForm();
       }
-      return p;
-    });
-    localStorage.setItem('kiam_patients', JSON.stringify(updatedPatients));
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
+  };
 
-    setConsultations(updatedConsultations.filter(c => c.clinicId === user.clinicId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setIsAddDialogOpen(false);
-    
-    toast({
-      title: "Consultation enregistrée",
-      description: "Le dossier médical a été mis à jour."
-    });
-
-    // Reset form
+  const resetForm = () => {
     setForm({
       patientId: "",
-      doctorId: user.id || "",
+      doctorId: user?.id || "",
       reason: "",
       diagnosis: "",
       prescription: "",
       notes: "",
       vitals: { temp: "", bp: "", weight: "", hr: "" }
     });
+    setSelectedLabTests([]);
   };
 
   return (
@@ -250,6 +289,40 @@ export default function Consultations() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <div className="space-y-3">
+                   <Label className="flex items-center gap-2 text-indigo-600 font-bold">
+                      <FlaskConical className="h-4 w-4" /> Examens Labo Requis
+                   </Label>
+                   <Select onValueChange={v => {
+                      if (!selectedLabTests.includes(v)) {
+                         setSelectedLabTests([...selectedLabTests, v]);
+                      }
+                   }}>
+                      <SelectTrigger className="h-8 text-xs border-indigo-200 bg-indigo-50/30">
+                         <SelectValue placeholder="Ajouter un examen..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                         {labServices.map(s => (
+                           <SelectItem key={s.id} value={s.id}>{s.name} - {s.price} CFA</SelectItem>
+                         ))}
+                      </SelectContent>
+                   </Select>
+                   <div className="flex flex-wrap gap-2">
+                      {selectedLabTests.map(testId => {
+                         const service = labServices.find(s => s.id === testId);
+                         return (
+                           <Badge key={testId} variant="secondary" className="gap-1 bg-white border border-indigo-100 text-indigo-700 py-1">
+                              {service?.name}
+                              <X 
+                                className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                                onClick={() => setSelectedLabTests(selectedLabTests.filter(id => id !== testId))}
+                              />
+                           </Badge>
+                         )
+                      })}
+                   </div>
+                </div>
               </div>
 
               {/* Middle & Right Column: Form */}
@@ -306,7 +379,6 @@ export default function Consultations() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
 
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="bg-muted/30">

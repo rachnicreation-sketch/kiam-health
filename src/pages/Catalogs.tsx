@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { MedicalAct, LabService } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-service";
 
 export default function Catalogs() {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ export default function Catalogs() {
   const [isActDialogOpen, setIsActDialogOpen] = useState(false);
   const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [actForm, setActForm] = useState({
     name: "",
@@ -52,98 +54,88 @@ export default function Catalogs() {
   });
 
   useEffect(() => {
-    loadData();
+    if (user?.clinicId) {
+      loadData();
+    }
   }, [user]);
 
-  const loadData = () => {
+  const loadData = async () => {
     if (!user?.clinicId) return;
-    const allActs: MedicalAct[] = JSON.parse(localStorage.getItem('kiam_medical_acts') || '[]');
-    const allLabServices: LabService[] = JSON.parse(localStorage.getItem('kiam_lab_services') || '[]');
-    
-    setActs(allActs.filter(a => a.clinicId === user.clinicId));
-    setLabServices(allLabServices.filter(l => l.clinicId === user.clinicId));
+    setIsLoading(true);
+    try {
+      const [actsData, labData] = await Promise.all([
+        api.catalogs.listActs(user.clinicId),
+        api.catalogs.listLab(user.clinicId)
+      ]);
+      setActs(actsData);
+      setLabServices(labData);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les catalogues." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSaveAct = () => {
+  const handleSaveAct = async () => {
     if (!user?.clinicId) return;
-    const allActs: MedicalAct[] = JSON.parse(localStorage.getItem('kiam_medical_acts') || '[]');
-    let updatedActs;
 
-    if (editingItem) {
-      updatedActs = allActs.map(a => a.id === editingItem.id ? { 
-        ...a, 
-        name: actForm.name, 
-        category: actForm.category, 
-        price: Number(actForm.price) 
-      } : a);
-    } else {
-      const newAct: MedicalAct = {
-        id: `ACT-${Date.now()}`,
+    try {
+      await api.catalogs.saveAct({
+        ...actForm,
+        id: editingItem?.id,
         clinicId: user.clinicId,
-        name: actForm.name,
-        category: actForm.category,
         price: Number(actForm.price)
-      };
-      updatedActs = [...allActs, newAct];
-    }
+      });
 
-    localStorage.setItem('kiam_medical_acts', JSON.stringify(updatedActs));
-    toast({ title: "Succès", description: "Acte enregistré avec succès." });
-    setIsActDialogOpen(false);
-    setEditingItem(null);
-    setActForm({ name: "", category: "Consultation", price: "" });
-    loadData();
+      toast({ title: "Succès", description: "Acte enregistré avec succès." });
+      setIsActDialogOpen(false);
+      setEditingItem(null);
+      setActForm({ name: "", category: "Consultation", price: "" });
+      loadData();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
-  const handleSaveLab = () => {
+  const handleSaveLab = async () => {
     if (!user?.clinicId) return;
-    const allLab: LabService[] = JSON.parse(localStorage.getItem('kiam_lab_services') || '[]');
-    let updatedLab;
 
-    if (editingItem) {
-      updatedLab = allLab.map(l => l.id === editingItem.id ? { 
-        ...l, 
-        testName: labForm.testName, 
-        category: labForm.category, 
-        price: Number(labForm.price),
-        unit: labForm.unit,
-        normativeValue: labForm.normativeValue
-      } : l);
-    } else {
-      const newLab: LabService = {
-        id: `LAB-${Date.now()}`,
+    try {
+      await api.catalogs.saveLab({
+        ...labForm,
+        id: editingItem?.id,
         clinicId: user.clinicId,
-        testName: labForm.testName,
-        category: labForm.category,
-        price: Number(labForm.price),
-        unit: labForm.unit,
-        normativeValue: labForm.normativeValue
-      };
-      updatedLab = [...allLab, newLab];
+        price: Number(labForm.price)
+      });
+
+      toast({ title: "Succès", description: "Analyse enregistrée avec succès." });
+      setIsLabDialogOpen(false);
+      setEditingItem(null);
+      setLabForm({ testName: "", category: "Biochimie", price: "", unit: "", normativeValue: "" });
+      loadData();
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
     }
-
-    localStorage.setItem('kiam_lab_services', JSON.stringify(updatedLab));
-    toast({ title: "Succès", description: "Analyse enregistrée avec succès." });
-    setIsLabDialogOpen(false);
-    setEditingItem(null);
-    setLabForm({ testName: "", category: "Biochimie", price: "", unit: "", normativeValue: "" });
-    loadData();
   };
 
-  const deleteAct = (id: string) => {
-    const allActs: MedicalAct[] = JSON.parse(localStorage.getItem('kiam_medical_acts') || '[]');
-    const filtered = allActs.filter(a => a.id !== id);
-    localStorage.setItem('kiam_medical_acts', JSON.stringify(filtered));
-    loadData();
-    toast({ title: "Supprimé", description: "L'acte a été retiré du catalogue." });
+  const deleteAct = async (id: string) => {
+    try {
+      await api.catalogs.delete(id, 'act');
+      loadData();
+      toast({ title: "Supprimé", description: "L'acte a été retiré du catalogue." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
-  const deleteLab = (id: string) => {
-    const allLab: LabService[] = JSON.parse(localStorage.getItem('kiam_lab_services') || '[]');
-    const filtered = allLab.filter(l => l.id !== id);
-    localStorage.setItem('kiam_lab_services', JSON.stringify(filtered));
-    loadData();
-    toast({ title: "Supprimé", description: "L'analyse a été retirée du catalogue." });
+  const deleteLab = async (id: string) => {
+    try {
+      await api.catalogs.delete(id, 'lab');
+      loadData();
+      toast({ title: "Supprimé", description: "L'analyse a été retirée du catalogue." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
   const openEditAct = (act: MedicalAct) => {

@@ -12,8 +12,10 @@ import {
   Ban,
   Trash2,
   FileText,
-  Eye
+  Eye,
+  Download
 } from "lucide-react";
+import { exportToCSV } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -21,7 +23,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/StatCard";
 import { Patient, Invoice, Transaction, Clinic, MedicalAct } from "@/lib/mock-data";
-import { useToast } from "@/hooks/use-toast";
 import { DocumentPreview } from "@/components/DocumentPreview";
 import { 
   Dialog, 
@@ -39,18 +40,21 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-service";
 
 export default function Billing() {
-  const { user, can } = useAuth();
+  const { user, clinic, can } = useAuth();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [clinic, setClinic] = useState<Clinic | null>(null);
   const [acts, setActs] = useState<MedicalAct[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState<{
     patientId: string;
@@ -65,20 +69,27 @@ export default function Billing() {
   });
 
   useEffect(() => {
-    loadData();
+    if (user?.clinicId) {
+      loadData();
+    }
   }, [user]);
 
-  const loadData = () => {
-    const allInvoices: Invoice[] = JSON.parse(localStorage.getItem('kiam_invoices') || '[]');
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const allClinics: Clinic[] = JSON.parse(localStorage.getItem('kiam_clinics') || '[]');
-    const allActs: MedicalAct[] = JSON.parse(localStorage.getItem('kiam_medical_acts') || '[]');
-    
-    if (user?.clinicId) {
-      setInvoices(allInvoices.filter(i => i.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
-      setClinic(allClinics.find(c => c.id === user.clinicId) || null);
-      setActs(allActs.filter(a => a.clinicId === user.clinicId));
+  const loadData = async () => {
+    if (!user?.clinicId) return;
+    setIsLoading(true);
+    try {
+      const [invData, patData, actData] = await Promise.all([
+        api.invoices.list(user.clinicId),
+        api.patients.list(user.clinicId),
+        api.acts.list(user.clinicId)
+      ]);
+      setInvoices(invData);
+      setPatients(patData);
+      setActs(actData);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Chargement des factures échoué." });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,10 +107,9 @@ export default function Billing() {
     const newItems = [...form.items];
     
     if (field === 'description') {
-      // Check if value matches an act name
       const foundAct = acts.find(a => a.name === value);
       if (foundAct) {
-        newItems[index] = { ...newItems[index], description: foundAct.name, amount: foundAct.price };
+        newItems[index] = { ...newItems[index], description: foundAct.name, amount: Number(foundAct.price) };
       } else {
         newItems[index] = { ...newItems[index], description: value };
       }
@@ -114,7 +124,7 @@ export default function Billing() {
     return form.items.reduce((acc, item) => acc + item.amount, 0);
   };
 
-  const handleSaveInvoice = () => {
+  const handleSaveInvoice = async () => {
     if (!form.patientId || form.items.some(i => !i.description || i.amount <= 0) || !user?.clinicId) {
       toast({
         variant: "destructive",
@@ -124,47 +134,47 @@ export default function Billing() {
       return;
     }
 
-    const allInvoices: Invoice[] = JSON.parse(localStorage.getItem('kiam_invoices') || '[]');
-    const total = calculateTotal();
-    const newInvoice: Invoice = {
-      id: `F-${new Date().getFullYear()}-${(allInvoices.length + 1).toString().padStart(4, '0')}`,
-      clinicId: user.clinicId,
-      patientId: form.patientId,
-      date: new Date().toISOString().split('T')[0],
-      items: form.items,
-      total: total,
-      status: form.status,
-      paymentMethod: form.paymentMethod
-    };
-
-    const updatedInvoices = [...allInvoices, newInvoice];
-    localStorage.setItem('kiam_invoices', JSON.stringify(updatedInvoices));
-
-    // If paid, create a transaction for accounting
-    if (form.status === 'paid') {
-      const allTransactions: Transaction[] = JSON.parse(localStorage.getItem('kiam_transactions') || '[]');
-      const patient = patients.find(p => p.id === form.patientId);
-      const newTransaction: Transaction = {
-        id: `TR-${Date.now()}`,
+    try {
+      const total = calculateTotal();
+      const invoiceData = {
+        ...form,
         clinicId: user.clinicId,
-        type: 'income',
-        amount: total,
-        category: 'Services Médicaux',
-        date: newInvoice.date,
-        description: `Paiement Facture ${newInvoice.id} - ${patient?.name}`,
-        paymentMethod: form.paymentMethod
+        total: total,
       };
-      localStorage.setItem('kiam_transactions', JSON.stringify([...allTransactions, newTransaction]));
+
+      const response = await api.invoices.create(invoiceData);
+
+      if (response.status === 'success') {
+        const invId = response.id;
+
+        // Si payé, créer une transaction comptable
+        if (form.status === 'paid') {
+          const patient = patients.find(p => p.id === form.patientId);
+          await api.transactions.create({
+            clinicId: user.clinicId,
+            type: 'income',
+            amount: total,
+            category: 'Services Médicaux',
+            description: `Paiement Facture ${invId} - ${patient?.name}`,
+            paymentMethod: form.paymentMethod
+          });
+        }
+
+        toast({
+          title: "Facture enregistrée",
+          description: `La facture ${invId} a été créée avec succès.`
+        });
+
+        loadData();
+        setIsAddDialogOpen(false);
+        resetForm();
+      }
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
     }
+  };
 
-    setInvoices(updatedInvoices.filter(i => i.clinicId === user.clinicId).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    setIsAddDialogOpen(false);
-    toast({
-      title: "Facture enregistrée",
-      description: `La facture ${newInvoice.id} a été créée avec succès.`
-    });
-
-    // Reset form
+  const resetForm = () => {
     setForm({
       patientId: "",
       items: [{ description: "Consultation générale", amount: 5000 }],
@@ -198,7 +208,18 @@ export default function Billing() {
           <p className="text-muted-foreground text-sm">Gestion des règlements et honoraires</p>
         </div>
         
-        {can('billing', 'write') && (
+        <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={() => {
+            if (invoices.length === 0) {
+              toast({ variant: "destructive", title: "Export impossible", description: "Aucune facture à exporter." });
+              return;
+            }
+            exportToCSV(invoices, "Journal_Facturation");
+            toast({ title: "Export réussi", description: "Le journal de facturation a été téléchargé." });
+          }}>
+            <Download className="h-4 w-4" />
+            Exporter CSV
+          </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -342,8 +363,8 @@ export default function Billing() {
             </div>
           </DialogContent>
         </Dialog>
-      )}
-    </div>
+       </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard title="Recettes Encaissées" value={`${totalPaid.toLocaleString()} CFA`} icon={TrendingUp} iconClassName="bg-emerald-100 text-emerald-600" changeType="positive" change="Mois en cours" />

@@ -40,6 +40,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
+import { api } from "@/lib/api-service";
 
 export default function Appointments() {
   const { user } = useAuth();
@@ -50,6 +51,7 @@ export default function Appointments() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState<Partial<Appointment>>({
     patientId: "",
@@ -60,57 +62,60 @@ export default function Appointments() {
   });
 
   useEffect(() => {
-    loadData();
+    if (user?.clinicId) {
+      loadData();
+    }
   }, [user]);
 
-  const loadData = () => {
+  const loadData = async () => {
     if (!user?.clinicId) return;
-    const allApps: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
-    const allPatients: Patient[] = JSON.parse(localStorage.getItem('kiam_patients') || '[]');
-    const allUsers: UserType[] = JSON.parse(localStorage.getItem('kiam_users') || '[]');
-    
-    setAppointments(allApps.filter(a => a.clinicId === user.clinicId).sort((a,b) => a.time.localeCompare(b.time)));
-    setPatients(allPatients.filter(p => p.clinicId === user.clinicId));
-    setDoctors(allUsers.filter(u => u.clinicId === user.clinicId && u.role === 'doctor'));
+    setIsLoading(true);
+    try {
+      const [appsData, patsData, usersData] = await Promise.all([
+        api.appointments.list(user.clinicId),
+        api.patients.list(user.clinicId),
+        api.users.list(user.clinicId)
+      ]);
+      setAppointments(appsData);
+      setPatients(patsData);
+      setDoctors(usersData.filter((u: any) => u.role === 'doctor'));
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les rendez-vous." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!form.patientId || !form.doctorId || !form.date || !form.time || !user?.clinicId) {
        toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir tous les champs." });
        return;
     }
 
-    const patient = patients.find(p => p.id === form.patientId);
-    const doctor = doctors.find(d => d.id === form.doctorId);
+    try {
+      await api.appointments.create({
+        ...form,
+        clinicId: user.clinicId,
+        status: 'pending'
+      });
 
-    const allApps: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
-    const newApp: Appointment = {
-      id: `APP-${Date.now()}`,
-      clinicId: user.clinicId,
-      patientId: form.patientId,
-      doctorId: form.doctorId,
-      date: form.date,
-      time: form.time,
-      patient: patient?.name || "Patient inconnu",
-      doctor: doctor?.name || "Médecin inconnu",
-      type: form.type || "Consultation",
-      status: 'pending'
-    };
-
-    const updated = [...allApps, newApp];
-    localStorage.setItem('kiam_appointments', JSON.stringify(updated));
-    setAppointments(updated.filter(a => a.clinicId === user.clinicId).sort((a,b) => a.time.localeCompare(b.time)));
-    setIsAddDialogOpen(false);
-    toast({ title: "Rendez-vous programmé", description: `RDV confirmé pour ${patient?.name} le ${form.date}.` });
-    
-    setForm({ patientId: "", doctorId: "", date: format(new Date(), 'yyyy-MM-dd'), time: "09:00", type: "Consultation Générale" });
+      toast({ title: "Rendez-vous programmé", description: "RDV confirmé dans le système." });
+      loadData();
+      setIsAddDialogOpen(false);
+      setForm({ patientId: "", doctorId: "", date: format(new Date(), 'yyyy-MM-dd'), time: "09:00", type: "Consultation Générale" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
-  const handleStatusUpdate = (id: string, newStatus: Appointment['status']) => {
-    const allApps: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
-    const updated = allApps.map(a => a.id === id ? { ...a, status: newStatus } : a);
-    localStorage.setItem('kiam_appointments', JSON.stringify(updated));
-    setAppointments(updated.filter(a => a.clinicId === user?.clinicId).sort((a,b) => a.time.localeCompare(b.time)));
+  const handleStatusUpdate = async (id: string, newStatus: Appointment['status']) => {
+    try {
+      await api.appointments.updateStatus(id, newStatus);
+      loadData();
+      toast({ title: "Statut mis à jour", description: "Le statut du rendez-vous a été modifié." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    }
   };
 
   const getDayAppointments = (date: Date) => {

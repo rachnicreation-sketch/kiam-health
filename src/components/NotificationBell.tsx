@@ -6,7 +6,8 @@ import {
   Calendar,
   Info,
   ChevronRight,
-  Stethoscope
+  Stethoscope,
+  MoveHorizontal
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Medication, LabTest, Appointment } from "@/lib/mock-data";
@@ -18,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { api } from "@/lib/api-service";
 
 export function NotificationBell() {
   const { user } = useAuth();
@@ -32,62 +34,52 @@ export function NotificationBell() {
   }[]>([]);
 
   useEffect(() => {
-    loadNotifications();
-    const interval = setInterval(loadNotifications, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
+    if (user?.clinicId) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 60000); // 1 min refresh for DB
+      return () => clearInterval(interval);
+    }
   }, [user]);
 
-  const loadNotifications = () => {
+  const loadNotifications = async () => {
     if (!user?.clinicId) return;
-    const clinicId = user.clinicId;
-    const today = new Date().toISOString().split('T')[0];
+    
+    try {
+      const data = await api.notifications.list(user.clinicId);
+      
+      const mappedNotifications = data.map((n: any) => {
+        let type: 'warning' | 'info' | 'critical' = 'info';
+        let icon = Info;
+        let path = '/dashboard';
 
-    const allMeds: Medication[] = JSON.parse(localStorage.getItem('kiam_medications') || '[]');
-    const allLabTests: LabTest[] = JSON.parse(localStorage.getItem('kiam_lab_tests') || '[]');
-    const allAppointments: Appointment[] = JSON.parse(localStorage.getItem('kiam_appointments') || '[]');
+        if (n.type === 'inventory') {
+          type = 'critical';
+          icon = AlertTriangle;
+          path = '/pharmacy';
+        } else if (n.type === 'lab') {
+          type = 'warning';
+          icon = FlaskConical;
+          path = '/laboratory';
+        } else if (n.type === 'appointment') {
+          type = 'info';
+          icon = Calendar;
+          path = '/appointments';
+        }
 
-    const newNotifications: any[] = [];
-
-    // 1. Stock Alerts
-    const lowStock = allMeds.filter(m => m.clinicId === clinicId && m.stock <= m.threshold);
-    if (lowStock.length > 0) {
-      newNotifications.push({
-        id: 'stock-alert',
-        title: 'Pénurie de médicaments',
-        description: `${lowStock.length} articles sont en dessous du seuil critique.`,
-        type: 'critical',
-        icon: AlertTriangle,
-        path: '/pharmacy'
+        return {
+          id: n.id,
+          title: n.title,
+          description: n.message,
+          type,
+          icon,
+          path
+        };
       });
-    }
 
-    // 2. Pending Lab Results (simulated delay check)
-    const pendingLabs = allLabTests.filter(t => t.clinicId === clinicId && t.status === 'pending');
-    if (pendingLabs.length > 0) {
-      newNotifications.push({
-        id: 'lab-alert',
-        title: 'Analyses en attente',
-        description: `${pendingLabs.length} examens biologiques attendent leurs résultats.`,
-        type: 'warning',
-        icon: FlaskConical,
-        path: '/laboratory'
-      });
+      setNotifications(mappedNotifications);
+    } catch (error) {
+      console.error("Error loading notifications:", error);
     }
-
-    // 3. Appointments for today
-    const todayApps = allAppointments.filter(a => a.clinicId === clinicId && a.date === today && a.status === 'pending');
-    if (todayApps.length > 0) {
-      newNotifications.push({
-        id: 'app-alert',
-        title: 'Agenda du jour',
-        description: `Vous avez ${todayApps.length} consultations programmées pour aujourd'hui.`,
-        type: 'info',
-        icon: Calendar,
-        path: '/appointments'
-      });
-    }
-
-    setNotifications(newNotifications);
   };
 
   const hasNotifications = notifications.length > 0;

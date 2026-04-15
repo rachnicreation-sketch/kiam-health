@@ -124,45 +124,43 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2">
-        {user?.role === 'saas_admin' ? (
+        {user?.role === 'saas_admin' && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
-              Super Admin SaaS
+            <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider font-bold text-primary">
+              ADMINISTRATION SAAS
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>{renderItems(saasItems)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        ) : (
-          <>
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
-                Principal
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>{renderItems(mainItems)}</SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
-                Services
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>{renderItems(serviceItems)}</SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
-                Administration
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>{renderItems(adminItems)}</SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
+            Principal {user?.role === 'saas_admin' && "(Supervision)"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderItems(mainItems)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
+            Services
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderItems(serviceItems)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-xs uppercase tracking-wider">
+            Administration
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{renderItems(adminItems)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="p-3">
