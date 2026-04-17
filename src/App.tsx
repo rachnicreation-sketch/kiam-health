@@ -26,6 +26,7 @@ import SettingsPage from "./pages/Settings";
 import Facilities from "./pages/Facilities";
 import ClinicLanding from "./pages/ClinicLanding";
 import PatientPortal from "./pages/PatientPortal";
+import Messaging from "./pages/Messaging";
 import { ModulePlaceholder } from "./pages/ModulePlaceholder";
 import NotFound from "./pages/NotFound";
 import { Calendar, BedDouble, FlaskConical, Building2, Settings, BarChart3, LineChart } from "lucide-react";
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/accounting" element={<ProtectedRoute module="accounting"><Accounting /></ProtectedRoute>} />
               <Route path="/reports" element={<ProtectedRoute module="reports"><Reports /></ProtectedRoute>} />
               <Route path="/hr" element={<ProtectedRoute module="hr"><HumanResources /></ProtectedRoute>} />
+              <Route path="/messages" element={<Messaging />} />
               <Route path="/catalogs" element={<ProtectedRoute module="catalogs"><Catalogs /></ProtectedRoute>} />
               <Route path="/facilities" element={<ProtectedRoute module="facilities"><Facilities /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute module="settings"><SettingsPage /></ProtectedRoute>} />

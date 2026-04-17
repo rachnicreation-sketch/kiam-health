@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
   Stethoscope, 
   Plus, 
@@ -11,10 +11,14 @@ import {
   History,
   Info,
   FlaskConical,
-  X
+  X,
+  Download
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { exportToCSV } from "@/lib/export-utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +46,7 @@ import { api } from "@/lib/api-service";
 export default function Consultations() {
   const { user, can } = useAuth();
   const { toast } = useToast();
+   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientIdParam = searchParams.get('patientId');
 
@@ -89,7 +94,13 @@ export default function Consultations() {
         api.lab.services(user.clinicId)
       ]);
       
-      setConsultations(consData);
+      setConsultations(consData.map((c: any) => ({
+        ...c,
+        id: c.id,
+        patientId: c.patient_id, // Map for components that expect patientId
+        doctorId: c.doctor_id,
+        date: c.consultation_date
+      })));
       setPatients(patsData);
       setDoctors(docsData.filter((u: any) => u.role === 'doctor'));
       setLabServices(labsData);
@@ -163,6 +174,33 @@ export default function Consultations() {
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erreur", description: error.message });
     }
+  };
+
+  const handleExportPDF = () => {
+    if (consultations.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Journal des Consultations", 20, 20);
+    
+    autoTable(doc, {
+      startY: 30,
+      head: [['Date', 'Patient', 'Médecin', 'Motif', 'Diagnostic']],
+      body: consultations.map(c => {
+        const pat = patients.find(p => p.id === c.patientId);
+        const docName = doctors.find(d => d.id === c.doctorId)?.name || "N/A";
+        return [
+          new Date(c.date).toLocaleDateString(),
+          `${pat?.name} ${pat?.firstName}`,
+          docName,
+          c.reason,
+          c.diagnosis
+        ];
+      }),
+      theme: 'grid',
+      headStyles: { fillColor: [59, 130, 246] }
+    });
+
+    doc.save(`Journal_Consultations_${new Date().getTime()}.pdf`);
   };
 
   const resetForm = () => {
@@ -389,6 +427,10 @@ export default function Consultations() {
               <Input placeholder="Rechercher une consultation..." className="pl-10 bg-white" />
             </div>
             <div className="flex gap-2">
+              <Button variant="outline" className="gap-2 bg-white" onClick={handleExportPDF}>
+                <Download className="h-4 w-4" />
+                Export PDF
+              </Button>
               <Button variant="outline" className="gap-2 bg-white">
                 <History className="h-4 w-4" />
                 Historique
@@ -444,7 +486,12 @@ export default function Consultations() {
                       </div>
                       <div className="flex flex-col justify-between items-end">
                          <Badge className="bg-success text-white">Terminé</Badge>
-                         <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/5">
+                         <Button 
+                           variant="ghost" 
+                           size="sm" 
+                           className="text-primary hover:bg-primary/5"
+                           onClick={() => navigate(`/patients/${c.patientId}`)}
+                         >
                            Voir le dossier →
                          </Button>
                       </div>

@@ -295,8 +295,8 @@ export default function HumanResources() {
                         <div className="font-medium text-sm">{emp.position}</div>
                         <div className="text-xs text-muted-foreground">{emp.department}</div>
                       </TableCell>
-                      <TableCell className="font-mono">{emp.baseSalary.toLocaleString()} CFA</TableCell>
-                      <TableCell className="text-sm">{emp.hireDate}</TableCell>
+                      <TableCell className="font-mono">{(Number(emp.baseSalary) || 0).toLocaleString()} CFA</TableCell>
+                      <TableCell className="text-sm">{emp.hireDate || emp.hire_date || '—'}</TableCell>
                       <TableCell><Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-none">Actif</Badge></TableCell>
                     </TableRow>
                   ))}
@@ -387,8 +387,8 @@ export default function HumanResources() {
                       <TableRow key={pay.id}>
                         <TableCell className="font-bold">{pay.month}</TableCell>
                         <TableCell>{emp?.name} {emp?.firstName}</TableCell>
-                        <TableCell className="text-muted-foreground">{pay.baseSalary.toLocaleString()} CFA</TableCell>
-                        <TableCell className="font-mono font-bold text-success">{pay.netSalary.toLocaleString()} CFA</TableCell>
+                        <TableCell className="text-muted-foreground">{(Number(pay.baseSalary) || 0).toLocaleString()} CFA</TableCell>
+                        <TableCell className="font-mono font-bold text-success">{(Number(pay.netSalary) || 0).toLocaleString()} CFA</TableCell>
                         <TableCell><Badge variant="outline" className="border-indigo-200 text-indigo-700 bg-indigo-50">Viré le {pay.paymentDate}</Badge></TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" onClick={() => { setSelectedPayroll(pay); setIsPayslipViewOpen(true); }} className="text-blue-600 hover:bg-blue-50">
@@ -522,7 +522,7 @@ export default function HumanResources() {
                           <TableBody>
                              <TableRow>
                                 <TableCell className="font-medium">Salaire de Base</TableCell>
-                                <TableCell className="text-right">{selectedPayroll.baseSalary.toLocaleString()}</TableCell>
+                                <TableCell className="text-right">{(Number(selectedPayroll.baseSalary) || 0).toLocaleString()}</TableCell>
                                 <TableCell className="text-right"></TableCell>
                              </TableRow>
                              {selectedPayroll.bonuses.map((b, i) => (
@@ -541,7 +541,7 @@ export default function HumanResources() {
                              ))}
                              <TableRow className="bg-slate-50 border-t-2 border-slate-900">
                                 <TableCell className="font-black text-right uppercase" colSpan={2}>Net à Payer</TableCell>
-                                <TableCell className="text-right font-black text-lg bg-emerald-50 text-emerald-700">{selectedPayroll.netSalary.toLocaleString()}</TableCell>
+                                <TableCell className="text-right font-black text-lg bg-emerald-50 text-emerald-700">{(Number(selectedPayroll.netSalary) || 0).toLocaleString()}</TableCell>
                              </TableRow>
                           </TableBody>
                        </Table>

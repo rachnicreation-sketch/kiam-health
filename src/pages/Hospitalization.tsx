@@ -12,9 +12,13 @@ import {
   Stethoscope,
   Info,
   Calendar,
-  Settings2
+  Settings2,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportToCSV } from "@/lib/export-utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -201,6 +205,38 @@ export default function Hospitalization() {
     }
   };
 
+  const handleExportPDF = () => {
+    const activeAdmissions = admissions.filter(a => a.status === 'active');
+    if (activeAdmissions.length === 0) return;
+    
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Liste des Patients Hospitalisés", 20, 20);
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 28);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [['Patient', 'Service', 'Chambre/Lit', 'Date Entrée', 'Motif']],
+      body: activeAdmissions.map(a => {
+        const p = patients.find(pat => pat.id === a.patientId);
+        const b = beds.find(bed => bed.id === a.bedId);
+        return [
+          `${p?.name} ${p?.firstName}`,
+          b?.ward || 'N/A',
+          `Ch. ${b?.room} / Lit ${b?.bedNum}`,
+          a.dateIn,
+          a.reason
+        ];
+      }),
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+
+    doc.save(`Patients_Hospitalises_${new Date().getTime()}.pdf`);
+    toast({ title: "Export réussi", description: "La liste PDF a été générée." });
+  };
+
   const wards = Array.from(new Set(beds.map(b => b.ward)));
 
   return (
@@ -215,6 +251,10 @@ export default function Hospitalization() {
         </div>
 
         <div className="flex gap-2">
+          <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
+            <Download className="h-4 w-4" />
+            PDF
+          </Button>
           <Button variant="outline" size="icon" onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')} className="hidden sm:inline-flex">
             {viewMode === 'grid' ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
           </Button>

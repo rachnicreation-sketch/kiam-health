@@ -8,20 +8,21 @@ import {
   Moon, 
   Plus, 
   X,
-  UserPlus
+  UserPlus,
+  Search
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { User, GuardShift, ShiftQuart } from "@/lib/mock-data";
-import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, startOfDay } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval, addMonths } from "date-fns";
 import { fr } from "date-fns/locale";
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  DialogTitle
 } from "@/components/ui/dialog";
 import { 
   Select, 
@@ -41,6 +42,7 @@ const QUARTS: { id: ShiftQuart; label: string; time: string; icon: any; color: s
 
 export default function GuardPlanning() {
   const { user, can } = useAuth();
+  const { toast } = useToast();
   const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month'>('week');
   const [searchTerm, setSearchTerm] = useState("");

@@ -21,13 +21,22 @@ if ($method === 'GET') {
             $bonuses = [];
             $deductions = [];
             foreach($items as $item) {
-                if ($item['type'] === 'bonus') $bonuses[] = ["name" => $item['name'], "amount" => $item['amount']];
-                else $deductions[] = ["name" => $item['name'], "amount" => $item['amount']];
+                if ($item['type'] === 'bonus') $bonuses[] = ["name" => $item['name'], "amount" => (float)$item['amount']];
+                else $deductions[] = ["name" => $item['name'], "amount" => (float)$item['amount']];
             }
             
-            $p['bonuses'] = $bonuses;
-            $p['deductions'] = $deductions;
-            $full_payrolls[] = $p;
+            $full_payrolls[] = [
+                "id"          => $p['id'],
+                "clinicId"    => $p['clinic_id'],
+                "employeeId"  => $p['employee_id'],
+                "month"       => $p['month'],
+                "baseSalary"  => (float)$p['base_salary'],
+                "netSalary"   => (float)$p['net_salary'],
+                "status"      => $p['status'],
+                "paymentDate" => $p['payment_date'],
+                "bonuses"     => $bonuses,
+                "deductions"  => $deductions,
+            ];
         }
         sendResponse($full_payrolls);
     }

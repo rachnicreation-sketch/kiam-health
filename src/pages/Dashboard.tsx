@@ -293,8 +293,8 @@ export default function Dashboard() {
                           <span className="text-lg font-extrabold leading-none">{new Date().getDate()}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-bold group-hover:text-primary transition-colors">{a.patient}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">{a.time} — {a.doctor}</p>
+                          <p className="text-xs font-bold group-hover:text-primary transition-colors">{a.patient || (a as any).patient_name || 'Patient inconnu'}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{(a.time || (a as any).appointment_time || '').substring(0, 5)} — {a.doctor || (a as any).doctor_name || 'Dr'}</p>
                         </div>
                      </div>
                    ))
@@ -328,7 +328,7 @@ export default function Dashboard() {
                     <p className="text-sm font-bold truncate leading-none mb-1">{p.name}</p>
                     <p className="text-[11px] text-muted-foreground font-mono">{p.id}</p>
                     <div className="mt-2 flex items-center gap-1.5">
-                      <Badge variant="outline" className="h-4 text-[9px] px-1 font-mono">{p.bloodGroup || '?'}</Badge>
+                      <Badge variant="outline" className="h-4 text-[9px] px-1 font-mono">{p.bloodGroup || (p as any).blood_group || '?'}</Badge>
                       <span className="text-[10px] text-muted-foreground">{p.city}</span>
                     </div>
                   </div>

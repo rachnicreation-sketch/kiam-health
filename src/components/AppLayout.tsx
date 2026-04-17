@@ -5,11 +5,13 @@ import { Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function AppLayout() {
   const { user, clinic } = useAuth();
+  const navigate = useNavigate();
   const [theme, setTheme] = useState<'light' | 'dark'>(
     (localStorage.getItem('kiam_theme') as 'light' | 'dark') || 'light'
   );
@@ -28,7 +30,8 @@ export function AppLayout() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "AD";
     return name.substring(0, 2).toUpperCase();
   };
 
@@ -45,6 +48,9 @@ export function AppLayout() {
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9 text-muted-foreground">
                 {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => navigate('/messages')} className="h-9 w-9 text-muted-foreground">
+                <MessageSquare className="h-5 w-5" />
               </Button>
               <NotificationBell />
               <div className="flex items-center gap-2">

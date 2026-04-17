@@ -259,7 +259,7 @@ export default function SaaSAdminDashboard() {
                 <div className="bg-[#0A1628] rounded-xl p-6 border border-slate-800 border-l-4 border-l-[#00D47E] shadow-md">
                   <div className="flex justify-between items-start mb-2">
                     <p className="text-slate-400 text-sm font-medium">Clients Actifs (Tenants)</p>
-                    <div class="p-2 bg-[#00D47E]/10 rounded-lg text-[#00D47E]"><Building2 className="w-5 h-5" /></div>
+                    <div className="p-2 bg-[#00D47E]/10 rounded-lg text-[#00D47E]"><Building2 className="w-5 h-5" /></div>
                   </div>
                   <h3 className="text-3xl font-bold text-white mb-2">{clinics.filter(c => c.status === 'active').length} / {clinics.length}</h3>
                   <p className="text-[#00D47E] text-sm flex items-center gap-1 font-medium"><UserPlus className="w-4 h-4" /> +2 nouveaux</p>
@@ -409,7 +409,7 @@ export default function SaaSAdminDashboard() {
                              <div className="text-xs text-slate-500 flex items-center gap-1 mt-1"><Blocks className="w-3 h-3" /> Module: Kiam Health</div>
                           </td>
                           <td className="px-6 py-4 text-slate-400">
-                             {new Date(clinic.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                             {(clinic.createdAt || (clinic as any).created_at) ? new Date(clinic.createdAt || (clinic as any).created_at!).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center space-x-3">

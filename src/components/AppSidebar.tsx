@@ -14,7 +14,8 @@ import {
   ServerCog,
   BarChart3,
   LineChart,
-  ClipboardList
+  ClipboardList,
+  MessageSquare
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -48,6 +49,7 @@ const mainItems: SidebarItem[] = [
   { title: "Rendez-vous", url: "/appointments", icon: Calendar, module: 'appointments' },
   { title: "Hospitalisation", url: "/hospitalization", icon: BedDouble, module: 'hospitalization' },
   { title: "Rapports & Stats", url: "/reports", icon: LineChart, module: 'reports' },
+  { title: "Messagerie", url: "/messages", icon: MessageSquare, module: 'dashboard' },
 ];
 
 const serviceItems: SidebarItem[] = [

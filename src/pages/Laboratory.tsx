@@ -38,6 +38,9 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api-service";
 import { Label } from "@/components/ui/label";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 export default function Laboratory() {
   const { user, clinic, can } = useAuth();
   const { toast } = useToast();
@@ -50,6 +53,7 @@ export default function Laboratory() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState<LabTest | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const [form, setForm] = useState<Partial<LabTest>>({
     patientId: "",
@@ -79,7 +83,14 @@ export default function Laboratory() {
         api.lab.services(user.clinicId)
       ]);
       
-      setTests(testsData);
+      setTests(testsData.map((t: any) => ({
+        ...t,
+        patientId: t.patient_id,
+        doctorId: t.doctor_id,
+        testName: t.test_name,
+        date: t.test_date,
+        normativeValue: t.normative_value
+      })));
       setPatients(patsData);
       setDoctors(docsData.filter((u: any) => u.role === 'doctor'));
       setLabServices(servicesData);
@@ -88,6 +99,39 @@ export default function Laboratory() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleExportCSV = () => {
+    if (tests.length === 0) {
+      toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucune donnée à exporter." });
+      return;
+    }
+    exportToCSV(tests, "Journal_Laboratoire");
+    toast({ title: "Export CSV fini", description: "Le fichier CSV a été généré." });
+  };
+
+  const handleExportPDF = () => {
+    if (tests.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(40, 44, 52);
+    doc.text(clinic?.name || "Kiam Health", 20, 20);
+    doc.setFontSize(12);
+    doc.text("JOURNAL DES ANALYSES LABORATOIRE", 20, 30);
+    
+    autoTable(doc, {
+      startY: 40,
+      head: [['ID', 'Patient', 'Examen', 'Date', 'Statut', 'Résultat']],
+      body: tests.map(t => {
+        const p = patients.find(pat => pat.id === t.patientId);
+        return [t.id, p?.name || 'N/A', t.testName, t.date, t.status, t.result || '-'];
+      }),
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+    
+    doc.save(`Journal_Labo_${new Date().getTime()}.pdf`);
+    toast({ title: "Export réussi", description: "Le journal PDF a été téléchargé." });
   };
 
   const handleCreateTest = async () => {
@@ -158,8 +202,7 @@ export default function Laboratory() {
 
   const filteredTests = tests.filter(t => {
     const patient = patients.find(p => p.id === t.patientId);
-    return t.testName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           patient?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    return t.testName.toLowerCase().includes(searchTerm.toLowerCase()) || patient?.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const testCategories = ["Hématologie", "Biochimie", "Immunologie", "Parasitologie", "Microbiologie", "Sérologie"];
@@ -185,15 +228,13 @@ export default function Laboratory() {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => {
-            if (tests.length === 0) {
-              toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucune donnée à exporter." });
-              return;
-            }
-            exportToCSV(tests, "Journal_Laboratoire");
-          }}>
+          <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
              <Download className="h-4 w-4" />
-             Exporter
+             CSV
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
+             <Download className="h-4 w-4" />
+             PDF
           </Button>
           {can('laboratory', 'write') && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>

@@ -20,6 +20,9 @@ import { Clinic, Patient } from "@/lib/mock-data";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
 interface DocumentPreviewProps {
   type: 'invoice' | 'prescription' | 'lab';
   data: any;
@@ -39,6 +42,86 @@ export function DocumentPreview({ type, data, clinic, patient, isOpen, onOpenCha
     }
   };
 
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const title = getTitle();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 44, 52);
+    doc.text(clinic?.name || "Kiam Health", 20, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(clinic?.address || "", 20, 27);
+    doc.text(`Tél: ${clinic?.phone || ""}`, 20, 32);
+    doc.text(clinic?.email || "", 20, 37);
+    
+    // Document Title
+    doc.setDrawColor(0, 102, 204);
+    doc.setLineWidth(1);
+    doc.line(20, 45, 190, 45);
+    
+    doc.setFontSize(16);
+    doc.setTextColor(0, 102, 204);
+    doc.text(title.toUpperCase(), 20, 55);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Réf: ${data?.id || "N/A"}`, 20, 62);
+    doc.text(`Date: ${format(new Date(), 'dd/MM/yyyy')}`, 150, 62);
+    
+    // Patient Info
+    doc.setFillColor(245, 247, 250);
+    doc.rect(20, 70, 170, 25, 'F');
+    doc.setTextColor(40);
+    doc.setFontSize(11);
+    doc.text("PATIENT(E):", 25, 78);
+    doc.text(`${patient?.name} ${patient?.firstName}`.toUpperCase(), 25, 85);
+    doc.text(`ID: ${patient?.id}`, 25, 90);
+    
+    doc.text("MÉDECIN:", 120, 78);
+    doc.text("DR. MATIABA FIRMIN", 120, 85);
+    
+    // Content
+    if (type === 'invoice') {
+      const tableData = data?.items?.map((item: any) => [item.description, `${item.amount.toLocaleString()} CFA`]) || [];
+      autoTable(doc, {
+        startY: 105,
+        head: [['Description', 'Montant']],
+        body: tableData,
+        foot: [['TOTAL À PAYER', `${data?.total?.toLocaleString()} CFA`]],
+        theme: 'striped',
+        headStyles: { fillColor: [0, 102, 204] },
+        footStyles: { fillColor: [40, 44, 52], textColor: [255, 255, 255] }
+      });
+    } else if (type === 'prescription') {
+      doc.setFontSize(12);
+      doc.setTextColor(40);
+      doc.text("MÉDICAMENTS & POSOLOGIE:", 20, 110);
+      doc.setFontSize(10);
+      const splitText = doc.splitTextToSize(data?.prescription || "", 160);
+      doc.text(splitText, 20, 120);
+    } else if (type === 'lab') {
+      autoTable(doc, {
+        startY: 105,
+        head: [['Analyse', 'Résultat', 'Unité', 'Référence']],
+        body: [[data?.testName, data?.result, data?.unit, data?.normativeValue]],
+        theme: 'grid',
+        headStyles: { fillColor: [0, 102, 204] }
+      });
+    }
+    
+    // Footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Ce document est une pièce officielle de l'établissement.", 20, pageHeight - 20);
+    doc.text(`Généré par Kiam Health le ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 20, pageHeight - 15);
+    
+    doc.save(`${title}_${data?.id || "doc"}.pdf`);
+  };
+
   const Icon = type === 'invoice' ? Receipt : type === 'prescription' ? Stethoscope : FlaskConical;
 
   return (
@@ -49,8 +132,8 @@ export function DocumentPreview({ type, data, clinic, patient, isOpen, onOpenCha
             <Icon className="h-4 w-4 text-primary" /> Aperture de Document
           </DialogTitle>
           <div className="flex gap-2">
-             <Button variant="outline" size="sm" className="h-8 gap-1 test-xs">
-                <Mail className="h-3 w-3" /> Envoyer
+             <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" onClick={handleDownloadPDF}>
+                <Download className="h-3 w-3" /> Télécharger PDF
              </Button>
              <Button size="sm" className="h-8 gap-1 text-xs" onClick={() => window.print()}>
                 <Printer className="h-3 w-3" /> Imprimer

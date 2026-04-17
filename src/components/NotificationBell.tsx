@@ -33,6 +33,8 @@ export function NotificationBell() {
     path: string;
   }[]>([]);
 
+  const hasNotifications = notifications.length > 0;
+
   useEffect(() => {
     if (user?.clinicId) {
       loadNotifications();
@@ -86,7 +88,15 @@ export function NotificationBell() {
     }
   };
 
-  const hasNotifications = notifications.length > 0;
+  const handleMarkAllRead = async () => {
+    if (!user?.clinicId) return;
+    try {
+      await api.notifications.markRead(user.clinicId);
+      loadNotifications();
+    } catch (error) {
+      console.error("Error marking as read:", error);
+    }
+  };
 
   return (
     <Popover>
@@ -140,7 +150,14 @@ export function NotificationBell() {
         </div>
         {notifications.length > 0 && (
           <div className="p-2 bg-muted/20 border-t flex justify-center">
-             <Button variant="ghost" size="sm" className="text-[10px] uppercase font-bold text-primary hover:bg-primary/5 h-7">Marquer tout comme lu</Button>
+             <Button 
+               variant="ghost" 
+               size="sm" 
+               className="text-[10px] uppercase font-bold text-primary hover:bg-primary/5 h-7"
+               onClick={handleMarkAllRead}
+             >
+               Marquer tout comme lu
+             </Button>
           </div>
         )}
       </PopoverContent>

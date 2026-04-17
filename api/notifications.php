@@ -6,8 +6,20 @@ $method = $_SERVER['REQUEST_METHOD'];
 $clinicId = $_GET['clinicId'] ?? null;
 
 if ($method === 'POST') {
+    $data = getRequestData();
+    $action = $_GET['action'] ?? '';
+
+    if ($action === 'mark_read') {
+        if (!$clinicId) sendResponse(["status" => "error", "message" => "Clinic ID manquant"], 400);
+        
+        // Simplement enregistrer qu'on a "lu" les notifications à cette heure
+        // En prod, on ferait ça par utilisateur
+        $stmt = $pdo->prepare("UPDATE clinics SET last_notifications_read_at = NOW() WHERE id = ?");
+        $stmt->execute([$clinicId]);
+        sendResponse(["status" => "success"]);
+    }
+
     // SaaS Admin creating a notification
-    $data = json_decode(file_get_contents("php://input"), true);
     if (!isset($data['title']) || !isset($data['message'])) {
         sendResponse(["status" => "error", "message" => "Données incomplètes"], 400);
     }
@@ -32,8 +44,12 @@ if ($method === 'GET') {
     $notifications = [];
 
     // 0. SaaS Admin Global Notifications
-    $stmt = $pdo->prepare("SELECT * FROM sys_notifications WHERE target_audience = 'all' OR target_audience = ? ORDER BY created_at DESC LIMIT 5");
-    $stmt->execute([$clinicId]);
+    $stmt = $pdo->prepare("SELECT sn.* FROM sys_notifications sn 
+                           JOIN clinics c ON c.id = ?
+                           WHERE (sn.target_audience = 'all' OR sn.target_audience = ?) 
+                           AND sn.created_at > COALESCE(c.last_notifications_read_at, '2000-01-01 00:00:00')
+                           ORDER BY sn.created_at DESC LIMIT 5");
+    $stmt->execute([$clinicId, $clinicId]);
     $sysNotifs = $stmt->fetchAll();
     foreach ($sysNotifs as $sys) {
         $notifications[] = [
@@ -41,7 +57,7 @@ if ($method === 'GET') {
             "title" => $sys['title'],
             "message" => $sys['message'],
             "type" => $sys['type'],
-            "priority" => $sys['priority'],
+            "priority" => $sys['priority'] ?? 'medium',
             "time" => date('d/m/Y H:i', strtotime($sys['created_at']))
         ];
     }

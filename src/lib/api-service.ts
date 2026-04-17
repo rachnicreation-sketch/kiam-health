@@ -201,7 +201,21 @@ export const api = {
     create: (data: any) => apiRequest("notifications.php", {
       method: "POST",
       body: JSON.stringify(data)
+    }),
+    markRead: (clinicId: string) => apiRequest(`notifications.php?action=mark_read&clinicId=${clinicId}`, {
+      method: "POST"
     })
+  },
+  messages: {
+    listUsers: (clinicId: string) => apiRequest(`messages.php?action=list_users&clinicId=${clinicId}`),
+    chatHistory: (clinicId: string, user1: string, user2: string) => 
+      apiRequest(`messages.php?action=chat&clinicId=${clinicId}&user1=${user1}&user2=${user2}`),
+    sendMessage: (clinicId: string, data: any) => apiRequest(`messages.php?clinicId=${clinicId}`, {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    unreadCount: (clinicId: string, userId: string) => 
+      apiRequest(`messages.php?action=unread_count&clinicId=${clinicId}&userId=${userId}`),
   },
   search: {
     query: (clinicId: string, query: string) => apiRequest(`search.php?clinicId=${clinicId}&query=${query}`),

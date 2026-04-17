@@ -16,6 +16,8 @@ import {
   Download
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export-utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -83,7 +85,14 @@ export default function Billing() {
         api.patients.list(user.clinicId),
         api.acts.list(user.clinicId)
       ]);
-      setInvoices(invData);
+      setInvoices(invData.map((i: any) => ({
+        ...i,
+        patientId: i.patient_id,
+        date: i.invoice_date,
+        total: parseFloat(i.total_amount) || 0,
+        status: i.status,
+        paymentMethod: i.payment_method
+      })));
       setPatients(patData);
       setActs(actData);
     } catch (error: any) {
@@ -188,13 +197,46 @@ export default function Billing() {
     setIsPreviewOpen(true);
   };
 
+  const handleExportCSV = () => {
+    if (invoices.length === 0) {
+      toast({ variant: "destructive", title: "Export impossible", description: "Aucune facture à exporter." });
+      return;
+    }
+    exportToCSV(invoices, "Journal_Facturation");
+    toast({ title: "Export réussi", description: "Le journal de facturation a été téléchargé." });
+  };
+
+  const handleExportPDF = () => {
+    if (invoices.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(40, 44, 52);
+    doc.text(clinic?.name || "Kiam Health", 20, 20);
+    doc.setFontSize(12);
+    doc.text("JOURNAL DE FACTURATION", 20, 30);
+    
+    autoTable(doc, {
+      startY: 40,
+      head: [['ID', 'Patient', 'Date', 'Montant', 'Statut']],
+      body: invoices.map(inv => {
+        const p = patients.find(pat => pat.id === inv.patientId);
+        return [inv.id, p?.name || 'N/A', inv.date, `${inv.total.toLocaleString()} CFA`, inv.status];
+      }),
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+    
+    doc.save(`Journal_Facturation_${new Date().getTime()}.pdf`);
+    toast({ title: "Export réussi", description: "Le journal PDF a été téléchargé." });
+  };
+
   const totalPaid = invoices.filter(i => i.status === 'paid').reduce((acc, i) => acc + i.total, 0);
   const totalPending = invoices.filter(i => i.status === 'pending').reduce((acc, i) => acc + i.total, 0);
 
   const filteredInvoices = invoices.filter(inv => {
     const patient = patients.find(p => p.id === inv.patientId);
     return inv.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
-           patient?.name.toLowerCase().includes(searchTerm.toLowerCase());
+           patient?.name?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   return (
@@ -209,16 +251,13 @@ export default function Billing() {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={() => {
-            if (invoices.length === 0) {
-              toast({ variant: "destructive", title: "Export impossible", description: "Aucune facture à exporter." });
-              return;
-            }
-            exportToCSV(invoices, "Journal_Facturation");
-            toast({ title: "Export réussi", description: "Le journal de facturation a été téléchargé." });
-          }}>
+          <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
             <Download className="h-4 w-4" />
-            Exporter CSV
+            CSV
+          </Button>
+          <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
+            <Download className="h-4 w-4" />
+            PDF
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>

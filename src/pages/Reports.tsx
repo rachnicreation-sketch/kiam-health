@@ -33,17 +33,70 @@ import { useAuth } from "@/hooks/useAuth";
 import { Patient, Consultation, Invoice, Transaction } from "@/lib/mock-data";
 import { api } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function Reports() {
-  const { user } = useAuth();
+  const { user, clinic } = useAuth();
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(40, 44, 52);
+    doc.text(clinic?.name || "Kiam Health", 20, 20);
+    doc.setFontSize(14);
+    doc.text("RAPPORT D'ACTIVITÉ GLOBAL", 20, 30);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Date du rapport: ${new Date().toLocaleDateString('fr-FR')}`, 150, 20);
+    
+    doc.setDrawColor(0, 102, 204);
+    doc.setLineWidth(1);
+    doc.line(20, 35, 190, 35);
+
+    // Summary Stats
+    doc.setFontSize(12);
+    doc.setTextColor(40);
+    doc.text("RÉSUMÉ DES INDICATEURS", 20, 45);
+    
+    autoTable(doc, {
+      startY: 50,
+      head: [['Indicateur', 'Valeur']],
+      body: [
+        ['Total Patients', patients.length.toString()],
+        ['Consultations effectuées', consultations.length.toString()],
+        ['Nombre de factures', invoices.length.toString()],
+        ['Chiffre d\'affaire (Recettes)', `${monthlyActivity[5].revenue.toLocaleString()} CFA`]
+      ],
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+
+    // Monthly Table
+    doc.text("ACTIVITÉ MENSUELLE (6 DERNIERS MOIS)", 20, (doc as any).lastAutoTable.finalY + 15);
+    
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 20,
+      head: [['Mois', 'Consultations', 'Recettes (CFA)']],
+      body: monthlyActivity.map(m => [m.name, m.consultations, m.revenue.toLocaleString()]),
+      theme: 'grid',
+      headStyles: { fillColor: [40, 44, 52] }
+    });
+
+    doc.save(`Rapport_Activite_${new Date().getTime()}.pdf`);
+    toast({ title: "Succès", description: "Le rapport PDF a été généré." });
+  };
 
   useEffect(() => {
     if (user?.clinicId) {
@@ -120,7 +173,7 @@ export default function Reports() {
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-4 w-4" /> Filtrer Période
           </Button>
-          <Button size="sm" className="gap-2">
+          <Button size="sm" className="gap-2" onClick={handleExportPDF}>
             <Download className="h-4 w-4" /> Exporter PDF
           </Button>
         </div>

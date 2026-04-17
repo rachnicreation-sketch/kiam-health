@@ -41,9 +41,11 @@ import { Patient } from "@/lib/mock-data";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api-service";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function Patients() {
-  const { user, can } = useAuth();
+  const { user, can, clinic } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -139,13 +141,34 @@ export default function Patients() {
     }
   };
 
-  const handleExport = () => {
+  const handleExportCSV = () => {
     if (patients.length === 0) {
       toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucun dossier patient à exporter." });
       return;
     }
     exportToCSV(patients, "Liste_Patients_Kiam_Health");
     toast({ title: "Export réussi", description: "Le fichier CSV a été téléchargé." });
+  };
+
+  const handleExportPDF = () => {
+    if (patients.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(40, 44, 52);
+    doc.text(clinic?.name || "Kiam Health", 20, 20);
+    doc.setFontSize(12);
+    doc.text("LISTE GLOBALE DES PATIENTS", 20, 30);
+    
+    autoTable(doc, {
+      startY: 40,
+      head: [['ID', 'Nom', 'Prénom', 'Sexe', 'Téléphone', 'Ville']],
+      body: patients.map(p => [p.id, p.name, p.firstName, p.gender, p.phone, p.city]),
+      theme: 'striped',
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+    
+    doc.save(`Liste_Patients_${new Date().getTime()}.pdf`);
+    toast({ title: "Export réussi", description: "Le fichier PDF a été téléchargé." });
   };
 
   const filteredPatients = patients.filter(patient =>
@@ -168,9 +191,13 @@ export default function Patients() {
 
           {can('patients', 'write') && (
             <div className="flex gap-2">
-              <Button variant="outline" className="gap-2" onClick={handleExport}>
+              <Button variant="outline" className="gap-2" onClick={handleExportCSV}>
                 <Download className="h-4 w-4" />
-                Exporter CSV
+                CSV
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleExportPDF}>
+                <Download className="h-4 w-4" />
+                PDF
               </Button>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>

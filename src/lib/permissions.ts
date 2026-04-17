@@ -73,8 +73,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
  * Checks if a role has access to a specific module
  */
 export function hasModuleAccess(role: UserRole, module: Module): boolean {
-  if (role === 'saas_admin' && !['saas', 'settings'].includes(module)) return false;
-  
   const permissions = ROLE_PERMISSIONS[role];
   if (!permissions) return false;
 

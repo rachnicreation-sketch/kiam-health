@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Pill, Plus, Search, AlertTriangle, DollarSign, Package, ShoppingCart, Download, Clock, History } from "lucide-react";
 import { exportToCSV } from "@/lib/export-utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api-service";
 
 export default function Pharmacy() {
-  const { user, can } = useAuth();
+  const { user, clinic, can } = useAuth();
   const { toast } = useToast();
   const [medications, setMedications] = useState<Medication[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -140,6 +142,37 @@ export default function Pharmacy() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (medications.length === 0) {
+      toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucun produit en stock à exporter." });
+      return;
+    }
+    exportToCSV(medications, "Inventaire_Pharmacie");
+    toast({ title: "Export réussi", description: "L'inventaire a été exporté en CSV." });
+  };
+
+  const handleExportPDF = () => {
+    if (medications.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text(clinic?.name || "Kiam Health", 20, 20);
+    doc.setFontSize(14);
+    doc.text("Inventaire de Pharmacie", 20, 30);
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 36);
+
+    autoTable(doc, {
+      startY: 45,
+      head: [['ID', 'Médicament', 'Catégorie', 'Stock', 'Prix']],
+      body: medications.map(m => [m.id, m.name, m.category, `${m.stock} ${m.unit}`, `${m.price.toLocaleString()} CFA`]),
+      theme: 'striped',
+      headStyles: { fillColor: [0, 150, 136] }
+    });
+
+    doc.save(`Inventaire_Pharmacie_${new Date().getTime()}.pdf`);
+    toast({ title: "Export réussi", description: "L'inventaire PDF a été généré." });
+  };
+
   const resetForm = () => {
     setNewName("");
     setNewCat("");
@@ -220,17 +253,16 @@ export default function Pharmacy() {
              </Dialog>
            )}
 
-            <Button className="gap-2" variant="outline" onClick={() => {
-              if (medications.length === 0) {
-                toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucun produit en stock à exporter." });
-                return;
-              }
-              exportToCSV(medications, "Inventaire_Pharmacie");
-              toast({ title: "Export réussi", description: "L'inventaire a été exporté en CSV." });
-            }}>
-              <Download className="h-4 w-4" />
-              Exporter
-            </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="gap-2" onClick={handleExportCSV}>
+                <Download className="h-4 w-4" />
+                CSV
+              </Button>
+              <Button size="sm" variant="outline" className="gap-2" onClick={handleExportPDF}>
+                <Download className="h-4 w-4" />
+                PDF
+              </Button>
+            </div>
            {can('pharmacy', 'write') && (
              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                <DialogTrigger asChild>

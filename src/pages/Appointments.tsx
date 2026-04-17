@@ -13,9 +13,13 @@ import {
   Filter,
   CalendarCheck2,
   Phone,
-  MoreVertical
+  MoreVertical,
+  Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportToCSV } from "@/lib/export-utils";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -128,6 +132,38 @@ export default function Appointments() {
     a.doctor.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleExportCSV = () => {
+    if (selectedDayApps.length === 0) {
+      toast({ variant: "destructive", title: "Export impossible", description: "Aucun rendez-vous pour ce jour." });
+      return;
+    }
+    const dataToExport = selectedDayApps.map(a => ({
+      Heure: a.time,
+      Patient: a.patient,
+      Médecin: a.doctor,
+      Type: a.type,
+      Statut: a.status
+    }));
+    exportToCSV(dataToExport, `Agenda_${format(selectedDate, 'yyyy-MM-dd')}`);
+  };
+
+  const handleExportPDF = () => {
+    if (selectedDayApps.length === 0) return;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text(`Agenda du ${format(selectedDate, 'dd/MM/yyyy')}`, 20, 20);
+    
+    autoTable(doc, {
+      startY: 30,
+      head: [['Heure', 'Patient', 'Médecin', 'Type', 'Statut']],
+      body: selectedDayApps.map(a => [a.time, a.patient, a.doctor, a.type, a.status]),
+      theme: 'grid',
+      headStyles: { fillColor: [79, 70, 229] }
+    });
+
+    doc.save(`Agenda_${format(selectedDate, 'yyyy-MM-dd')}.pdf`);
+  };
+
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
 
@@ -144,72 +180,82 @@ export default function Appointments() {
           <p className="text-muted-foreground text-sm">Agenda des consultations et planification médicale</p>
         </div>
 
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Réserver un Créneau
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Plannifier une Visite</DialogTitle>
-              <CardDescription>Saisissez les informations de passage du patient</CardDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                    <Label>Date *</Label>
-                    <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                    <Label>Heure *</Label>
-                    <Input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} />
-                 </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExportCSV}>
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={handleExportPDF}>
+            <Download className="h-4 w-4" />
+            PDF
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" size="sm">
+                <Plus className="h-4 w-4" />
+                Réserver
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Plannifier une Visite</DialogTitle>
+                <CardDescription>Saisissez les informations de passage du patient</CardDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                      <Label>Date *</Label>
+                      <Input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+                   </div>
+                   <div className="space-y-2">
+                      <Label>Heure *</Label>
+                      <Input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} />
+                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Patient *</Label>
+                  <Select value={form.patientId} onValueChange={v => setForm({...form, patientId: v})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un patient" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {patients.map(p => (
+                        <SelectItem key={p.id} value={p.id}>{p.name} {p.firstName}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Médecin sollicité *</Label>
+                  <Select value={form.doctorId} onValueChange={v => setForm({...form, doctorId: v})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir le médecin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {doctors.map(d => (
+                        <SelectItem key={d.id} value={d.id}>{d.specialty ? `Dr ${d.name} (${d.specialty})` : `Dr ${d.name}`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Type de visite</Label>
+                  <Select value={form.type} onValueChange={v => setForm({...form, type: v})}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {appointmentTypes.map(t => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button className="w-full mt-2" onClick={handleSchedule}>Valider le rendez-vous</Button>
               </div>
-              <div className="space-y-2">
-                <Label>Patient *</Label>
-                <Select value={form.patientId} onValueChange={v => setForm({...form, patientId: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir un patient" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {patients.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name} {p.firstName}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Médecin sollicité *</Label>
-                <Select value={form.doctorId} onValueChange={v => setForm({...form, doctorId: v})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir le médecin" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {doctors.map(d => (
-                      <SelectItem key={d.id} value={d.id}>{d.specialty ? `Dr ${d.name} (${d.specialty})` : `Dr ${d.name}`}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Type de visite</Label>
-                <Select value={form.type} onValueChange={v => setForm({...form, type: v})}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {appointmentTypes.map(t => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button className="w-full mt-2" onClick={handleSchedule}>Valider le rendez-vous</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

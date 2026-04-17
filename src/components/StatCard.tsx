@@ -8,11 +8,22 @@ interface StatCardProps {
   changeType?: "positive" | "negative" | "neutral";
   icon: LucideIcon;
   iconClassName?: string;
+  className?: string;
+  onClick?: () => void;
 }
 
-export function StatCard({ title, value, change, changeType = "neutral", icon: Icon, iconClassName }: StatCardProps) {
+export function StatCard({ 
+  title, 
+  value, 
+  change, 
+  changeType = "neutral", 
+  icon: Icon, 
+  iconClassName,
+  className,
+  onClick
+}: StatCardProps) {
   return (
-    <div className="stat-card">
+    <div className={cn("stat-card", className)} onClick={onClick}>
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">{title}</p>

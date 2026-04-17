@@ -40,7 +40,12 @@ if ($method === 'GET') {
     $stats['recentPatients'] = $stmt->fetchAll();
 
     // Upcoming Appointments (4)
-    $stmt = $pdo->prepare("SELECT * FROM appointments WHERE clinic_id = ? AND appointment_date >= ? ORDER BY appointment_date ASC, appointment_time ASC LIMIT 4");
+    $stmt = $pdo->prepare("SELECT a.*, p.name as patient_name, u.name as doctor_name 
+                           FROM appointments a 
+                           LEFT JOIN patients p ON a.patient_id = p.id 
+                           LEFT JOIN users u ON a.doctor_id = u.id 
+                           WHERE a.clinic_id = ? AND a.appointment_date >= ? 
+                           ORDER BY a.appointment_date ASC, a.appointment_time ASC LIMIT 4");
     $stmt->execute([$clinicId, $today]);
     $stats['upcomingAppointments'] = $stmt->fetchAll();
 
