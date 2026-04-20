@@ -43,17 +43,17 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-lg mx-auto space-y-8">
         {/* Logo */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary shadow-lg">
             <span className="text-primary-foreground font-bold text-2xl">K</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Kiam</h1>
-          <p className="text-muted-foreground text-sm">Plateforme de gestion hospitalière</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Kiam</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">Plateforme de gestion hospitalière</p>
         </div>
 
-        <Card className="shadow-xl border-border/50">
+        <Card className="shadow-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
           <CardContent className="pt-6 space-y-5">
             {error && (
               <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md flex items-center gap-2">
@@ -64,9 +64,9 @@ export default function Login() {
             
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-200">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
                     id="email" 
                     type="email" 
@@ -81,11 +81,11 @@ export default function Login() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium">Mot de passe</Label>
+                  <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-200">Mot de passe</Label>
                   <a href="#" className="text-xs text-primary hover:underline">Mot de passe oublié ?</a>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
                     id="password" 
                     type="password" 
@@ -103,16 +103,16 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="pt-4 border-t border-border mt-4">
-              <p className="text-xs text-center text-muted-foreground mb-2">Comptes de test (mot de passe: password)</p>
-              <div className="text-xs space-y-1 text-center text-muted-foreground font-mono bg-muted p-2 rounded">
+            <div className="pt-4 border-t border-slate-200 mt-4 dark:border-slate-800">
+              <p className="text-xs text-center text-slate-600 dark:text-slate-400 mb-2">Comptes de test (mot de passe: password)</p>
+              <div className="text-xs space-y-1 text-center text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900 p-2 rounded">
                 <div>admin@saas.com (SaaS)</div>
                 <div>admin@fraternite.com (Clinique)</div>
                 <div>admin@marion.com (Clinique)</div>
               </div>
             </div>
 
-            <p className="text-center text-xs text-muted-foreground mt-4">
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
               Développé par <span className="font-medium">Matiaba Firm</span>
             </p>
           </CardContent>

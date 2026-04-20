@@ -9,11 +9,20 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/kiam/api': {
+        target: 'http://localhost',
+        changeOrigin: true,
+      }
+    },
     hmr: {
       overlay: false,
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  build: {
+    sourcemap: true,
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

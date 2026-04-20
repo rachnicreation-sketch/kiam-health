@@ -2,7 +2,84 @@
 -- Created for WampServer (MySQL)
 
 CREATE DATABASE IF NOT EXISTS kiam_health;
-USE kiam_health;
+USE kiam_saas;
+
+-- 0. Core SaaS (KIAM)
+CREATE TABLE IF NOT EXISTS kiam_plans (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    price_monthly DECIMAL(15, 2) NOT NULL,
+    max_users INT DEFAULT 10,
+    max_storage_gb INT DEFAULT 5,
+    features JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kiam_tenants (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    sector ENUM('health', 'hotel', 'school', 'erp', 'shop', 'enterprise') NOT NULL DEFAULT 'health',
+    plan_id VARCHAR(50),
+    subscription_status ENUM('active', 'trial', 'suspended', 'cancelled') DEFAULT 'trial',
+    trial_ends_at TIMESTAMP NULL,
+    next_billing_date DATE,
+    mrr_value DECIMAL(15, 2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (plan_id) REFERENCES kiam_plans(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kiam_tenant_modules (
+    tenant_id VARCHAR(50) NOT NULL,
+    module_name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (tenant_id, module_name),
+    FOREIGN KEY (tenant_id) REFERENCES kiam_tenants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kiam_global_users (
+    id VARCHAR(50) PRIMARY KEY,
+    tenant_id VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    global_role ENUM('saas_admin', 'tenant_admin', 'tenant_user') DEFAULT 'tenant_user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES kiam_tenants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kiam_support_tickets (
+    id VARCHAR(50) PRIMARY KEY,
+    tenant_id VARCHAR(50) NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status ENUM('open', 'pending', 'resolved', 'closed') DEFAULT 'open',
+    priority ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (tenant_id) REFERENCES kiam_tenants(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kiam_audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(50),
+    tenant_id VARCHAR(50),
+    action VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(100),
+    entity_id VARCHAR(50),
+    details JSON,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS kiam_system_announcements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    target_sector VARCHAR(50) DEFAULT 'all',
+    is_active BOOLEAN DEFAULT TRUE,
+    expires_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- 1. Clinics
 CREATE TABLE IF NOT EXISTS clinics (

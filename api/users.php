@@ -2,14 +2,16 @@
 require_once 'config.php';
 require_once 'functions.php';
 
+$auth = requireAuth();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
+$clinicId = $auth['tenant_id'];
 
 if ($method === 'GET') {
     // Liste des utilisateurs par clinique
-    if ($action === 'list' && isset($_GET['clinicId'])) {
+    if ($action === 'list') {
         $stmt = $pdo->prepare("SELECT id, email, role, name, specialty, phone FROM users WHERE clinic_id = ?");
-        $stmt->execute([$_GET['clinicId']]);
+        $stmt->execute([$clinicId]);
         sendResponse($stmt->fetchAll());
     } elseif ($action === 'profile' && isset($_GET['id'])) {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
@@ -29,7 +31,7 @@ if ($method === 'GET') {
         $data['email'],
         $data['password'], // Utiliser password_hash en prod
         $data['role'],
-        $data['clinicId'] ?? null,
+        $clinicId,
         $data['name'] ?? 'Utilisateur'
     ]);
 

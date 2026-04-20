@@ -4,7 +4,8 @@ require_once 'functions.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
-$clinicId = $_GET['clinicId'] ?? null;
+$auth = requireAuth();
+$clinicId = $auth['tenant_id'];
 
 if (!$clinicId) {
     sendResponse(["status" => "error", "message" => "Clinic ID manquant"], 400);
@@ -52,3 +53,4 @@ if ($method === 'GET') {
     }
 }
 ?>
+

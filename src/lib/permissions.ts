@@ -16,7 +16,11 @@ export type Module =
   | 'catalogs'
   | 'facilities'
   | 'settings'
-  | 'saas';
+  | 'saas'
+  | 'hotel'
+  | 'school'
+  | 'erp'
+  | 'enterprise';
 
 export type Action = 'read' | 'write' | 'delete' | 'admin';
 
@@ -27,14 +31,12 @@ export interface Permission {
 
 export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
   'saas_admin': [
-    'saas', 'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
-    'laboratory', 'pharmacy', 'billing', 'accounting', 'reports', 'hr', 
-    'planning', 'catalogs', 'facilities', 'settings'
+    'saas'
   ],
   'clinic_admin': [
     'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
     'laboratory', 'pharmacy', 'billing', 'accounting', 'reports', 'hr', 
-    'planning', 'catalogs', 'facilities', 'settings'
+    'planning', 'catalogs', 'facilities', 'settings', 'hotel', 'school', 'erp', 'enterprise'
   ],
   'doctor': [
     'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 

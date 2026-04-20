@@ -2,15 +2,24 @@
  * Service API pour communiquer avec le backend PHP sur WampServer
  */
 
-const API_BASE_URL = "/kiam-health/api";
+const API_BASE_URL = "/kiam/api";
 
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}/${endpoint}`;
   
+  const token = localStorage.getItem('kiam_jwt_token');
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const response = await fetch(url, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...headers,
       ...options.headers,
     },
   });
@@ -29,6 +38,19 @@ export const api = {
       method: "POST",
       body: JSON.stringify(credentials)
     }),
+    impersonate: (tenantId: string) => apiRequest("auth.php?action=impersonate", {
+      method: "POST",
+      body: JSON.stringify({ tenantId })
+    }),
+  },
+  tenants: {
+    create: (data: { name: string; sector: string; plan_id: string; admin_email?: string; admin_name?: string; admin_password?: string }) =>
+      apiRequest("create_tenant.php", {
+        method: "POST",
+        body: JSON.stringify(data)
+      }),
+    list: () => apiRequest("saas_admin.php?action=tenants"),
+    get: (id: string) => apiRequest(`saas_admin.php?action=get_tenant&id=${id}`),
   },
   clinics: {
     list: () => apiRequest("clinics.php?action=list"),
@@ -220,4 +242,56 @@ export const api = {
   search: {
     query: (clinicId: string, query: string) => apiRequest(`search.php?clinicId=${clinicId}&query=${query}`),
   },
+  saas: {
+    stats: () => apiRequest("saas_admin.php?action=stats"),
+    tenants: () => apiRequest("saas_admin.php?action=tenants"),
+    modules: (tenantId: string) => apiRequest(`saas_admin.php?action=modules&tenant_id=${tenantId}`),
+    toggleModule: (data: { tenantId: string, moduleName: string, active: boolean }) => apiRequest("saas_admin.php?action=toggle_module", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    updateTenant: (data: any) => apiRequest("saas_admin.php?action=update_tenant", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    tickets: () => apiRequest("saas_support.php?action=list"),
+    updateTicketStatus: (data: any) => apiRequest("saas_support.php?action=update_status", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    announcements: () => apiRequest("saas_admin.php?action=announcements"),
+    createAnnouncement: (data: any) => apiRequest("saas_admin.php?action=create_announcement", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    plans: () => apiRequest("saas_admin.php?action=list_plans"),
+    savePlan: (data: any) => apiRequest("saas_admin.php?action=save_plan", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    users: () => apiRequest("saas_admin.php?action=saas_users"),
+    invoices: () => apiRequest("saas_admin.php?action=saas_invoices"),
+  },
+  hotel: {
+    rooms: (clinicId: string) => apiRequest(`hotel.php?action=list_rooms&clinicId=${clinicId}`),
+    bookings: (clinicId: string) => apiRequest(`hotel.php?action=list_bookings&clinicId=${clinicId}`),
+    stats: (clinicId: string) => apiRequest(`hotel.php?action=stats&clinicId=${clinicId}`),
+    addRoom: (data: any) => apiRequest("hotel.php?action=add_room", { method: "POST", body: JSON.stringify(data) }),
+    checkin: (data: any) => apiRequest("hotel.php?action=checkin", { method: "POST", body: JSON.stringify(data) }),
+    checkout: (data: any) => apiRequest("hotel.php?action=checkout", { method: "PUT", body: JSON.stringify(data) }),
+  },
+  school: {
+    students: (clinicId: string) => apiRequest(`school.php?action=list_students&clinicId=${clinicId}`),
+    grades: (clinicId: string, studentId?: string) => 
+      apiRequest(`school.php?action=list_grades&clinicId=${clinicId}${studentId ? `&student_id=${studentId}` : ''}`),
+    stats: (clinicId: string) => apiRequest(`school.php?action=stats&clinicId=${clinicId}`),
+    addStudent: (data: any) => apiRequest("school.php?action=add_student", { method: "POST", body: JSON.stringify(data) }),
+    addGrade: (data: any) => apiRequest("school.php?action=add_grade", { method: "POST", body: JSON.stringify(data) }),
+  },
+  inventory: {
+    list: (clinicId: string) => apiRequest(`inventory.php?action=list&clinicId=${clinicId}`),
+    stats: (clinicId: string) => apiRequest(`inventory.php?action=stats&clinicId=${clinicId}`),
+    add: (data: any) => apiRequest("inventory.php?action=add", { method: "POST", body: JSON.stringify(data) }),
+    adjust: (data: any) => apiRequest("inventory.php?action=stock_adj", { method: "PUT", body: JSON.stringify(data) }),
+  }
 };

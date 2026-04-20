@@ -6,30 +6,51 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import SaaSAdminDashboard from "./pages/SaaSAdminDashboard";
-import Patients from "./pages/Patients";
-import PatientDetail from "./pages/PatientDetail";
-import HumanResources from "./pages/HumanResources";
-import GuardPlanning from "./pages/GuardPlanning";
-import Consultations from "./pages/Consultations";
-import Pharmacy from "./pages/Pharmacy";
-import Laboratory from "./pages/Laboratory";
-import Hospitalization from "./pages/Hospitalization";
-import Appointments from "./pages/Appointments";
-import Billing from "./pages/Billing";
-import Accounting from "./pages/Accounting";
-import Reports from "./pages/Reports";
-import Catalogs from "./pages/Catalogs";
-import SettingsPage from "./pages/Settings";
-import Facilities from "./pages/Facilities";
-import ClinicLanding from "./pages/ClinicLanding";
-import PatientPortal from "./pages/PatientPortal";
-import Messaging from "./pages/Messaging";
-import { ModulePlaceholder } from "./pages/ModulePlaceholder";
-import NotFound from "./pages/NotFound";
-import { Calendar, BedDouble, FlaskConical, Building2, Settings, BarChart3, LineChart } from "lucide-react";
+
+// Core Pages
+import Login from "./core/pages/Login";
+import Register from "./core/pages/Register";
+import LandingPage from "./core/pages/LandingPage";
+import SaaSAdminDashboard from "./core/pages/SaaSAdminDashboard";
+import NotFound from "./core/pages/NotFound";
+import { ModulePlaceholder } from "./core/pages/ModulePlaceholder";
+
+// KIAM Health Module Pages
+import Dashboard from "./modules/health/pages/Dashboard";
+import Patients from "./modules/health/pages/Patients";
+import PatientDetail from "./modules/health/pages/PatientDetail";
+import HumanResources from "./modules/health/pages/HumanResources";
+import GuardPlanning from "./modules/health/pages/GuardPlanning";
+import Consultations from "./modules/health/pages/Consultations";
+import Pharmacy from "./modules/health/pages/Pharmacy";
+import Laboratory from "./modules/health/pages/Laboratory";
+import Hospitalization from "./modules/health/pages/Hospitalization";
+import Appointments from "./modules/health/pages/Appointments";
+import Billing from "./modules/health/pages/Billing";
+import Accounting from "./modules/health/pages/Accounting";
+import Reports from "./modules/health/pages/Reports";
+import Catalogs from "./modules/health/pages/Catalogs";
+import SettingsPage from "./modules/health/pages/Settings";
+import Facilities from "./modules/health/pages/Facilities";
+import ClinicLanding from "./modules/health/pages/ClinicLanding";
+import PatientPortal from "./modules/health/pages/PatientPortal";
+import Messaging from "./modules/health/pages/Messaging";
+
+// NEW MODULES DASHBOARDS
+import HotelDashboard from "./modules/hotel/pages/HotelDashboard";
+import SchoolDashboard from "./modules/school/pages/SchoolDashboard";
+import ErpDashboard from "./modules/erp/pages/ErpDashboard";
+import PharmacyDashboard from "./modules/pharmacy/pages/PharmacyDashboard";
+import EnterpriseDashboard from "./modules/enterprise/pages/EnterpriseDashboard";
+
+// NEW SAAS ADMIN MODULES
+import SaaSTenants from "./core/pages/saas/SaaSTenants";
+import SaaSBilling from "./core/pages/saas/SaaSBilling";
+import SaaSModules from "./core/pages/saas/SaaSModules";
+import SaaSMarketing from "./core/pages/saas/SaaSMarketing";
+import SaaSUsers from "./core/pages/saas/SaaSUsers";
+import SaaSSettings from "./core/pages/saas/SaaSSettings";
+import SaaSTenantProfile from "./core/pages/saas/SaaSTenantProfile";
 
 const queryClient = new QueryClient();
 
@@ -41,8 +62,9 @@ const App = () => (
         <Sonner />
         <HashRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             
             {/* Public Clinic & Patient Routes */}
             <Route path="/:clinicId" element={<ClinicLanding />} />
@@ -50,6 +72,15 @@ const App = () => (
 
             <Route element={<AppLayout />}>
               <Route path="/saas/dashboard" element={<ProtectedRoute module="saas"><SaaSAdminDashboard /></ProtectedRoute>} />
+              <Route path="/saas/tenants" element={<ProtectedRoute module="saas"><SaaSTenants /></ProtectedRoute>} />
+              <Route path="/saas/tenants/:id" element={<ProtectedRoute module="saas"><SaaSTenantProfile /></ProtectedRoute>} />
+              <Route path="/saas/billing" element={<ProtectedRoute module="saas"><SaaSBilling /></ProtectedRoute>} />
+              <Route path="/saas/modules" element={<ProtectedRoute module="saas"><SaaSModules /></ProtectedRoute>} />
+              <Route path="/saas/marketing" element={<ProtectedRoute module="saas"><SaaSMarketing /></ProtectedRoute>} />
+              <Route path="/saas/users" element={<ProtectedRoute module="saas"><SaaSUsers /></ProtectedRoute>} />
+              <Route path="/saas/settings" element={<ProtectedRoute module="saas"><SaaSSettings /></ProtectedRoute>} />
+              
+              {/* KIAM HEALTH ROUTES */}
               <Route path="/dashboard" element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
               <Route path="/patients" element={<ProtectedRoute module="patients"><Patients /></ProtectedRoute>} />
               <Route path="/patients/:id" element={<ProtectedRoute module="patients"><PatientDetail /></ProtectedRoute>} />
@@ -67,7 +98,32 @@ const App = () => (
               <Route path="/catalogs" element={<ProtectedRoute module="catalogs"><Catalogs /></ProtectedRoute>} />
               <Route path="/facilities" element={<ProtectedRoute module="facilities"><Facilities /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute module="settings"><SettingsPage /></ProtectedRoute>} />
+
+              {/* KIAM HOTEL ROUTES */}
+              <Route path="/hotel" element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
+              <Route path="/hotel/dashboard" element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
+              <Route path="/hotel/*" element={<ProtectedRoute module="hotel"><ModulePlaceholder /></ProtectedRoute>} />
+
+              {/* KIAM SCHOOL ROUTES */}
+              <Route path="/school" element={<ProtectedRoute module="school"><SchoolDashboard /></ProtectedRoute>} />
+              <Route path="/school/dashboard" element={<ProtectedRoute module="school"><SchoolDashboard /></ProtectedRoute>} />
+              <Route path="/school/*" element={<ProtectedRoute module="school"><ModulePlaceholder /></ProtectedRoute>} />
+
+              {/* KIAM ERP / SHOP ROUTES */}
+              <Route path="/erp" element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />
+              <Route path="/erp/dashboard" element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />
+              <Route path="/erp/settings" element={<ProtectedRoute module="erp"><ModulePlaceholder title="Paramètres ERP" /></ProtectedRoute>} />
+              <Route path="/erp/*" element={<ProtectedRoute module="erp"><ModulePlaceholder /></ProtectedRoute>} />
+              
+              {/* KIAM PHARMACY ROUTES */}
+              <Route path="/pharmacy/dashboard" element={<ProtectedRoute module="pharmacy"><PharmacyDashboard /></ProtectedRoute>} />
+              <Route path="/pharmacy/*" element={<ProtectedRoute module="pharmacy"><ModulePlaceholder /></ProtectedRoute>} />
+
+              {/* KIAM ENTERPRISE ROUTES */}
+              <Route path="/enterprise/dashboard" element={<ProtectedRoute module="enterprise"><EnterpriseDashboard /></ProtectedRoute>} />
+              <Route path="/enterprise/*" element={<ProtectedRoute module="enterprise"><ModulePlaceholder /></ProtectedRoute>} />
             </Route>
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </HashRouter>

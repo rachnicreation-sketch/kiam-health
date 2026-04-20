@@ -2,8 +2,13 @@
 require_once 'config.php';
 require_once 'functions.php';
 
+/**
+ * Gestion des notifications multi-secteurs
+ */
+
 $method = $_SERVER['REQUEST_METHOD'];
-$clinicId = $_GET['clinicId'] ?? null;
+$auth = requireAuth();
+$clinicId = $auth['tenant_id'];
 
 if ($method === 'POST') {
     $data = getRequestData();
@@ -12,14 +17,11 @@ if ($method === 'POST') {
     if ($action === 'mark_read') {
         if (!$clinicId) sendResponse(["status" => "error", "message" => "Clinic ID manquant"], 400);
         
-        // Simplement enregistrer qu'on a "lu" les notifications à cette heure
-        // En prod, on ferait ça par utilisateur
-        $stmt = $pdo->prepare("UPDATE clinics SET last_notifications_read_at = NOW() WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE kiam_tenants SET last_notifications_read_at = NOW() WHERE id = ?");
         $stmt->execute([$clinicId]);
         sendResponse(["status" => "success"]);
     }
 
-    // SaaS Admin creating a notification
     if (!isset($data['title']) || !isset($data['message'])) {
         sendResponse(["status" => "error", "message" => "Données incomplètes"], 400);
     }
@@ -28,8 +30,8 @@ if ($method === 'POST') {
     $target = $data['target_audience'] ?? 'all';
     $type = $data['type'] ?? 'system';
     
-    $stmt = $pdo->prepare("INSERT INTO sys_notifications (id, title, message, type, target_audience) VALUES (?, ?, ?, ?, ?)");
-    if ($stmt->execute([$id, $data['title'], $data['message'], $type, $target])) {
+    $stmt = $pdo->prepare("INSERT INTO kiam_system_announcements (title, content, target_sector) VALUES (?, ?, ?)");
+    if ($stmt->execute([$data['title'], $data['message'], $target])) {
         sendResponse(["status" => "success", "message" => "Notification diffusée avec succès"]);
     } else {
         sendResponse(["status" => "error", "message" => "Erreur DB"], 500);
@@ -43,71 +45,62 @@ if ($method === 'GET') {
 
     $notifications = [];
 
-    // 0. SaaS Admin Global Notifications
-    $stmt = $pdo->prepare("SELECT sn.* FROM sys_notifications sn 
-                           JOIN clinics c ON c.id = ?
-                           WHERE (sn.target_audience = 'all' OR sn.target_audience = ?) 
-                           AND sn.created_at > COALESCE(c.last_notifications_read_at, '2000-01-01 00:00:00')
+    // 0. SaaS Admin Global Notifications (from kiam_system_announcements)
+    $stmt = $pdo->prepare("SELECT sn.* FROM kiam_system_announcements sn 
+                           JOIN kiam_tenants c ON c.id = ?
+                           WHERE (sn.target_sector = 'all' OR sn.target_sector = c.sector) 
+                           AND (c.last_notifications_read_at IS NULL OR sn.created_at > c.last_notifications_read_at)
                            ORDER BY sn.created_at DESC LIMIT 5");
-    $stmt->execute([$clinicId, $clinicId]);
+    $stmt->execute([$clinicId]);
     $sysNotifs = $stmt->fetchAll();
     foreach ($sysNotifs as $sys) {
         $notifications[] = [
-            "id" => $sys['id'],
+            "id" => "ann-" . $sys['id'],
             "title" => $sys['title'],
-            "message" => $sys['message'],
-            "type" => $sys['type'],
-            "priority" => $sys['priority'] ?? 'medium',
+            "message" => $sys['content'],
+            "type" => "system",
+            "priority" => "medium",
             "time" => date('d/m/Y H:i', strtotime($sys['created_at']))
         ];
     }
 
-    // 1. Low stock medications
-    $stmt = $pdo->prepare("SELECT * FROM medications WHERE clinic_id = ? AND stock < 10");
-    $stmt->execute([$clinicId]);
-    $lowStock = $stmt->fetchAll();
-    foreach ($lowStock as $med) {
-        $notifications[] = [
-            "id" => "stock-" . $med['id'],
-            "title" => "Stock Faible",
-            "message" => "Le stock de " . $med['name'] . " est critique (" . $med['stock'] . ")",
-            "type" => "inventory",
-            "priority" => "high",
-            "time" => "Maintenant"
-        ];
-    }
+    // 1. Low stock medications (if health sector)
+    $stmt = $pdo->prepare("SELECT role FROM kiam_global_users WHERE tenant_id = ? LIMIT 1"); // Fallback check or assumption
+    // Actually, we check if the table exists
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM medications WHERE clinic_id = ? AND stock < 10");
+        $stmt->execute([$clinicId]);
+        $lowStock = $stmt->fetchAll();
+        foreach ($lowStock as $med) {
+            $notifications[] = [
+                "id" => "stock-" . $med['id'],
+                "title" => "Stock Faible",
+                "message" => "Le stock de " . $med['name'] . " est critique (" . $med['stock'] . ")",
+                "type" => "inventory",
+                "priority" => "high",
+                "time" => "Maintenant"
+            ];
+        }
+    } catch (Exception $e) {}
 
     // 2. Pending Lab Tests
-    $stmt = $pdo->prepare("SELECT lt.*, p.name as patient_name FROM lab_tests lt JOIN patients p ON lt.patient_id = p.id WHERE lt.clinic_id = ? AND lt.status = 'pending'");
-    $stmt->execute([$clinicId]);
-    $pendingLabs = $stmt->fetchAll();
-    foreach ($pendingLabs as $lab) {
-        $notifications[] = [
-            "id" => "lab-" . $lab['id'],
-            "title" => "Analyse en attente",
-            "message" => "Nouvelle analyse pour " . $lab['patient_name'],
-            "type" => "lab",
-            "priority" => "medium",
-            "time" => "Aujourd'hui"
-        ];
-    }
-
-    // 3. Upcoming Appointments for today
-    $today = date('Y-m-d');
-    $stmt = $pdo->prepare("SELECT * FROM appointments WHERE clinic_id = ? AND appointment_date = ?");
-    $stmt->execute([$clinicId, $today]);
-    $appts = $stmt->fetchAll();
-    foreach ($appts as $appt) {
-        $notifications[] = [
-            "id" => "appt-" . $appt['id'],
-            "title" => "Rendez-vous",
-            "message" => $appt['patient'] . " à " . $appt['appointment_time'],
-            "type" => "appointment",
-            "priority" => "medium",
-            "time" => $appt['appointment_time']
-        ];
-    }
+    try {
+        $stmt = $pdo->prepare("SELECT lt.*, p.name as patient_name FROM lab_tests lt JOIN patients p ON lt.patient_id = p.id WHERE lt.clinic_id = ? AND lt.status = 'pending'");
+        $stmt->execute([$clinicId]);
+        $pendingLabs = $stmt->fetchAll();
+        foreach ($pendingLabs as $lab) {
+            $notifications[] = [
+                "id" => "lab-" . $lab['id'],
+                "title" => "Analyse en attente",
+                "message" => "Nouvelle analyse pour " . $lab['patient_name'],
+                "type" => "lab",
+                "priority" => "medium",
+                "time" => "Aujourd'hui"
+            ];
+        }
+    } catch (Exception $e) {}
 
     sendResponse($notifications);
 }
 ?>
+

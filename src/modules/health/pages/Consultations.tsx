@@ -12,7 +12,8 @@ import {
   Info,
   FlaskConical,
   X,
-  Download
+  Download,
+  PackageSearch
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ import { Patient, Consultation, User as AppUser, LabService, LabTest } from "@/l
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api-service";
+import { Medication } from "@/lib/mock-data";
 
 export default function Consultations() {
   const { user, can } = useAuth();
@@ -54,8 +56,10 @@ export default function Consultations() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<AppUser[]>([]);
   const [labServices, setLabServices] = useState<LabService[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedLabTests, setSelectedLabTests] = useState<string[]>([]);
+  const [selectedMeds, setSelectedMeds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // New Consultation Form State
@@ -87,23 +91,25 @@ export default function Consultations() {
     if (!user?.clinicId) return;
     setIsLoading(true);
     try {
-      const [consData, patsData, docsData, labsData] = await Promise.all([
+      const [consData, patsData, docsData, labsData, medsData] = await Promise.all([
         api.consultations.list(user.clinicId),
         api.patients.list(user.clinicId),
         api.users.list(user.clinicId),
-        api.lab.services(user.clinicId)
+        api.lab.services(user.clinicId),
+        api.pharmacy.medications(user.clinicId)
       ]);
       
       setConsultations(consData.map((c: any) => ({
         ...c,
         id: c.id,
-        patientId: c.patient_id, // Map for components that expect patientId
+        patientId: c.patient_id, 
         doctorId: c.doctor_id,
         date: c.consultation_date
       })));
       setPatients(patsData);
       setDoctors(docsData.filter((u: any) => u.role === 'doctor'));
       setLabServices(labsData);
+      setMedications(medsData);
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erreur", description: "Chargement des données échoué." });
     } finally {
@@ -131,10 +137,22 @@ export default function Consultations() {
       });
 
       if (consResponse.status === 'success') {
-        // 2. Créer les tests labo si nécessaires
+        const consId = consResponse.id;
+        
+        // 2. Facturation Automatique (Consultation + Labo si présent)
+        const billingItems: { description: string; amount: number }[] = [
+          { description: "Prestation: Consultation Médicale", amount: 10000 }
+        ];
+
+        // 3. Créer les tests labo si nécessaires
         if (selectedLabTests.length > 0) {
+          console.log("Creating lab tests for consultation:", consId);
           const labTestPromises = selectedLabTests.map(testId => {
             const service = labServices.find(s => s.id === testId);
+            billingItems.push({ 
+              description: `Lab: ${service?.testName || "Examen"}`, 
+              amount: Number(service?.price) || 0 
+            });
             return api.lab.createTest({
               clinicId: user.clinicId,
               patientId: form.patientId,
@@ -145,22 +163,17 @@ export default function Consultations() {
             });
           });
           await Promise.all(labTestPromises);
-
-          // 3. Facturation (Simplifiée: une seule facture pour tous les tests)
-          const labItems = selectedLabTests.map(testId => {
-            const service = labServices.find(s => s.id === testId);
-            return { description: `Lab: ${service?.testName}`, amount: service?.price || 0 };
-          });
-          const total = labItems.reduce((sum, item) => sum + item.amount, 0);
-
-          await api.invoices.create({
-            clinicId: user.clinicId,
-            patientId: form.patientId,
-            items: labItems,
-            total,
-            status: 'pending'
-          });
         }
+
+        // 4. Emettre la facture globale
+        const totalAmount = billingItems.reduce((sum, item) => sum + item.amount, 0);
+        await api.invoices.create({
+          clinicId: user.clinicId,
+          patientId: form.patientId,
+          items: billingItems,
+          total: totalAmount,
+          status: 'pending'
+        });
 
         toast({
           title: "Consultation enregistrée",
@@ -214,6 +227,7 @@ export default function Consultations() {
       vitals: { temp: "", bp: "", weight: "", hr: "" }
     });
     setSelectedLabTests([]);
+    setSelectedMeds([]);
   };
 
   return (
@@ -388,12 +402,48 @@ export default function Consultations() {
                       <Pill className="h-3 w-3" />
                       Prescription / Traitement
                     </Label>
-                    <Textarea 
-                      placeholder="Médicaments, posologie..." 
-                      className="h-32 border-success/30 focus-visible:ring-success"
-                      value={form.prescription}
-                      onChange={e => setForm({...form, prescription: e.target.value})}
-                    />
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Select onValueChange={v => {
+                          if (!selectedMeds.includes(v)) {
+                            const med = medications.find(m => m.id === v);
+                            setSelectedMeds([...selectedMeds, v]);
+                            // Append to prescription text
+                            const current = form.prescription || "";
+                            setForm({...form, prescription: current + (current ? "\n" : "") + `- ${med?.name} : (Posologie à préciser)`});
+                          }
+                        }}>
+                          <SelectTrigger className="h-8 text-xs border-success/30 bg-success/5">
+                            <PackageSearch className="w-3 h-3 mr-1" />
+                            <SelectValue placeholder="Chercher médicament..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {medications.map(m => (
+                              <SelectItem key={m.id} value={m.id} disabled={Number(m.stock) <= 0}>
+                                {m.name} ({m.stock} {m.unit} dispo)
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Textarea 
+                        placeholder="Médicaments, posologie..." 
+                        className="h-32 border-success/30 focus-visible:ring-success"
+                        value={form.prescription}
+                        onChange={e => setForm({...form, prescription: e.target.value})}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                         {selectedMeds.map(id => {
+                           const m = medications.find(x => x.id === id);
+                           return (
+                             <Badge key={id} variant="outline" className="text-[10px] border-success/30 text-success">
+                               {m?.name} ({m?.stock} {m?.unit})
+                               <X className="w-3 h-3 ml-1 cursor-pointer" onClick={() => setSelectedMeds(selectedMeds.filter(x => x !== id))} />
+                             </Badge>
+                           )
+                         })}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-2">

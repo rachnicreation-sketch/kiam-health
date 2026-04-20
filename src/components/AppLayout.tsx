@@ -1,16 +1,14 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { NotificationBell } from "@/components/NotificationBell";
-import { Sun, Moon, MessageSquare } from "lucide-react";
+import { Sun, Moon, MessageSquare, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 export function AppLayout() {
-  const { user, clinic } = useAuth();
+  const { user, clinic, logout } = useAuth();
   const navigate = useNavigate();
   const [theme, setTheme] = useState<'light' | 'dark'>(
     (localStorage.getItem('kiam_theme') as 'light' | 'dark') || 'light'
@@ -30,6 +28,11 @@ export function AppLayout() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const getInitials = (name: string | undefined) => {
     if (!name) return "AD";
     return name.substring(0, 2).toUpperCase();
@@ -38,11 +41,9 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between border-b bg-card px-4 shrink-0">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-muted-foreground" />
               <GlobalSearch />
             </div>
             <div className="flex items-center gap-3">
@@ -53,6 +54,9 @@ export function AppLayout() {
                 <MessageSquare className="h-5 w-5" />
               </Button>
               <NotificationBell />
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-muted-foreground">
+                <LogOut className="h-5 w-5" />
+              </Button>
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-sm font-medium text-primary">

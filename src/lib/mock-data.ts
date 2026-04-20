@@ -45,6 +45,7 @@ export interface User {
   name: string;
   specialty?: string;
   phone?: string;
+  sector?: 'health' | 'hotel' | 'school' | 'erp' | 'shop';
 }
 
 export interface Patient {

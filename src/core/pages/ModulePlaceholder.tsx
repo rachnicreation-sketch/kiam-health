@@ -3,12 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Construction } from "lucide-react";
 
 interface ModulePlaceholderProps {
-  title: string;
-  description: string;
-  icon: LucideIcon;
+  title?: string;
+  description?: string;
+  icon?: LucideIcon;
 }
 
-export function ModulePlaceholder({ title, description, icon: Icon }: ModulePlaceholderProps) {
+export function ModulePlaceholder({ 
+  title = "Module", 
+  description = "Ce module est en cours de développement.", 
+  icon: Icon = Construction 
+}: ModulePlaceholderProps) {
   return (
     <div className="space-y-6">
       <div>

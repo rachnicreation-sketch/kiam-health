@@ -8,6 +8,7 @@ interface AuthContextType {
   clinic: Clinic | null;
   login: (email: string, passwordHash: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
+  impersonate: (tenantId: string) => Promise<{ success: boolean; message?: string }>;
   isLoading: boolean;
   can: (module: Module, action?: Action) => boolean;
 }
@@ -24,15 +25,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       try {
         const foundUser: User = JSON.parse(storedUser);
-        setUser(foundUser);
-        
-        // On pourrait refetcher les données cliniques si besoin
-        const storedClinic = localStorage.getItem('kiam_auth_clinic');
-        if (storedClinic) {
-          setClinic(JSON.parse(storedClinic));
+        if (foundUser && typeof foundUser === 'object') {
+          setUser(foundUser);
+          
+          const storedClinic = localStorage.getItem('kiam_auth_clinic');
+          if (storedClinic && storedClinic !== "undefined") {
+            try {
+              setClinic(JSON.parse(storedClinic));
+            } catch (e) {
+              localStorage.removeItem('kiam_auth_clinic');
+            }
+          }
+        } else {
+           throw new Error("Invalid user data");
         }
       } catch (e) {
         localStorage.removeItem('kiam_auth_user');
+        localStorage.removeItem('kiam_auth_clinic');
       }
     }
     setIsLoading(false);
@@ -48,6 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         setUser(foundUser);
         localStorage.setItem('kiam_auth_user', JSON.stringify(foundUser));
+        if (response.token) {
+          localStorage.setItem('kiam_jwt_token', response.token);
+        }
         
         if (foundClinic) {
           setClinic(foundClinic);
@@ -68,6 +80,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setClinic(null);
     localStorage.removeItem('kiam_auth_user');
     localStorage.removeItem('kiam_auth_clinic');
+    localStorage.removeItem('kiam_jwt_token');
+  };
+
+  const impersonate = async (tenantId: string) => {
+    try {
+      const response = await api.auth.impersonate(tenantId);
+      if (response.status === 'success') {
+        setUser(response.user);
+        setClinic(response.clinic);
+        localStorage.setItem('kiam_auth_user', JSON.stringify(response.user));
+        localStorage.setItem('kiam_auth_clinic', JSON.stringify(response.clinic));
+        if (response.token) {
+          localStorage.setItem('kiam_jwt_token', response.token);
+        }
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error: any) {
+      return { success: false, message: error.message };
+    }
   };
 
   const can = (module: Module, action: Action = 'read'): boolean => {
@@ -75,8 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return canPerform(user.role, module, action);
   };
 
+
   return (
-    <AuthContext.Provider value={{ user, clinic, login, logout, isLoading, can }}>
+    <AuthContext.Provider value={{ user, clinic, login, logout, impersonate, isLoading, can }}>
       {children}
     </AuthContext.Provider>
   );

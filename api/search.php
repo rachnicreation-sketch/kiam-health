@@ -3,7 +3,8 @@ require_once 'config.php';
 require_once 'functions.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$clinicId = $_GET['clinicId'] ?? null;
+$auth = requireAuth();
+$clinicId = $auth['tenant_id'];
 $query = $_GET['query'] ?? '';
 
 if ($method === 'GET') {
@@ -56,3 +57,4 @@ if ($method === 'GET') {
     sendResponse($results);
 }
 ?>
+

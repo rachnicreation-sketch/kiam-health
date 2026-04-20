@@ -146,7 +146,7 @@ export default function Patients() {
       toast({ variant: "destructive", title: "Export impossible", description: "Il n'y a aucun dossier patient à exporter." });
       return;
     }
-    exportToCSV(patients, "Liste_Patients_Kiam_Health");
+    exportToCSV(patients, "Liste_Patients_Kiam_Saas");
     toast({ title: "Export réussi", description: "Le fichier CSV a été téléchargé." });
   };
 

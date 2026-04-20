@@ -4,7 +4,8 @@ require_once 'functions.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list_acts';
-$clinicId = $_GET['clinicId'] ?? null;
+$auth = requireAuth();
+$clinicId = $auth['tenant_id'];
 
 if ($method === 'GET') {
     if ($action === 'list_acts' && $clinicId) {
@@ -66,3 +67,4 @@ if ($method === 'GET') {
     sendResponse(["status" => "success"]);
 }
 ?>
+
