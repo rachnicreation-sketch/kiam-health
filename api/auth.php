@@ -55,7 +55,12 @@ if ($action === 'login') {
     }
 
     // 2. Fallback to Legacy/Local Users (Normal employees)
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt = $pdo->prepare("
+        SELECT u.*, t.sector 
+        FROM users u 
+        LEFT JOIN kiam_tenants t ON u.clinic_id = t.id 
+        WHERE u.email = ?
+    ");
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
@@ -86,7 +91,7 @@ if ($action === 'login') {
                 "name" => $user['name'],
                 "role" => $user['role'],
                 "clinicId" => $user['clinic_id'],
-                "sector" => 'health' // Default for legacy users
+                "sector" => $user['sector'] ?: 'health' // Dynamic sector from tenant table
             ],
             "clinic" => $clinic
         ]);

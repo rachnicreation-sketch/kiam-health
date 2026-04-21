@@ -50,6 +50,16 @@ if ($method === 'GET') {
     $stmt->execute([$clinicId, $today]);
     $stats['upcomingAppointments'] = $stmt->fetchAll();
 
+    // High Fever Alerts (> 38.5)
+    $stmt = $pdo->prepare("SELECT c.*, p.name as patient_name FROM consultations c JOIN patients p ON c.patient_id = p.id WHERE c.clinic_id = ? AND CAST(c.temp AS DECIMAL(5,1)) > 38.5 ORDER BY c.consultation_date DESC LIMIT 5");
+    $stmt->execute([$clinicId]);
+    $stats['vitalsAlerts'] = $stmt->fetchAll();
+
+    // Guards Today
+    $stmt = $pdo->prepare("SELECT g.*, u.name as doctor_name FROM guards g JOIN users u ON g.user_id = u.id WHERE g.clinic_id = ? AND g.guard_date = ? LIMIT 2");
+    $stmt->execute([$clinicId, $today]);
+    $stats['dailyGuards'] = $stmt->fetchAll();
+
     sendResponse($stats);
 }
 ?>

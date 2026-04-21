@@ -247,27 +247,28 @@ export default function Dashboard() {
 
         {/* Next/Right column: Vitals Alerts or Notifications */}
         <div className="flex flex-col gap-6">
-           <Card className="border-none shadow-md bg-primary text-primary-foreground overflow-hidden relative">
+            <Card className="border-none shadow-md bg-primary text-primary-foreground overflow-hidden relative">
               <div className="absolute -right-8 -top-8 h-32 w-32 bg-white/10 rounded-full blur-2xl"></div>
               <CardHeader className="pb-1">
                 <CardTitle className="text-xs font-bold uppercase tracking-widest opacity-80">Gardes du jour</CardTitle>
               </CardHeader>
               <CardContent className="pb-4">
                 <div className="space-y-3">
-                  <div className="flex items-center gap-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
-                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">SK</div>
-                    <div>
-                      <p className="text-xs font-bold">Dr. Keita</p>
-                      <p className="text-[10px] opacity-70 italic">Quart du Matin</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
-                    <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">DM</div>
-                    <div>
-                      <p className="text-xs font-bold">Dr. Marion</p>
-                      <p className="text-[10px] opacity-70 italic">Quart de Nuit</p>
-                    </div>
-                  </div>
+                  {stats?.dailyGuards?.length > 0 ? (
+                    stats.dailyGuards.map((g: any) => (
+                      <div key={g.id} className="flex items-center gap-3 bg-white/10 p-2 rounded-lg backdrop-blur-sm">
+                        <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">
+                          {g.doctor_name?.[0]}{g.doctor_name?.split(' ')?.[1]?.[0] || ''}
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold">{g.doctor_name}</p>
+                          <p className="text-[10px] opacity-70 italic">{g.shift_type || 'Service'}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-[10px] italic opacity-70">Aucune garde planifiée</p>
+                  )}
                 </div>
                 <Button variant="ghost" onClick={() => navigate('/planning')} className="w-full mt-4 h-8 text-[11px] text-white hover:bg-white/10 font-bold uppercase tracking-wider">
                   Planning complet →
@@ -286,7 +287,7 @@ export default function Dashboard() {
                  {appointments.length === 0 ? (
                    <p className="text-center py-4 text-xs italic text-muted-foreground">Aucun rendez-vous</p>
                  ) : (
-                   appointments.slice(0, 4).map(a => (
+                   appointments.slice(0, 3).map(a => (
                      <div key={a.id} className="flex items-center gap-3 border-b border-muted/30 pb-3 last:border-0 last:pb-0 group cursor-pointer">
                         <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 flex flex-col items-center justify-center shrink-0">
                           <span className="text-[10px] font-bold leading-none uppercase">{new Date().toLocaleDateString('fr-FR', { month: 'short' })}</span>
@@ -300,6 +301,21 @@ export default function Dashboard() {
                    ))
                  )}
               </CardContent>
+              {stats?.vitalsAlerts?.length > 0 && (
+                <div className="p-4 border-t bg-rose-50/50">
+                  <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <ShieldAlert className="h-3 w-3" /> Alertes Vitales
+                  </p>
+                  <div className="space-y-2">
+                    {stats.vitalsAlerts.slice(0, 2).map((v: any) => (
+                      <div key={v.id} className="bg-white p-2 rounded-lg border border-rose-100 flex justify-between items-center">
+                        <span className="text-[10px] font-bold">{v.patient_name}</span>
+                        <Badge className="h-4 text-[9px] bg-rose-500">{v.temp}°C</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
            </Card>
         </div>
       </div>

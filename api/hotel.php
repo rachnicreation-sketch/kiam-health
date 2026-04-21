@@ -25,7 +25,9 @@ if ($method === 'GET') {
             "total_rooms" => $pdo->query("SELECT COUNT(*) FROM hotel_rooms WHERE clinic_id = '$clinicId'")->fetchColumn(),
             "occupied" => $pdo->query("SELECT COUNT(*) FROM hotel_rooms WHERE clinic_id = '$clinicId' AND status = 'occupied'")->fetchColumn(),
             "available" => $pdo->query("SELECT COUNT(*) FROM hotel_rooms WHERE clinic_id = '$clinicId' AND status = 'available'")->fetchColumn(),
-            "cleaning" => $pdo->query("SELECT COUNT(*) FROM hotel_rooms WHERE clinic_id = '$clinicId' AND status = 'cleaning'")->fetchColumn()
+            "cleaning" => $pdo->query("SELECT COUNT(*) FROM hotel_rooms WHERE clinic_id = '$clinicId' AND status = 'cleaning'")->fetchColumn(),
+            "distribution" => $pdo->query("SELECT type, COUNT(*) as count FROM hotel_rooms WHERE clinic_id = '$clinicId' GROUP BY type")->fetchAll(),
+            "recent_bookings" => $pdo->query("SELECT * FROM hotel_bookings WHERE clinic_id = '$clinicId' ORDER BY created_at DESC LIMIT 5")->fetchAll()
         ];
         sendResponse($stats);
     }

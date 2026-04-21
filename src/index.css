@@ -101,9 +101,25 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm;
+    @apply bg-card/80 backdrop-blur-md border border-white/20 shadow-xl;
   }
   .stat-card {
-    @apply bg-card rounded-xl border border-border/50 p-5 shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-card rounded-[2rem] border border-border/50 p-6 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-1;
+  }
+  .bg-edu-gradient {
+    @apply bg-gradient-to-br from-sky-500 via-indigo-600 to-purple-700;
+  }
+  .bg-hotel-gradient {
+    @apply bg-gradient-to-br from-violet-600 via-indigo-700 to-slate-900;
+  }
+  .bg-erp-gradient {
+    @apply bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
   }
 }

@@ -16,7 +16,9 @@ if ($method === 'GET') {
         $stats = [
             "total_items" => $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE clinic_id = '$clinicId'")->fetchColumn(),
             "low_stock" => $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE clinic_id = '$clinicId' AND stock <= threshold")->fetchColumn(),
-            "out_of_stock" => $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE clinic_id = '$clinicId' AND stock <= 0")->fetchColumn()
+            "out_of_stock" => $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE clinic_id = '$clinicId' AND stock <= 0")->fetchColumn(),
+            "top_items" => $pdo->query("SELECT name, stock, unit, price_sell FROM inventory_items WHERE clinic_id = '$clinicId' ORDER BY stock DESC LIMIT 5")->fetchAll(),
+            "distribution" => $pdo->query("SELECT category, COUNT(*) as count FROM inventory_items WHERE clinic_id = '$clinicId' GROUP BY category")->fetchAll()
         ];
         sendResponse($stats);
     }

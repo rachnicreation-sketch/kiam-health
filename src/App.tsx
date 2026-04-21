@@ -38,7 +38,20 @@ import Messaging from "./modules/health/pages/Messaging";
 
 // NEW MODULES DASHBOARDS
 import HotelDashboard from "./modules/hotel/pages/HotelDashboard";
+import Rooms from "./modules/hotel/pages/Rooms";
+import Bookings from "./modules/hotel/pages/Bookings";
+// KIAM SCHOOL MODULE PAGES
 import SchoolDashboard from "./modules/school/pages/SchoolDashboard";
+import Students from "./modules/school/pages/Students";
+import Classes from "./modules/school/pages/Classes";
+import Grades from "./modules/school/pages/Grades";
+import Attendance from "./modules/school/pages/Attendance";
+import Payments from "./modules/school/pages/Payments";
+import Schedule from "./modules/school/pages/Schedule";
+import Elearning from "./modules/school/pages/Elearning";
+import PointOfSale from "./modules/erp/pages/PointOfSale";
+import InventoryManager from "./modules/erp/pages/InventoryManager";
+import ErpTransactions from "./modules/erp/pages/ErpTransactions";
 import ErpDashboard from "./modules/erp/pages/ErpDashboard";
 import PharmacyDashboard from "./modules/pharmacy/pages/PharmacyDashboard";
 import EnterpriseDashboard from "./modules/enterprise/pages/EnterpriseDashboard";
@@ -102,15 +115,26 @@ const App = () => (
               {/* KIAM HOTEL ROUTES */}
               <Route path="/hotel" element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
               <Route path="/hotel/dashboard" element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
+              <Route path="/hotel/rooms" element={<ProtectedRoute module="hotel"><Rooms /></ProtectedRoute>} />
+              <Route path="/hotel/bookings" element={<ProtectedRoute module="hotel"><Bookings /></ProtectedRoute>} />
               <Route path="/hotel/*" element={<ProtectedRoute module="hotel"><ModulePlaceholder /></ProtectedRoute>} />
 
               {/* KIAM SCHOOL ROUTES */}
               <Route path="/school" element={<ProtectedRoute module="school"><SchoolDashboard /></ProtectedRoute>} />
               <Route path="/school/dashboard" element={<ProtectedRoute module="school"><SchoolDashboard /></ProtectedRoute>} />
-              <Route path="/school/*" element={<ProtectedRoute module="school"><ModulePlaceholder /></ProtectedRoute>} />
+              <Route path="/school/students" element={<ProtectedRoute module="school"><Students /></ProtectedRoute>} />
+              <Route path="/school/classes" element={<ProtectedRoute module="school"><Classes /></ProtectedRoute>} />
+              <Route path="/school/grades" element={<ProtectedRoute module="school"><Grades /></ProtectedRoute>} />
+              <Route path="/school/attendance" element={<ProtectedRoute module="school"><Attendance /></ProtectedRoute>} />
+              <Route path="/school/payments" element={<ProtectedRoute module="school"><Payments /></ProtectedRoute>} />
+              <Route path="/school/schedule" element={<ProtectedRoute module="school"><Schedule /></ProtectedRoute>} />
+              <Route path="/school/learning" element={<ProtectedRoute module="school"><Elearning /></ProtectedRoute>} />
 
               {/* KIAM ERP / SHOP ROUTES */}
               <Route path="/erp" element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />
+              <Route path="/erp/pos" element={<ProtectedRoute module="erp"><PointOfSale /></ProtectedRoute>} />
+              <Route path="/erp/inventory" element={<ProtectedRoute module="erp"><InventoryManager /></ProtectedRoute>} />
+              <Route path="/erp/transactions" element={<ProtectedRoute module="erp"><ErpTransactions /></ProtectedRoute>} />
               <Route path="/erp/dashboard" element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />
               <Route path="/erp/settings" element={<ProtectedRoute module="erp"><ModulePlaceholder title="Paramètres ERP" /></ProtectedRoute>} />
               <Route path="/erp/*" element={<ProtectedRoute module="erp"><ModulePlaceholder /></ProtectedRoute>} />

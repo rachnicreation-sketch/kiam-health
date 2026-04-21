@@ -26,10 +26,33 @@ export default function Login() {
       // Let's assume we can get the role from the stored user or better, from the response.
       if (result.success) {
         const storedUser = JSON.parse(localStorage.getItem('kiam_auth_user') || '{}');
+        
+        // Dynamic Redirection based on role and sector
         if (storedUser.role === 'saas_admin') {
           navigate("/saas/dashboard");
         } else {
-          navigate("/dashboard");
+          const sector = storedUser.sector || 'health';
+          switch (sector) {
+            case 'school':
+              navigate("/school/dashboard");
+              break;
+            case 'hotel':
+              navigate("/hotel/dashboard");
+              break;
+            case 'erp':
+            case 'shop':
+              navigate("/erp/dashboard");
+              break;
+            case 'pharmacy':
+              navigate("/pharmacy/dashboard");
+              break;
+            case 'enterprise':
+              navigate("/enterprise/dashboard");
+              break;
+            case 'health':
+            default:
+              navigate("/dashboard");
+          }
         }
       } else {
         setError(result.message || "Erreur de connexion");

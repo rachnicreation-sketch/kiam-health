@@ -88,9 +88,9 @@ const healthAdminItems: SidebarItem[] = [
 // KIAM HOTEL (🏨)
 // ========================
 const hotelMainItems: SidebarItem[] = [
-  { title: "Tableau de bord", url: "/hotel/dashboard", icon: LayoutDashboard, module: 'hotel' },
-  { title: "Réservations", url: "/hotel/reservations", icon: Calendar, module: 'hotel' },
-  { title: "Chambres", url: "/hotel/rooms", icon: BedDouble, module: 'hotel' },
+  { title: "Tableau de bord", url: "/hotel", icon: LayoutDashboard, module: 'hotel' },
+  { title: "Plan des Chambres", url: "/hotel/rooms", icon: BedDouble, module: 'hotel' },
+  { title: "Réservations & Séjours", url: "/hotel/bookings", icon: Calendar, module: 'hotel' },
   { title: "Clients", url: "/hotel/guests", icon: Users, module: 'hotel' },
   { title: "Facturation", url: "/hotel/billing", icon: Receipt, module: 'hotel' },
 ];
@@ -102,8 +102,10 @@ const schoolMainItems: SidebarItem[] = [
   { title: "Tableau de bord", url: "/school/dashboard", icon: LayoutDashboard, module: 'school' },
   { title: "Étudiants", url: "/school/students", icon: UserCheck, module: 'school' },
   { title: "Classes / Salles", url: "/school/classes", icon: Building2, module: 'school' },
+  { title: "Présences (Appel)", url: "/school/attendance", icon: ClipboardCheck, module: 'school' },
   { title: "Résultats & Notes", url: "/school/grades", icon: ClipboardList, module: 'school' },
   { title: "Emploi du temps", url: "/school/schedule", icon: Calendar, module: 'school' },
+  { title: "Cours & E-learning", url: "/school/learning", icon: PlayCircle, module: 'school' },
   { title: "Scolarité (Paiements)", url: "/school/payments", icon: Receipt, module: 'school' },
 ];
 
@@ -112,11 +114,13 @@ const schoolMainItems: SidebarItem[] = [
 // ========================
 const erpMainItems: SidebarItem[] = [
   { title: "Tableau de bord", url: "/erp/dashboard", icon: LayoutDashboard, module: 'erp' },
-  { title: "Ventes / POS", url: "/erp/sales", icon: ShoppingCart, module: 'erp' },
-  { title: "Stock Produits", url: "/erp/inventory", icon: Warehouse, module: 'erp' },
+  { title: "Point de Vente (POS)", url: "/erp/pos", icon: Zap, module: 'erp' },
+  { title: "Gestion des Stocks", url: "/erp/inventory", icon: Box, module: 'erp' },
+  { title: "Journal des Ventes", url: "/erp/transactions", icon: History, module: 'erp' },
   { title: "Fournisseurs", url: "/erp/suppliers", icon: Truck, module: 'erp' },
   { title: "Facturation", url: "/erp/billing", icon: Receipt, module: 'erp' },
   { title: "Retours / SAV", url: "/erp/returns", icon: RotateCcw, module: 'erp' },
+  { title: "Paramètres ERP", url: "/erp/settings", icon: Settings, module: 'erp' },
 ];
 
 // ========================
