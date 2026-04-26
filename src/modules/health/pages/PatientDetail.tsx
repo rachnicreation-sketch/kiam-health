@@ -41,6 +41,17 @@ export default function PatientDetail() {
   const { user, can } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
+  const isMedicalStaff = ['doctor', 'nurse', 'clinic_admin'].includes(user?.role || '');
+
+  const renderSensitive = (text: string | undefined) => {
+    if (isMedicalStaff) return text || "N/A";
+    return (
+      <span className="blur-[4px] select-none cursor-help text-muted-foreground/50 transition-all hover:blur-[2px]" title="Accès restreint (Confidentialité médicale)">
+        [DONNÉES PROTÉGÉES]
+      </span>
+    );
+  };
+
   useEffect(() => {
     if (id && user?.clinicId) {
       loadData();
@@ -253,7 +264,7 @@ export default function PatientDetail() {
                             <p className="text-sm font-bold">{c.reason}</p>
                             <span className="text-[10px] text-muted-foreground">{c.date}</span>
                           </div>
-                          <p className="text-xs text-muted-foreground py-1">Diagnostic: <span className="font-medium text-foreground">{c.diagnosis}</span></p>
+                          <p className="text-xs text-muted-foreground py-1">Diagnostic: <span className="font-medium text-foreground">{renderSensitive(c.diagnosis)}</span></p>
                           <div className="flex gap-2 mt-1">
                             <Badge className="bg-success/10 text-success border-none text-[9px] h-4">Prescription établie</Badge>
                           </div>
@@ -277,15 +288,15 @@ export default function PatientDetail() {
                            <span className="text-xs text-muted-foreground">{c.date}</span>
                          </div>
                          <h4 className="text-sm font-bold mb-1">{c.reason}</h4>
-                         <p className="text-xs text-muted-foreground line-clamp-2 italic">"{c.notes}"</p>
-                         <div className="mt-3 pt-3 border-t grid grid-cols-2 gap-4">
+                         <div className="text-xs text-muted-foreground line-clamp-2 italic mb-3">"{renderSensitive(c.notes)}"</div>
+                         <div className="pt-3 border-t grid grid-cols-2 gap-4">
                            <div>
                              <Label className="text-[9px] uppercase text-muted-foreground">Diagnostic</Label>
-                             <p className="text-[11px] font-medium">{c.diagnosis}</p>
+                             <div className="text-[11px] font-medium">{renderSensitive(c.diagnosis)}</div>
                            </div>
                            <div>
                              <Label className="text-[9px] uppercase text-muted-foreground">Traitement</Label>
-                             <p className="text-[11px] font-medium text-success">{c.prescription}</p>
+                             <div className="text-[11px] font-medium text-success">{renderSensitive(c.prescription)}</div>
                            </div>
                          </div>
                        </CardContent>
@@ -327,7 +338,7 @@ export default function PatientDetail() {
                              </Button>
                            </div>
                            <div className="bg-white p-3 rounded border border-success/10 mt-2">
-                             <pre className="text-sm font-sans whitespace-pre-wrap">{c.prescription}</pre>
+                             <pre className="text-sm font-sans whitespace-pre-wrap">{isMedicalStaff ? c.prescription : renderSensitive("Contenu de l'ordonnance masqué")}</pre>
                            </div>
                            <p className="text-[10px] mt-2 text-muted-foreground italic text-right">Prescrit par le médecin en charge</p>
                          </CardContent>

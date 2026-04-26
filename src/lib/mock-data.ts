@@ -61,6 +61,11 @@ export interface Patient {
   city?: string;
   idNumber?: string; // CNI/Passport
   bloodGroup?: string;
+  hairColor?: string;
+  isHospitalized?: boolean;
+  hospitalService?: string;
+  hospitalRoom?: string;
+  hospitalBed?: string;
   assurance?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;

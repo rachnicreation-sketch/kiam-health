@@ -36,6 +36,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/hooks/useAuth";
 import { Patient } from "@/lib/mock-data";
 import { useNavigate } from "react-router-dom";
@@ -68,7 +69,12 @@ export default function Patients() {
     history: "",
     emergencyContactName: "",
     emergencyContactPhone: "",
-    assurance: ""
+    assurance: "",
+    hairColor: "",
+    isHospitalized: false,
+    hospitalService: "",
+    hospitalRoom: "",
+    hospitalBed: ""
   });
 
   useEffect(() => {
@@ -133,7 +139,12 @@ export default function Patients() {
           history: "",
           emergencyContactName: "",
           emergencyContactPhone: "",
-          assurance: ""
+          assurance: "",
+          hairColor: "",
+          isHospitalized: false,
+          hospitalService: "",
+          hospitalRoom: "",
+          hospitalBed: ""
         });
       }
     } catch (error: any) {
@@ -260,6 +271,14 @@ export default function Patients() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="space-y-2">
+                        <Label>Couleur des cheveux</Label>
+                        <Input 
+                          placeholder="EX: Noir, Brun, Blond..." 
+                          value={newPatient.hairColor || ""} 
+                          onChange={e => setNewPatient({...newPatient, hairColor: e.target.value})} 
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Identité (CNI / Passport)</Label>
@@ -378,6 +397,53 @@ export default function Patients() {
                           onChange={e => setNewPatient({...newPatient, history: e.target.value})}
                         />
                       </div>
+                    </div>
+                    
+                    {/* Section 4: Hospitalisation */}
+                    <div className="md:col-span-2 space-y-4 mt-2">
+                      <div className="flex items-center gap-2 text-primary border-b pb-1">
+                        <BedDouble className="h-4 w-4" />
+                        <h3 className="font-bold text-xs uppercase tracking-wider">4. Admission & Hospitalisation</h3>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="isHospitalized" 
+                          checked={newPatient.isHospitalized} 
+                          onCheckedChange={(checked) => setNewPatient({...newPatient, isHospitalized: checked as boolean})} 
+                        />
+                        <Label htmlFor="isHospitalized" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                          Ce patient est actuellement hospitalisé
+                        </Label>
+                      </div>
+                      
+                      {newPatient.isHospitalized && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/20 p-4 rounded-lg border">
+                          <div className="space-y-2">
+                            <Label>Service</Label>
+                            <Input 
+                              placeholder="Urgences, Maternité..." 
+                              value={newPatient.hospitalService || ""} 
+                              onChange={e => setNewPatient({...newPatient, hospitalService: e.target.value})} 
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Chambre</Label>
+                            <Input 
+                              placeholder="Numéro ou Nom" 
+                              value={newPatient.hospitalRoom || ""} 
+                              onChange={e => setNewPatient({...newPatient, hospitalRoom: e.target.value})} 
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Lit</Label>
+                            <Input 
+                              placeholder="Numéro de lit" 
+                              value={newPatient.hospitalBed || ""} 
+                              onChange={e => setNewPatient({...newPatient, hospitalBed: e.target.value})} 
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

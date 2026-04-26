@@ -28,7 +28,15 @@ import {
   UserCheck,
   Target,
   CheckSquare,
-  FileText
+  FileText,
+  ClipboardCheck,
+  PlayCircle,
+  Zap,
+  Box,
+  History,
+  Shield,
+  ShieldAlert,
+  Activity
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink } from "@/components/NavLink";
@@ -156,23 +164,12 @@ const saasItems: SidebarItem[] = [
   { title: "Plans & Revenus", url: "/saas/billing", icon: Receipt, module: 'saas' },
   { title: "Modules Add-ons", url: "/saas/modules", icon: ServerCog, module: 'saas' },
   { title: "Communications", url: "/saas/marketing", icon: MessageSquare, module: 'saas' },
+  { title: "Support Client", url: "/saas/support", icon: ShieldAlert, module: 'saas' },
+  { title: "Audit & Sécurité", url: "/saas/security", icon: Shield, module: 'saas' },
+  { title: "Santé Système", url: "/saas/health", icon: Activity, module: 'saas' },
+  { title: "IA Insights", url: "/saas/ai", icon: Zap, module: 'saas' },
   { title: "Utilisateurs", url: "/saas/users", icon: Users, module: 'saas' },
   { title: "Paramètres", url: "/saas/settings", icon: Settings, module: 'saas' },
-];
-
-const saasInfoItems = [
-  "Cockpit Business",
-  "Gestion Clients",
-  "Modules & Fonctionnalités",
-  "Abonnements & Paiements",
-  "Utilisateurs Plateforme",
-  "Analytics & Reporting",
-  "Communications",
-  "Support Client",
-  "Audit & Sécurité",
-  "Performance Système",
-  "Configuration",
-  "IA Insights (Bêta)",
 ];
 
 export function AppSidebar() {
@@ -219,7 +216,7 @@ export function AppSidebar() {
     activeModuleSet.has(sectorModule) ||
     (sectorModule === 'erp' && activeModuleSet.has('shop'));
 
-  const itemBaseClasses = "flex items-center gap-3 px-3 py-3 rounded-2xl border border-transparent transition-colors text-slate-300 hover:border-slate-800 hover:bg-slate-900 hover:text-white";
+  const itemBaseClasses = "group flex items-center gap-3 px-3 py-2.5 mx-1 mb-1 rounded-xl border border-transparent transition-all duration-300 ease-out text-slate-400 hover:bg-slate-800/60 hover:text-white hover:translate-x-1";
   const renderItems = (items: SidebarItem[]) =>
     items
       .filter((item) => can(item.module))
@@ -229,10 +226,10 @@ export function AppSidebar() {
             to={item.url}
             end
             className={itemBaseClasses}
-            activeClassName="bg-slate-900 text-white font-semibold"
+            activeClassName="bg-gradient-to-r from-sky-500/20 to-transparent text-sky-400 font-bold border-l-2 border-l-sky-500 !translate-x-0"
           >
-            <item.icon className="h-5 w-5 shrink-0" />
-            {!collapsed && <span>{item.title}</span>}
+            <item.icon className="h-5 w-5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
+            {!collapsed && <span className="tracking-wide text-[13px]">{item.title}</span>}
           </NavLink>
         </SidebarMenuItem>
       ));
@@ -377,33 +374,13 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-slate-800 bg-slate-950/95">
-        {isSaaSAdmin ? (
-          <div className="space-y-4">
-            <div className="space-y-2 rounded-3xl bg-slate-900/80 p-3 text-[11px] text-slate-300">
-              {saasInfoItems.map((item) => (
-                <div key={item} className="rounded-xl bg-slate-950/80 px-3 py-2 text-slate-300/90">{item}</div>
-              ))}
-            </div>
-            <div className="rounded-3xl bg-slate-900/80 p-3 text-[11px] leading-snug text-slate-400">
-              "Le tenant 'Hôtel Palace' a augmenté son usage de 40% ce mois. Suggérer le plan Enterprise."
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition"
-            >
-              <LogOut className="h-4 w-4" />
-              {!collapsed && "Déconnexion"}
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition"
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && "Déconnexion"}
-          </button>
-        )}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition"
+        >
+          <LogOut className="h-4 w-4" />
+          {!collapsed && "Déconnexion"}
+        </button>
       </SidebarFooter>
     </Sidebar>
   );

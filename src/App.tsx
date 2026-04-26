@@ -64,6 +64,10 @@ import SaaSMarketing from "./core/pages/saas/SaaSMarketing";
 import SaaSUsers from "./core/pages/saas/SaaSUsers";
 import SaaSSettings from "./core/pages/saas/SaaSSettings";
 import SaaSTenantProfile from "./core/pages/saas/SaaSTenantProfile";
+import SaaSSupport from "./core/pages/saas/SaaSSupport";
+import SaaSSecurity from "./core/pages/saas/SaaSSecurity";
+import SaaSHealth from "./core/pages/saas/SaaSHealth";
+import SaaSAI from "./core/pages/saas/SaaSAI";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +94,10 @@ const App = () => (
               <Route path="/saas/billing" element={<ProtectedRoute module="saas"><SaaSBilling /></ProtectedRoute>} />
               <Route path="/saas/modules" element={<ProtectedRoute module="saas"><SaaSModules /></ProtectedRoute>} />
               <Route path="/saas/marketing" element={<ProtectedRoute module="saas"><SaaSMarketing /></ProtectedRoute>} />
+              <Route path="/saas/support" element={<ProtectedRoute module="saas"><SaaSSupport /></ProtectedRoute>} />
+              <Route path="/saas/security" element={<ProtectedRoute module="saas"><SaaSSecurity /></ProtectedRoute>} />
+              <Route path="/saas/health" element={<ProtectedRoute module="saas"><SaaSHealth /></ProtectedRoute>} />
+              <Route path="/saas/ai" element={<ProtectedRoute module="saas"><SaaSAI /></ProtectedRoute>} />
               <Route path="/saas/users" element={<ProtectedRoute module="saas"><SaaSUsers /></ProtectedRoute>} />
               <Route path="/saas/settings" element={<ProtectedRoute module="saas"><SaaSSettings /></ProtectedRoute>} />
               

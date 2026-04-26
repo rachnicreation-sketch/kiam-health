@@ -38,7 +38,7 @@ export function NotificationBell() {
   useEffect(() => {
     if (user?.clinicId) {
       loadNotifications();
-      const interval = setInterval(loadNotifications, 60000); // 1 min refresh for DB
+      const interval = setInterval(loadNotifications, 10000); // 10s refresh during dev/test
       return () => clearInterval(interval);
     }
   }, [user]);

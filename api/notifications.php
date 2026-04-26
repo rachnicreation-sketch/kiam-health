@@ -48,9 +48,8 @@ if ($method === 'GET') {
     // 0. SaaS Admin Global Notifications (from kiam_system_announcements)
     $stmt = $pdo->prepare("SELECT sn.* FROM kiam_system_announcements sn 
                            JOIN kiam_tenants c ON c.id = ?
-                           WHERE (sn.target_sector = 'all' OR sn.target_sector = c.sector) 
-                           AND (c.last_notifications_read_at IS NULL OR sn.created_at > c.last_notifications_read_at)
-                           ORDER BY sn.created_at DESC LIMIT 5");
+                           WHERE (sn.target_sector = 'all' OR sn.target_sector = c.sector OR sn.target_sector = c.plan_id) 
+                           ORDER BY sn.created_at DESC LIMIT 10");
     $stmt->execute([$clinicId]);
     $sysNotifs = $stmt->fetchAll();
     foreach ($sysNotifs as $sys) {

@@ -1,4 +1,5 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -41,9 +42,11 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
+        <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between border-b bg-card px-4 shrink-0">
             <div className="flex items-center gap-3">
+              <SidebarTrigger />
               <GlobalSearch />
             </div>
             <div className="flex items-center gap-3">
@@ -54,9 +57,6 @@ export function AppLayout() {
                 <MessageSquare className="h-5 w-5" />
               </Button>
               <NotificationBell />
-              <Button variant="ghost" size="icon" onClick={handleLogout} className="h-9 w-9 text-muted-foreground">
-                <LogOut className="h-5 w-5" />
-              </Button>
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                   <span className="text-sm font-medium text-primary">

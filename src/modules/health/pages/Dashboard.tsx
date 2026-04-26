@@ -175,12 +175,13 @@ export default function Dashboard() {
               <button
                 key={action.label}
                 onClick={() => navigate(action.url)}
-                className="flex flex-col items-center justify-center p-4 rounded-xl border border-transparent hover:border-muted group transition-all"
+                className="relative flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-100 bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 group transition-all duration-300 overflow-hidden"
               >
-                <div className={`${action.color} text-white p-3 rounded-2xl mb-3 shadow-lg shadow-black/5 group-hover:scale-110 transition-transform`}>
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${action.color}`}></div>
+                <div className={`${action.color} text-white p-3.5 rounded-2xl mb-3 shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 relative z-10`}>
                   <action.icon className="h-6 w-6" />
                 </div>
-                <span className="text-[11px] font-bold text-center text-muted-foreground leading-tight group-hover:text-foreground transition-colors px-1">
+                <span className="text-[11px] font-bold text-center text-slate-600 leading-tight group-hover:text-slate-900 transition-colors px-1 relative z-10">
                   {action.label}
                 </span>
               </button>
@@ -206,8 +207,8 @@ export default function Dashboard() {
               <AreaChart data={weeklyData}>
                 <defs>
                   <linearGradient id="colorCons" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1A56DB" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#1A56DB" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />

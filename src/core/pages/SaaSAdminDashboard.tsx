@@ -22,6 +22,7 @@ export default function SaaSAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [tenants, setTenants] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
 
@@ -34,8 +35,10 @@ export default function SaaSAdminDashboard() {
     try {
       const statsData = await api.saas.stats();
       const tenantsData = await api.saas.tenants();
+      const ticketsData = await api.saas.tickets();
       setStats(statsData);
       setTenants(tenantsData || []);
+      setTickets(ticketsData || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -202,20 +205,17 @@ export default function SaaSAdminDashboard() {
           </CardHeader>
           <CardContent className="p-4 flex-1">
             <div className="space-y-4">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-rose-50 border border-rose-100">
-                <div className="h-2 w-2 rounded-full bg-rose-500 mt-1.5" />
-                <div>
-                  <p className="text-xs font-bold text-rose-700">Surcharge DB Mineure</p>
-                  <p className="text-[10px] text-rose-600/70">Il y a 12 min</p>
+              {tickets.length > 0 ? tickets.slice(0, 3).map((ticket, i) => (
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${ticket.status === 'open' ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className={`h-2 w-2 rounded-full mt-1.5 ${ticket.status === 'open' ? 'bg-rose-500' : 'bg-slate-400'}`} />
+                  <div>
+                    <p className={`text-xs font-bold ${ticket.status === 'open' ? 'text-rose-700' : 'text-slate-700'}`}>{ticket.subject}</p>
+                    <p className="text-[10px] text-muted-foreground">{ticket.tenant_name} • {new Date(ticket.created_at).toLocaleDateString()}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                <div className="h-2 w-2 rounded-full bg-amber-500 mt-1.5" />
-                <div>
-                  <p className="text-xs font-bold text-amber-700">Mise à jour SSL requise</p>
-                  <p className="text-[10px] text-amber-600/70">Expire dans 4 jours</p>
-                </div>
-              </div>
+              )) : (
+                <div className="text-center py-6 text-muted-foreground italic text-xs">Aucune alerte en cours</div>
+              )}
             </div>
           </CardContent>
         </Card>

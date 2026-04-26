@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, Send, Megaphone, CheckCircle2, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,20 @@ export default function SaaSMarketing() {
   const [target, setTarget] = useState("all");
   const [loading, setLoading] = useState(false);
 
-  const [announcements] = useState([
-    { id: 1, title: "Maintenance Programmée", message: "Le système sera indisponible ce dimanche de 02:00 à 04:00 (GMT) pour une mise à jour mineure.", target: "Tous les locataires", date: "18 Juin 2026", status: "envoyé" },
-    { id: 2, title: "Nouveau Module: Facturation Pro", message: "Découvrez notre nouveau système de facturation avancé disponible dès demain dans l'Add-on Store.", target: "Secteur: Santé", date: "15 Juin 2026", status: "envoyé" },
-    { id: 3, title: "Rappel de paiement", message: "Merci de bien vouloir régulariser votre facture avant le 30 du mois pour éviter toute suspension de service.", target: "Plans Basic", date: "10 Juin 2026", status: "envoyé" },
-  ]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadAnnouncements();
+  }, []);
+
+  const loadAnnouncements = async () => {
+    try {
+      const data = await api.saas.announcements();
+      setAnnouncements(data || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +37,7 @@ export default function SaaSMarketing() {
       toast({ title: "Message diffusé", description: "L'annonce a bien été envoyée à la cible.", variant: "default" });
       setTitle("");
       setMessage("");
+      loadAnnouncements();
     } catch (e: any) {
       toast({ title: "Erreur", description: "L'envoi a échoué. " + e.message, variant: "destructive" });
     } finally {
@@ -112,13 +122,13 @@ export default function SaaSMarketing() {
                        <div className="flex justify-between items-start mb-3">
                           <h3 className="text-slate-900 font-bold text-base">{ann.title}</h3>
                           <Badge variant="outline" className="bg-emerald-100 text-emerald-700 border-0 flex items-center gap-1 font-bold shadow-sm">
-                             <CheckCircle2 className="w-3 h-3" /> {ann.status}
+                             <CheckCircle2 className="w-3 h-3" /> Envoyé
                           </Badge>
                        </div>
-                       <p className="text-slate-600 text-sm leading-relaxed mb-4">{ann.message}</p>
+                       <p className="text-slate-600 text-sm leading-relaxed mb-4">{ann.content || ann.message}</p>
                        <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-                          <span className="bg-slate-200 px-2.5 py-1 rounded-md text-slate-700 border border-slate-300">{ann.target}</span>
-                          <span>{ann.date}</span>
+                          <span className="bg-slate-200 px-2.5 py-1 rounded-md text-slate-700 border border-slate-300">{ann.target_sector || ann.target}</span>
+                          <span>{ann.created_at ? new Date(ann.created_at).toLocaleDateString() : (ann.date || "Date inconnue")}</span>
                        </div>
                        
                        <div className="absolute top-0 left-0 w-1 h-full bg-pink-500 opacity-0 group-hover:opacity-100 transition-opacity" />
