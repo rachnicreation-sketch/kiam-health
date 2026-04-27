@@ -16,6 +16,7 @@ export default function SaaSTenantProfile() {
   const [loading, setLoading] = useState(true);
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [tenant, setTenant] = useState<any>(null);
+  const domainPrefix = tenant?.domain_prefix || tenant?.name?.toLowerCase().replace(/[^a-z0-9]/g, "");
 
   useEffect(() => {
     loadTenant();
@@ -69,7 +70,7 @@ export default function SaaSTenantProfile() {
               {tenant.name}
             </h1>
             <p className="text-slate-500 mt-1 flex items-center gap-2">
-              <Badge variant="outline" className="font-mono text-[10px]">{tenant.domain_prefix}.kiam.tech</Badge>
+              <Badge variant="outline" className="font-mono text-[10px]">{domainPrefix || tenant.id}.kiam.tech</Badge>
               ID: {tenant.id}
             </p>
           </div>

@@ -50,7 +50,7 @@ export const api = {
         body: JSON.stringify(data)
       }),
     list: () => apiRequest("saas_admin.php?action=tenants"),
-    get: (id: string) => apiRequest(`saas_admin.php?action=get_tenant&id=${id}`),
+    get: (id: string) => apiRequest(`saas_admin.php?action=tenant_detail&id=${id}`),
   },
   clinics: {
     list: () => apiRequest("clinics.php?action=list"),
@@ -224,8 +224,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data)
     }),
-    markRead: (clinicId: string) => apiRequest(`notifications.php?action=mark_read&clinicId=${clinicId}`, {
-      method: "POST"
+    markRead: (clinicId: string, notificationId: string) => apiRequest(`notifications.php?action=mark_read&clinicId=${clinicId}`, {
+      method: "POST",
+      body: JSON.stringify({ notificationId })
+    }),
+    markUnread: (clinicId: string, notificationId: string) => apiRequest(`notifications.php?action=mark_unread&clinicId=${clinicId}`, {
+      method: "POST",
+      body: JSON.stringify({ notificationId })
+    }),
+    markAllRead: (clinicId: string, notificationIds: string[]) => apiRequest(`notifications.php?action=mark_read&clinicId=${clinicId}`, {
+      method: "POST",
+      body: JSON.stringify({ notificationIds })
     })
   },
   messages: {
@@ -255,6 +264,10 @@ export const api = {
       body: JSON.stringify(data)
     }),
     tickets: () => apiRequest("saas_support.php?action=list"),
+    createTicket: (data: any) => apiRequest("saas_support.php?action=create_ticket", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
     updateTicketStatus: (data: any) => apiRequest("saas_support.php?action=update_status", {
       method: "POST",
       body: JSON.stringify(data)

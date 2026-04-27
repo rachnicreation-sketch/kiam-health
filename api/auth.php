@@ -25,6 +25,8 @@ if ($action === 'login') {
     $globalUser = $stmt->fetch();
 
     if ($globalUser && ($password === $globalUser['password_hash'] || password_verify($password, $globalUser['password_hash']))) {
+        ensureClinicForTenant($pdo, $globalUser['tenant_id']);
+
         // Issue JWT token
         $token = JWT::encode([
             'id' => $globalUser['id'],
@@ -66,6 +68,10 @@ if ($action === 'login') {
 
     if ($user && ($password === $user['password_hash'] || password_verify($password, $user['password_hash']))) {
         unset($user['password_hash']);
+
+        if (!empty($user['clinic_id'])) {
+            ensureClinicForTenant($pdo, $user['clinic_id']);
+        }
         
         $clinic = null;
         if ($user['clinic_id']) {
@@ -109,6 +115,8 @@ if ($action === 'login') {
     if (!$tenant) {
         sendResponse(["status" => "error", "message" => "Tenant inconnu"], 404);
     }
+
+    ensureClinicForTenant($pdo, $tenant['id']);
     
     // Issue Impersonated JWT token
     $token = JWT::encode([

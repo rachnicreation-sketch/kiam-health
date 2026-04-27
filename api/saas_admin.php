@@ -87,9 +87,10 @@ if ($method === 'GET') {
         ]);
     } elseif ($action === 'tenant_detail' && isset($_GET['id'])) {
         $stmt = $pdo->prepare("
-            SELECT t.*, p.name as plan_name 
+            SELECT t.*, p.name as plan_name, gu.email as admin_email
             FROM kiam_tenants t 
             LEFT JOIN kiam_plans p ON t.plan_id = p.id 
+            LEFT JOIN kiam_global_users gu ON gu.tenant_id = t.id AND gu.global_role = 'tenant_admin'
             WHERE t.id = ?
         ");
         $stmt->execute([$_GET['id']]);
@@ -102,9 +103,10 @@ if ($method === 'GET') {
     } elseif ($action === 'tenants') {
         // Full Tenant List with Plan details
         $stmt = $pdo->query("
-            SELECT t.*, p.name as plan_name 
+            SELECT t.*, p.name as plan_name, gu.email as admin_email
             FROM kiam_tenants t 
             LEFT JOIN kiam_plans p ON t.plan_id = p.id 
+            LEFT JOIN kiam_global_users gu ON gu.tenant_id = t.id AND gu.global_role = 'tenant_admin'
             ORDER BY t.created_at DESC
         ");
         sendResponse($stmt->fetchAll());
@@ -159,6 +161,8 @@ if ($method === 'GET') {
                 $data['plan_id']
             ]);
 
+            ensureClinicForTenant($pdo, $tenantId);
+
             // 2. Create Admin User for this tenant
             if (!empty($data['adminEmail']) && !empty($data['adminPassword'])) {
                 $userId = generateId('usr_');
@@ -193,11 +197,21 @@ if ($method === 'GET') {
             sendResponse(["status" => "success"]);
 
         } elseif ($action === 'create_announcement') {
+            $targetSector = $data['target_sector'] ?? 'all';
+            if (str_starts_with($targetSector, 'tenant:')) {
+                $targetTenantId = substr($targetSector, 7);
+                $tenantStmt = $pdo->prepare("SELECT id FROM kiam_tenants WHERE id = ?");
+                $tenantStmt->execute([$targetTenantId]);
+                if (!$tenantStmt->fetch()) {
+                    sendResponse(["status" => "error", "message" => "Locataire cible introuvable"], 400);
+                }
+            }
+
             $stmt = $pdo->prepare("INSERT INTO kiam_system_announcements (title, content, target_sector, expires_at) VALUES (?, ?, ?, ?)");
             $stmt->execute([
                 $data['title'],
                 $data['content'],
-                $data['target_sector'] ?? 'all',
+                $targetSector,
                 $data['expires_at'] ?? null
             ]);
             sendResponse(["status" => "success"]);
