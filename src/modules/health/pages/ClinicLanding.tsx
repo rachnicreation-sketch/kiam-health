@@ -251,7 +251,7 @@ export default function ClinicLanding() {
             </div>
          </div>
          <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between text-[10px] uppercase font-bold text-slate-500 tracking-widest gap-2">
-            <p>© 2026 Kiam Health SaaS - Propulsé par Matiaba Firm</p>
+            <p>© 2026 Kiam Health SaaS - Propulsé par <a href="https://www.rxservices-cg.com" className="hover:text-primary transition-colors">RX services</a></p>
             <div className="flex gap-6">
                <span>Confidentialité</span>
                <span>Conditions d'utilisation</span>

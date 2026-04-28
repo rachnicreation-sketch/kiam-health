@@ -216,6 +216,11 @@ if ($method === 'GET') {
             ]);
             sendResponse(["status" => "success"]);
 
+        } elseif ($action === 'update_status') {
+            $stmt = $pdo->prepare("UPDATE kiam_tenants SET subscription_status = ? WHERE id = ?");
+            $stmt->execute([$data['status'], $data['id']]);
+            sendResponse(["status" => "success"]);
+
         } elseif ($action === 'save_plan') {
             $id = $data['id'] ?? uniqid('plan_');
             $stmt = $pdo->prepare("
@@ -234,6 +239,35 @@ if ($method === 'GET') {
         }
     } catch (Throwable $e) {
         sendResponse(["status" => "error", "message" => "ERREUR SYSTEME: " . $e->getMessage()], 500);
+    }
+} elseif ($method === 'DELETE') {
+    $id = $_GET['id'] ?? null;
+    if ($action === 'delete_tenant' && $id) {
+        try {
+            $pdo->beginTransaction();
+            
+            // 1. Delete associated users
+            $stmt = $pdo->prepare("DELETE FROM kiam_global_users WHERE tenant_id = ?");
+            $stmt->execute([$id]);
+            
+            // 2. Delete modules configuration
+            $stmt = $pdo->prepare("DELETE FROM kiam_tenant_modules WHERE tenant_id = ?");
+            $stmt->execute([$id]);
+            
+            // 3. Delete from clinics
+            $stmt = $pdo->prepare("DELETE FROM clinics WHERE id = ?");
+            $stmt->execute([$id]);
+
+            // 4. Finally delete the tenant
+            $stmt = $pdo->prepare("DELETE FROM kiam_tenants WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            $pdo->commit();
+            sendResponse(["status" => "success", "message" => "Tenant deleted"]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            sendResponse(["status" => "error", "message" => $e->getMessage()], 500);
+        }
     }
 }
 ?>

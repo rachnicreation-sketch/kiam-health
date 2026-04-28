@@ -284,6 +284,13 @@ export const api = {
     }),
     users: () => apiRequest("saas_admin.php?action=saas_users"),
     invoices: () => apiRequest("saas_admin.php?action=saas_invoices"),
+    deleteTenant: (id: string) => apiRequest(`saas_admin.php?action=delete_tenant&id=${id}`, {
+      method: "DELETE"
+    }),
+    updateTenantStatus: (id: string, status: string) => apiRequest("saas_admin.php?action=update_status", {
+      method: "POST",
+      body: JSON.stringify({ id, status })
+    }),
   },
   hotel: {
     rooms: (clinicId: string) => apiRequest(`hotel.php?action=list_rooms&clinicId=${clinicId}`),

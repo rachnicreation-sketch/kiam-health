@@ -2,27 +2,33 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api-service";
+import { DUMMY_HOTEL_STATS, DUMMY_HOTEL_ROOMS } from "@/lib/mock-data";
 import { HotelAdminDashboard } from "../components/HotelAdminDashboard";
 import { HotelFrontDeskDashboard } from "../components/HotelFrontDeskDashboard";
 
 export default function HotelDashboard() {
-  const { user } = useAuth();
+  const { user, isPresentationMode } = useAuth();
   const { toast } = useToast();
   const [rooms, setRooms] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    if (isPresentationMode) {
+      setRooms(DUMMY_HOTEL_ROOMS);
+      setStats(DUMMY_HOTEL_STATS);
+      setIsLoading(false);
+    } else if (user?.clinicId) {
+      loadData();
+    }
+  }, [user, isPresentationMode]);
 
   const loadData = async () => {
-    if (!user?.clinicId) return;
     setIsLoading(true);
     try {
       const [roomData, statData] = await Promise.all([
-        api.hotel.rooms(user.clinicId),
-        api.hotel.stats(user.clinicId)
+        api.hotel.rooms(user!.clinicId!),
+        api.hotel.stats(user!.clinicId!)
       ]);
       setRooms(roomData);
       setStats(statData);

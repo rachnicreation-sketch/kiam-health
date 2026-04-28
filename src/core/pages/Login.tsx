@@ -66,7 +66,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4">
-      <div className="w-full max-w-lg mx-auto space-y-8">
+      <div className="w-full max-w-sm mx-auto space-y-6">
         {/* Logo */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary shadow-lg">
@@ -95,7 +95,7 @@ export default function Login() {
                     type="email" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@clinique.com" 
+                    placeholder="" 
                     className="pl-10" 
                     required 
                   />
@@ -114,7 +114,7 @@ export default function Login() {
                     type="password" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••" 
+                    placeholder="" 
                     className="pl-10" 
                     required 
                   />
@@ -126,17 +126,8 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="pt-4 border-t border-slate-200 mt-4 dark:border-slate-800">
-              <p className="text-xs text-center text-slate-600 dark:text-slate-400 mb-2">Comptes de test (mot de passe: password)</p>
-              <div className="text-xs space-y-1 text-center text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900 p-2 rounded">
-                <div>admin@saas.com (SaaS)</div>
-                <div>admin@fraternite.com (Clinique)</div>
-                <div>admin@marion.com (Clinique)</div>
-              </div>
-            </div>
-
             <p className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4">
-              Développé par <span className="font-medium">Matiaba Firm</span>
+              Développé par <a href="https://www.rxservices-cg.com" className="font-medium hover:underline text-primary">RX services</a>
             </p>
           </CardContent>
         </Card>

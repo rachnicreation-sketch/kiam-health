@@ -9,7 +9,7 @@ import { Sun, Moon, MessageSquare, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function AppLayout() {
-  const { user, clinic, logout } = useAuth();
+  const { user, clinic, logout, isPresentationMode, stopImpersonation } = useAuth();
   const navigate = useNavigate();
   const [theme, setTheme] = useState<'light' | 'dark'>(
     (localStorage.getItem('kiam_theme') as 'light' | 'dark') || 'light'
@@ -29,9 +29,9 @@ export function AppLayout() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleExitDemo = () => {
+    stopImpersonation();
+    navigate('/saas/dashboard');
   };
 
   const getInitials = (name: string | undefined) => {
@@ -44,6 +44,19 @@ export function AppLayout() {
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
+          <div className={`bg-amber-600 text-white transition-all duration-300 overflow-hidden z-50 shadow-inner ${isPresentationMode ? 'h-9 py-1.5 px-4 flex opacity-100' : 'h-0 py-0 opacity-0 hidden'}`}>
+            <div className="flex-1 text-center text-[10px] font-bold uppercase tracking-[0.2em]">
+              Mode Présentation — Données fictives (Sécurité Active)
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExitDemo} 
+              className="h-6 text-[9px] bg-white/10 hover:bg-white text-white hover:text-amber-700 border-white/20 font-black px-3 rounded-full transition-all"
+            >
+              QUITTER LE MODE DEMO
+            </Button>
+          </div>
           <header className="h-14 flex items-center justify-between border-b bg-card px-4 shrink-0">
             <div className="flex items-center gap-3">
               <SidebarTrigger />

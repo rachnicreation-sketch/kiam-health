@@ -25,6 +25,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
+import { DUMMY_SCHOOL_STATS } from "@/lib/mock-data";
 
 // Role-based dashboards
 import { SchoolAdminDashboard } from "../components/AdminDashboard";
@@ -35,7 +36,7 @@ import { AccountantDashboard } from "../components/AccountantDashboard";
 import { SecretariatDashboard } from "../components/SecretariatDashboard";
 
 export default function SchoolDashboard() {
-  const { user } = useAuth();
+  const { user, isPresentationMode } = useAuth();
   const { toast } = useToast();
   const [stats, setStats] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -53,14 +54,18 @@ export default function SchoolDashboard() {
   const classes = ["6ème", "5ème", "4ème", "3ème", "Seconde", "Première", "Terminale"];
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    if (isPresentationMode) {
+      setStats(DUMMY_SCHOOL_STATS);
+      setIsLoading(false);
+    } else if (user?.clinicId) {
+      loadData();
+    }
+  }, [user, isPresentationMode]);
 
   const loadData = async () => {
-    if (!user?.clinicId) return;
     setIsLoading(true);
     try {
-      const statData = await api.school.stats(user.clinicId);
+      const statData = await api.school.stats(user!.clinicId!);
       setStats(statData);
     } catch (error) {
       toast({ variant: "destructive", title: "Erreur", description: "Chargement des données scolaire échoué." });

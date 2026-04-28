@@ -12,7 +12,8 @@ import {
   ShieldAlert,
   Droplet,
   IdCard,
-  Download
+  Download,
+  BedDouble
 } from "lucide-react";
 import { exportToCSV } from "@/lib/export-utils";
 import { Button } from "@/components/ui/button";

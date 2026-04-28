@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Building2, ArrowLeft, Mail, Phone, Calendar, CheckCircle, ShieldAlert, Badge as BadgeIcon, FileText } from "lucide-react";
+import { Building2, ArrowLeft, Mail, Phone, Calendar, CheckCircle, ShieldAlert, Badge as BadgeIcon, FileText, Activity, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,12 +40,46 @@ export default function SaaSTenantProfile() {
     setIsImpersonating(true);
     const res = await impersonate(id);
     if (res.success) {
-      toast({ title: "Connexion réussie", description: `Vous êtes connecté en tant que ${tenant.name}` });
-      // Redirect to the normal protected dashboard
-      navigate('/dashboard');
+      toast({ title: "Mode Présentation Activé", description: `Vous visualisez l'interface de ${tenant.name} sans accès aux données réelles.` });
+      
+      // Dynamic redirection based on sector
+      const sector = tenant.sector || 'health';
+      const sectorRoutes: Record<string, string> = {
+        health: '/dashboard',
+        hotel: '/hotel',
+        school: '/school/dashboard',
+        erp: '/erp/dashboard',
+        shop: '/erp/dashboard',
+        pharmacy: '/pharmacy/dashboard',
+        enterprise: '/enterprise/dashboard'
+      };
+      
+      navigate(sectorRoutes[sector] || '/dashboard');
     } else {
       toast({ title: "Erreur", description: res.message, variant: "destructive" });
       setIsImpersonating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de "${tenant.name}" ?`)) return;
+    try {
+      await api.saas.deleteTenant(id!);
+      toast({ title: "Client supprimé" });
+      navigate('/saas/tenants');
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Erreur", description: err.message });
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    const newStatus = tenant.subscription_status === 'active' ? 'suspended' : 'active';
+    try {
+      await api.saas.updateTenantStatus(id!, newStatus);
+      toast({ title: "Statut mis à jour" });
+      loadTenant();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Erreur", description: err.message });
     }
   };
 
@@ -61,27 +95,42 @@ export default function SaaSTenantProfile() {
     <div className="min-h-full bg-slate-50 text-slate-900 pb-12">
       {/* HEADER SECTION */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-slate-200 px-6 lg:px-8 py-5 shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full hover:bg-slate-100">
-            <ArrowLeft className="w-5 h-5 text-slate-600" />
-          </Button>
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-black text-slate-900 flex items-center gap-3">
-              {tenant.name}
-            </h1>
-            <p className="text-slate-500 mt-1 flex items-center gap-2">
-              <Badge variant="outline" className="font-mono text-[10px]">{domainPrefix || tenant.id}.kiam.tech</Badge>
-              ID: {tenant.id}
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full hover:bg-slate-100">
+              <ArrowLeft className="w-5 h-5 text-slate-600" />
+            </Button>
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-black text-slate-900 flex items-center gap-3">
+                {tenant.name}
+              </h1>
+              <p className="text-slate-500 mt-1 flex items-center gap-2 text-xs">
+                <Badge variant="outline" className="font-mono text-[10px]">{domainPrefix || tenant.id}.kiam.tech</Badge>
+                ID: {tenant.id}
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button 
+               disabled={isImpersonating} 
+               onClick={handleImpersonate} 
+               className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-bold"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              {isImpersonating ? "Connexion..." : "Voir Interface (Démo)"}
+            </Button>
+            
+            <Button variant="outline" onClick={handleToggleStatus} className={tenant.subscription_status === 'active' ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}>
+              {tenant.subscription_status === 'active' ? <ShieldAlert className="w-4 h-4 mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+              {tenant.subscription_status === 'active' ? "Bloquer" : "Débloquer"}
+            </Button>
+            
+            <Button variant="destructive" onClick={handleDelete} className="bg-rose-600 hover:bg-rose-700">
+              <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+            </Button>
           </div>
         </div>
-        <Button 
-           disabled={isImpersonating} 
-           onClick={handleImpersonate} 
-           className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-bold w-full sm:w-auto"
-        >
-          {isImpersonating ? "Connexion..." : "Se connecter en tant que ce client"}
-        </Button>
       </div>
 
       <div className="p-6 lg:px-8 max-w-[1200px] mx-auto space-y-6 mt-6">

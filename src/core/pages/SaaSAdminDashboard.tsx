@@ -51,8 +51,10 @@ export default function SaaSAdminDashboard() {
   ];
 
   const moduleDistribution = stats?.modulesUsage || [
-    { name: 'Kiam Health', value: 45, color: '#3b82f6' },
-    { name: 'Kiam ERP', value: 30, color: '#8b5cf6' },
+    { name: 'Kiam Health', value: 40, color: '#3b82f6' },
+    { name: 'Kiam Hotel', value: 20, color: '#8b5cf6' },
+    { name: 'Kiam School', value: 25, color: '#10b981' },
+    { name: 'Kiam ERP', value: 15, color: '#f59e0b' },
   ];
 
   const recentClients = tenants.slice(0, 5);

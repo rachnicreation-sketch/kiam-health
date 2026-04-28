@@ -70,6 +70,28 @@ export default function SaaSTenants() {
     }
   };
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de "${name}" ? Cette action est irréversible.`)) return;
+    try {
+      await api.saas.deleteTenant(id);
+      toast({ title: "Locataire supprimé", description: "Le compte et toutes ses données ont été retirés." });
+      loadData();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Erreur", description: err.message });
+    }
+  };
+
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    try {
+      await api.saas.updateTenantStatus(id, newStatus);
+      toast({ title: "Statut mis à jour", description: `Le compte est désormais ${newStatus === 'active' ? 'actif' : 'suspendu'}.` });
+      loadData();
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "Erreur", description: err.message });
+    }
+  };
+
   return (
     <div className="min-h-full bg-slate-50 text-slate-900 pb-12">
       
@@ -164,9 +186,14 @@ export default function SaaSTenants() {
                  <Button variant="ghost" onClick={() => navigate(`/saas/tenants/${tenant.id}`)} className="text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl flex items-center justify-center gap-1.5 font-bold">
                     <Activity className="w-4 h-4" /> Profil client
                  </Button>
-                 <Button variant="ghost" className="text-slate-600 hover:text-purple-600 hover:bg-purple-50 rounded-xl flex items-center justify-center gap-1.5 font-bold">
-                    <Blocks className="w-4 h-4" /> Modules
-                 </Button>
+                 <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleToggleStatus(tenant.id, tenant.subscription_status)} className={`rounded-xl h-9 w-9 ${tenant.subscription_status === 'active' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-500 hover:bg-emerald-50'}`}>
+                       {tenant.subscription_status === 'active' ? <ShieldAlert className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(tenant.id, tenant.name)} className="rounded-xl h-9 w-9 text-rose-500 hover:bg-rose-50">
+                       <Trash2 className="w-4 h-4" />
+                    </Button>
+                 </div>
               </div>
             </Card>
           ))}

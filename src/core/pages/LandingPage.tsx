@@ -125,7 +125,7 @@ export default function LandingPage() {
           </div>
           
           <div className="pt-12 flex items-center justify-center gap-8 grayscale opacity-70">
-            <span className="font-bold text-slate-400 uppercase tracking-widest text-xs italic">Propulsé par Rachnicreation-Sketch</span>
+            <span className="font-bold text-slate-400 uppercase tracking-widest text-xs italic">Propulsé par <a href="https://www.rxservices-cg.com" className="hover:text-blue-600 underline">RX services</a></span>
           </div>
         </div>
       </section>
@@ -294,7 +294,7 @@ export default function LandingPage() {
             </div>
             <span className="text-xl font-black text-slate-900 tracking-tighter">KIAM<span className="text-blue-600">SaaS</span></span>
           </div>
-          <p className="text-slate-400 text-sm font-medium">© 2026 KIAM SaaS Platform. Powered by Rachnicreation-Sketch. Tous droits réservés.</p>
+          <p className="text-slate-400 text-sm font-medium">© 2026 KIAM SaaS Platform. Propulsé par <a href="https://www.rxservices-cg.com" className="hover:text-blue-600 underline">RX services</a>. Tous droits réservés.</p>
           <div className="flex justify-center gap-6 text-sm font-bold text-slate-500 italic">
             <a href="#" className="hover:text-blue-600 underline">Confidentialité</a>
             <a href="#" className="hover:text-blue-600 underline">Conditions Générales</a>

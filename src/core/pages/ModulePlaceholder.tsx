@@ -8,10 +8,10 @@ interface ModulePlaceholderProps {
   icon?: LucideIcon;
 }
 
-export function ModulePlaceholder({ 
-  title = "Module", 
-  description = "Ce module est en cours de développement.", 
-  icon: Icon = Construction 
+export function ModulePlaceholder({
+  title = "Module",
+  description = "Ce module est en cours de développement.",
+  icon: Icon = Construction
 }: ModulePlaceholderProps) {
   return (
     <div className="space-y-6">
@@ -27,7 +27,7 @@ export function ModulePlaceholder({
           <Construction className="h-12 w-12 text-muted-foreground/40 mb-4" />
           <h2 className="text-lg font-semibold text-muted-foreground">Module en cours de développement</h2>
           <p className="text-sm text-muted-foreground/60 mt-1 max-w-md">
-            Ce module sera bientôt disponible. Contactez Matiaba Firm pour plus d'informations.
+            Ce module sera bientôt disponible. Contactez <a href="https://www.kiam.com" className="text-primary hover:underline">Kiam support</a> pour plus d'informations.
           </p>
         </CardContent>
       </Card>

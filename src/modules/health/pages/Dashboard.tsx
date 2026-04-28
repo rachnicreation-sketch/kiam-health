@@ -31,7 +31,7 @@ import {
   Area 
 } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
-import { Patient, Appointment, Consultation } from "@/lib/mock-data";
+import { Patient, Appointment, Consultation, DUMMY_STATS } from "@/lib/mock-data";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,17 +49,20 @@ const weeklyData = [
 ];
 
 export default function Dashboard() {
-  const { user, clinic } = useAuth();
+  const { user, clinic, isPresentationMode } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.clinicId) {
+    if (isPresentationMode) {
+      setStats(DUMMY_STATS);
+      setIsLoading(false);
+    } else if (user?.clinicId) {
       loadStats();
     }
-  }, [user]);
+  }, [user, isPresentationMode]);
 
   const loadStats = async () => {
     if (!user?.clinicId) return;
