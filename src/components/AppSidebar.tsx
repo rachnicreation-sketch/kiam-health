@@ -106,15 +106,41 @@ const hotelMainItems: SidebarItem[] = [
 // ========================
 // KIAM SCHOOL (🏫)
 // ========================
-const schoolMainItems: SidebarItem[] = [
+const schoolDirectionItems: SidebarItem[] = [
+  { title: "Dashboard Stratégique", url: "/school/dashboard", icon: LayoutDashboard, module: 'school' },
+  { title: "Statistiques Globales", url: "/school/reports", icon: LineChart, module: 'school' },
+  { title: "Bulletins Consolidés", url: "/school/bulletins", icon: FileText, module: 'school' },
+  { title: "Gestion Financière", url: "/school/payments", icon: Receipt, module: 'school' },
+  { title: "Paramètres Ecole", url: "/school/settings", icon: Settings, module: 'school' },
+];
+
+const schoolAdminItems: SidebarItem[] = [
   { title: "Tableau de bord", url: "/school/dashboard", icon: LayoutDashboard, module: 'school' },
-  { title: "Étudiants", url: "/school/students", icon: UserCheck, module: 'school' },
-  { title: "Classes / Salles", url: "/school/classes", icon: Building2, module: 'school' },
-  { title: "Présences (Appel)", url: "/school/attendance", icon: ClipboardCheck, module: 'school' },
-  { title: "Résultats & Notes", url: "/school/grades", icon: ClipboardList, module: 'school' },
+  { title: "Registre Élèves", url: "/school/students", icon: UserCheck, module: 'school' },
+  { title: "Classes & Salles", url: "/school/classes", icon: Building2, module: 'school' },
+  { title: "Planning & Emploi du temps", url: "/school/schedule", icon: Calendar, module: 'school' },
+  { title: "Personnel Enseignant", url: "/school/teachers", icon: UserCog, module: 'school' },
+];
+
+const schoolFinanceItems: SidebarItem[] = [
+  { title: "Suivi Paiements", url: "/school/payments", icon: Receipt, module: 'school' },
+  { title: "Facturation Scolarité", url: "/school/billing", icon: FileText, module: 'school' },
+  { title: "Caisse & Dépenses", url: "/school/accounting", icon: BarChart3, module: 'school' },
+];
+
+const schoolScolariteItems: SidebarItem[] = [
+  { title: "Bulletins de Notes", url: "/school/bulletins", icon: FileText, module: 'school' },
+  { title: "Saisie des Evaluations", url: "/school/grades", icon: ClipboardList, module: 'school' },
+  { title: "Registre de Présences", url: "/school/attendance", icon: ClipboardCheck, module: 'school' },
   { title: "Emploi du temps", url: "/school/schedule", icon: Calendar, module: 'school' },
-  { title: "Cours & E-learning", url: "/school/learning", icon: PlayCircle, module: 'school' },
-  { title: "Scolarité (Paiements)", url: "/school/payments", icon: Receipt, module: 'school' },
+];
+
+const schoolTeacherItems: SidebarItem[] = [
+  { title: "Mes Classes", url: "/school/classes", icon: Building2, module: 'school' },
+  { title: "Saisie des Notes", url: "/school/grades", icon: Award, module: 'school' },
+  { title: "Appel / Présences", url: "/school/attendance", icon: ClipboardCheck, module: 'school' },
+  { title: "Mon Emploi du temps", url: "/school/schedule", icon: Calendar, module: 'school' },
+  { title: "Supports de cours", url: "/school/learning", icon: PlayCircle, module: 'school' },
 ];
 
 // ========================
@@ -172,7 +198,7 @@ const saasItems: SidebarItem[] = [
   { title: "Paramètres", url: "/saas/settings", icon: Settings, module: 'saas' },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -240,31 +266,28 @@ export function AppSidebar() {
   const isSaaSAdmin = user?.role === 'saas_admin';
   const currentSector = (user?.sector as any) || 'health';
 
-
   return (
-    <Sidebar collapsible="icon" className="w-72 border-r border-slate-800 bg-slate-950 text-slate-100 shadow-xl">
-      <SidebarHeader className="p-4 border-b border-slate-800">
+    <Sidebar className="notranslate border-r-0 shadow-2xl" {...props}>
+      <SidebarHeader className="h-16 border-b flex items-center px-6 bg-slate-950 notranslate">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-sky-500/20">
-            <span className="text-white font-bold text-lg">K</span>
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+            <span className="text-primary-foreground font-black text-lg">K</span>
           </div>
           {!collapsed && (
-            <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-              <h1 className="font-bold text-lg text-white leading-none tracking-tight">
-                {isSaaSAdmin ? "KIAM Master" : "KIAM SaaS"}
-              </h1>
-              <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-1">
+            <div className="flex flex-col">
+              <span className="text-sm font-black text-white tracking-tight">Kiam</span>
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1">
                 {isSaaSAdmin ? "Global Controller" : `${currentSector} Edition`}
-              </p>
+              </span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-3">
+      <SidebarContent className="px-2 py-3 bg-slate-950 notranslate">
         {/* ========== SAAS ADMIN SECTION (ONLY FOR SUPER ADMINS) ========== */}
         {isSaaSAdmin && (
-          <SidebarGroup className="animate-in slide-in-from-top-2 duration-300">
+          <SidebarGroup className="notranslate">
             <SidebarGroupLabel className="text-primary text-[10px] uppercase tracking-[0.2em] font-black pb-4">
               SUIVI GLOBAL
             </SidebarGroupLabel>
@@ -276,10 +299,10 @@ export function AppSidebar() {
 
         {/* ========== CLIENT SECTIONS (HIDDEN FOR SUPER ADMIN) ========== */}
         {!isSaaSAdmin ? (
-          <>
+          <div className="notranslate">
             {/* HEALTH SECTOR */}
             {currentSector === 'health' && (
-              <div className="animate-in fade-in duration-500">
+              <>
                 <SidebarGroup>
                   <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
                     Santé - Principal
@@ -306,12 +329,12 @@ export function AppSidebar() {
                     <SidebarMenu>{renderItems(healthAdminItems)}</SidebarMenu>
                   </SidebarGroupContent>
                 </SidebarGroup>
-              </div>
+              </>
             )}
 
             {/* HOTEL SECTOR */}
             {currentSector === 'hotel' && isSectorEnabled('hotel') && (
-              <SidebarGroup className="animate-in fade-in duration-500">
+              <SidebarGroup>
                 <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
                   Hôtellerie
                 </SidebarGroupLabel>
@@ -323,19 +346,28 @@ export function AppSidebar() {
 
             {/* SCHOOL SECTOR */}
             {currentSector === 'school' && isSectorEnabled('school') && (
-              <SidebarGroup className="animate-in fade-in duration-500">
+              <SidebarGroup>
                 <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
-                  Éducation
+                  Éducation — {user?.role === 'school_direction' ? 'Direction' : user?.role === 'school_admin' ? 'Administration' : user?.role === 'school_finance' ? 'Finance' : user?.role === 'school_scolarite' ? 'Scolarité' : 'Enseignant'}
                 </SidebarGroupLabel>
                 <SidebarGroupContent>
-                  <SidebarMenu>{renderItems(schoolMainItems)}</SidebarMenu>
+                  <SidebarMenu>
+                    {renderItems(
+                      user?.role === 'school_direction' ? schoolDirectionItems :
+                      user?.role === 'school_admin' ? schoolAdminItems :
+                      user?.role === 'school_finance' ? schoolFinanceItems :
+                      user?.role === 'school_scolarite' ? schoolScolariteItems :
+                      user?.role === 'school_teacher' ? schoolTeacherItems :
+                      schoolAdminItems // fallback
+                    )}
+                  </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
 
             {/* ERP / SHOP SECTOR */}
             {(currentSector === 'shop' || currentSector === 'erp') && isSectorEnabled('erp') && (
-              <SidebarGroup className="animate-in fade-in duration-500">
+              <SidebarGroup>
                 <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
                   Gestion / Commerce
                 </SidebarGroupLabel>
@@ -347,7 +379,7 @@ export function AppSidebar() {
             
             {/* PHARMACY SECTOR */}
             {currentSector === 'pharmacy' && isSectorEnabled('pharmacy') && (
-              <SidebarGroup className="animate-in fade-in duration-500">
+              <SidebarGroup>
                 <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
                   Officine
                 </SidebarGroupLabel>
@@ -359,7 +391,7 @@ export function AppSidebar() {
 
             {/* ENTERPRISE SECTOR */}
             {currentSector === 'enterprise' && isSectorEnabled('enterprise') && (
-              <SidebarGroup className="animate-in fade-in duration-500">
+              <SidebarGroup>
                 <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
                   Entreprise
                 </SidebarGroupLabel>
@@ -368,12 +400,12 @@ export function AppSidebar() {
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
-          </>
+          </div>
         ) : null}
 
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t border-slate-800 bg-slate-950/95">
+      <SidebarFooter className="p-4 border-t border-slate-800 bg-slate-950 notranslate">
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-900 transition"

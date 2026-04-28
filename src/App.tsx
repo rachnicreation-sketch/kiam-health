@@ -49,6 +49,7 @@ import Attendance from "./modules/school/pages/Attendance";
 import Payments from "./modules/school/pages/Payments";
 import Schedule from "./modules/school/pages/Schedule";
 import Elearning from "./modules/school/pages/Elearning";
+import Bulletins from "./modules/school/pages/Bulletins";
 import PointOfSale from "./modules/erp/pages/PointOfSale";
 import InventoryManager from "./modules/erp/pages/InventoryManager";
 import ErpTransactions from "./modules/erp/pages/ErpTransactions";
@@ -137,6 +138,7 @@ const App = () => (
               <Route path="/school/payments" element={<ProtectedRoute module="school"><Payments /></ProtectedRoute>} />
               <Route path="/school/schedule" element={<ProtectedRoute module="school"><Schedule /></ProtectedRoute>} />
               <Route path="/school/learning" element={<ProtectedRoute module="school"><Elearning /></ProtectedRoute>} />
+              <Route path="/school/bulletins" element={<ProtectedRoute module="school"><Bulletins /></ProtectedRoute>} />
 
               {/* KIAM ERP / SHOP ROUTES */}
               <Route path="/erp" element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />

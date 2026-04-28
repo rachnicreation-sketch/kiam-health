@@ -30,76 +30,111 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api-service";
 
+import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/lib/api-service";
+import { DUMMY_SCHEDULE, DUMMY_CLASSES } from "@/lib/mock-data";
+
 export default function Schedule() {
-  const { user } = useAuth();
+  const { user, isPresentationMode } = useAuth();
   const [selectedClass, setSelectedClass] = useState("all");
   const [classes, setClasses] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<any[]>([]);
   
   const days = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
   const hours = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
-  // Mock data for initial view
-  const scheduleData = [
-    { day: "Lundi", start: "08:00", end: "10:00", subject: "Mathématiques", teacher: "M. Koua", room: "S-101", class: "6ème A" },
-    { day: "Lundi", start: "10:00", end: "12:00", subject: "Physique", teacher: "Mme. Traore", room: "Labo 1", class: "6ème A" },
-    { day: "Mardi", start: "08:00", end: "09:00", subject: "Anglais", teacher: "Mr. Smith", room: "S-202", class: "6ème A" },
-    { day: "Mercredi", start: "14:00", end: "16:00", subject: "EPS", teacher: "M. Diallo", room: "Gymnase", class: "6ème A" },
-  ];
+  useEffect(() => {
+    if (isPresentationMode) {
+      setSchedule(DUMMY_SCHEDULE);
+      setClasses(DUMMY_CLASSES);
+    } else {
+      // Real API load would go here
+      setSchedule([]);
+    }
+  }, [user, isPresentationMode]);
+
+  const filteredSchedule = selectedClass === "all" 
+    ? schedule 
+    : schedule.filter(s => s.class === selectedClass);
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 p-2 sm:p-6 italic-none">
+    <div className="space-y-6 p-2 sm:p-6 italic-none">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-            <Calendar className="w-8 h-8 text-indigo-600" /> Emploi du Temps
+            <div className="h-10 w-10 rounded-2xl bg-edu-gradient flex items-center justify-center shadow-lg shadow-indigo-200">
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+            Emploi du Temps
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm font-medium">Planification hebdomadaire des cours et activités.</p>
+          <p className="text-muted-foreground mt-1 text-sm font-medium">Planification hebdomadaire des cours et activités pédagogiques.</p>
         </div>
         <div className="flex gap-2">
           <Select value={selectedClass} onValueChange={setSelectedClass}>
-            <SelectTrigger className="w-[180px] h-10 border-slate-200">
+            <SelectTrigger className="w-[200px] h-11 border-none bg-white shadow-sm rounded-xl font-bold">
                <SelectValue placeholder="Filtrer par classe" />
             </SelectTrigger>
-            <SelectContent>
-               <SelectItem value="all">Toutes les classes</SelectItem>
-               <SelectItem value="6ème A">6ème A</SelectItem>
-               <SelectItem value="5ème B">5ème B</SelectItem>
+            <SelectContent className="rounded-xl border-none shadow-2xl">
+               <SelectItem value="all" className="font-bold">Toutes les classes</SelectItem>
+               {classes.map(c => (
+                 <SelectItem key={c.id} value={c.name} className="font-medium">{c.name}</SelectItem>
+               ))}
             </SelectContent>
           </Select>
-          <Button className="bg-edu-gradient text-white font-bold gap-2 shadow-lg shadow-indigo-200">
-             <Plus className="w-4 h-4" /> Ajouter un cours
+          <Button className="bg-edu-gradient text-white font-bold gap-2 shadow-lg shadow-indigo-200 h-11 px-6 rounded-xl">
+             <Plus className="w-4 h-4" /> Nouveau Cours
           </Button>
         </div>
       </div>
 
       <Card className="border-none shadow-2xl bg-white overflow-hidden rounded-[2.5rem]">
          <div className="overflow-x-auto">
-            <div className="min-w-[800px]">
+            <div className="min-w-[1000px]">
                <div className="grid grid-cols-[100px_repeat(6,1fr)] border-b bg-slate-50/50">
-                  <div className="p-4"></div>
+                  <div className="p-6"></div>
                   {days.map(day => (
-                    <div key={day} className="p-4 text-center font-black text-[10px] uppercase tracking-widest text-slate-500 border-l">{day}</div>
+                    <div key={day} className="p-6 text-center font-black text-[11px] uppercase tracking-[0.2em] text-slate-500 border-l border-slate-100">{day}</div>
                   ))}
                </div>
                
-               <div className="divide-y relative">
+               <div className="divide-y divide-slate-100 relative">
                   {hours.map(hour => (
-                    <div key={hour} className="grid grid-cols-[100px_repeat(6,1fr)] min-h-[100px]">
-                       <div className="p-4 text-xs font-bold text-slate-400 flex items-center justify-center">{hour}</div>
+                    <div key={hour} className="grid grid-cols-[100px_repeat(6,1fr)] min-h-[120px]">
+                       <div className="p-6 text-xs font-black text-slate-400 flex items-center justify-center border-r border-slate-100 bg-slate-50/30">{hour}</div>
                        {days.map(day => {
-                          const slot = scheduleData.find(s => s.day === day && s.start === hour);
+                          // Find course that STARTS at this hour
+                          const slot = filteredSchedule.find(s => s.day === day && s.start === hour);
+                          
+                          // Check if this cell is part of an ONGOING course (duration > 1h)
+                          // For simplicity in this demo, we just render if it starts here.
+                          // Real logic would calculate rowSpan.
+                          
                           return (
-                            <div key={`${day}-${hour}`} className="p-2 border-l relative group">
+                            <div key={`${day}-${hour}`} className="p-3 border-l border-slate-100 relative group hover:bg-slate-50/50 transition-colors">
                                {slot && (
-                                 <div className="h-full w-full p-3 rounded-2xl bg-indigo-50 border border-indigo-100 shadow-sm group-hover:shadow-md transition-all">
-                                    <div className="text-[10px] font-black text-indigo-600 uppercase mb-1">{slot.subject}</div>
-                                    <div className="flex items-center gap-1 text-[9px] text-slate-500 mb-1">
-                                       <User className="h-3 w-3" /> {slot.teacher}
+                                 <div className={`h-full w-full p-4 rounded-[1.5rem] border shadow-sm group-hover:shadow-md transition-all flex flex-col justify-between ${slot.color || 'bg-indigo-50 border-indigo-100 text-indigo-700'}`}>
+                                    <div>
+                                      <div className="text-[11px] font-black uppercase tracking-wider mb-2">{slot.subject}</div>
+                                      <div className="flex items-center gap-2 text-[10px] opacity-80 font-bold mb-1">
+                                         <User className="h-3.5 w-3.5" /> {slot.teacher}
+                                      </div>
+                                      <div className="flex items-center gap-2 text-[10px] opacity-70 font-medium">
+                                         <MapPin className="h-3.5 w-3.5" /> {slot.room}
+                                      </div>
                                     </div>
-                                    <div className="flex items-center gap-1 text-[9px] text-slate-400">
-                                       <MapPin className="h-3 w-3" /> {slot.room}
+                                    <div className="flex justify-between items-end mt-2">
+                                       <Badge variant="outline" className="text-[9px] font-black uppercase bg-white/50 border-none px-2">{slot.class}</Badge>
+                                       <div className="text-[9px] font-bold opacity-60 flex items-center gap-1">
+                                          <Clock className="h-3 w-3" /> {slot.start} - {slot.end}
+                                       </div>
                                     </div>
-                                    <Badge variant="secondary" className="absolute top-2 right-2 text-[8px] bg-white text-slate-400 px-1 py-0">{slot.class}</Badge>
+                                 </div>
+                               )}
+                               {!slot && (
+                                 <div className="h-full w-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white shadow-sm text-slate-300 hover:text-indigo-600">
+                                      <Plus className="h-4 w-4" />
+                                    </Button>
                                  </div>
                                )}
                             </div>

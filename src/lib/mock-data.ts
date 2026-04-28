@@ -10,7 +10,12 @@ export type UserRole =
   | 'hr' 
   | 'inventory_manager' 
   | 'nurse_aide' 
-  | 'agent';
+  | 'agent'
+  | 'school_direction'
+  | 'school_admin'
+  | 'school_finance'
+  | 'school_scolarite'
+  | 'school_teacher';
 
 export interface Clinic {
   id: string;
@@ -283,11 +288,56 @@ export const DUMMY_HOTEL_ROOMS = [
 
 export const DUMMY_SCHOOL_STATS = {
   total_students: 850,
-  teachers_count: 42,
+  classes_count: 24,
+  today_attendance: 94,
+  revenue: 4250000,
   avg_performance: 14.5,
   pending_payments: 1250000,
+  distribution: [
+    { class_level: '6ème', count: 145 },
+    { class_level: '5ème', count: 132 },
+    { class_level: '4ème', count: 128 },
+    { class_level: '3ème', count: 110 },
+    { class_level: '2nde', count: 95 },
+    { class_level: '1ère', count: 82 },
+    { class_level: 'Tle', count: 75 },
+  ],
   recent_enrollments: [
-    { id: 'S-101', name: 'Mabiala Jean', class: '3ème', status: 'enrolled' },
-    { id: 'S-102', name: 'Okombi Sarah', class: '6ème', status: 'pending' },
+    { id: 'S-101', name: 'Mabiala Jean', class: '3ème', date: '2026-04-12', status: 'enrolled' },
+    { id: 'S-102', name: 'Okombi Sarah', class: '6ème', date: '2026-04-11', status: 'pending' },
+    { id: 'S-103', name: 'Ngouabi Moise', class: '4ème', date: '2026-04-10', status: 'enrolled' },
   ]
 };
+
+export const DUMMY_STUDENTS = [
+  { id: 'ST-001', name: 'Mabiala', first_name: 'Jean', class_level: '3ème', tutor_name: 'M. Mabiala Pierre', tutor_phone: '06 444 22 11', status: 'active', address: 'Brazzaville, Moungali', cycle: 'Collège', averages: { 'Maths': 14, 'Français': 12, 'Anglais': 15 } },
+  { id: 'ST-002', name: 'Okombi', first_name: 'Sarah', class_level: '6ème', tutor_name: 'Mme Okombi Lucie', tutor_phone: '05 555 33 22', status: 'active', address: 'Brazzaville, Poto-Poto', cycle: 'Collège', averages: { 'Maths': 10, 'Français': 16, 'Anglais': 14 } },
+  { id: 'ST-003', name: 'Ngouabi', first_name: 'Moise', class_level: '4ème', tutor_name: 'M. Ngouabi Paul', tutor_phone: '06 111 22 33', status: 'active', address: 'Brazzaville, Bacongo', cycle: 'Collège', averages: { 'Maths': 18, 'Français': 15, 'HG': 17 } },
+  { id: 'ST-004', name: 'Lekoumou', first_name: 'Alice', class_level: 'Tle', tutor_name: 'Mme Lekoumou Marie', tutor_phone: '05 666 44 55', status: 'active', address: 'Brazzaville, Ouenzé', cycle: 'Lycée', averages: { 'Maths': 16, 'Physique': 17, 'Philo': 11 } },
+  { id: 'ST-005', name: 'Tchicaya', first_name: 'Felix', class_level: '2nde', tutor_name: 'M. Tchicaya Jean', tutor_phone: '06 999 88 77', status: 'active', address: 'Pointe-Noire, Centre', cycle: 'Lycée', averages: { 'Maths': 12, 'Français': 13, 'Anglais': 11 } },
+];
+
+export const SCHOOL_SUBJECTS = {
+  'Collège': ['Mathématiques', 'Français', 'Anglais', 'Physique-Chimie', 'SVT', 'Histoire-Géo', 'EPS', 'Arts'],
+  'Lycée': ['Mathématiques', 'Physique-Chimie', 'SVT', 'Philosophie', 'Français', 'Anglais', 'Histoire-Géo', 'EPS'],
+  'Primaire': ['Mathématiques', 'Français', 'Éveil', 'Dictée', 'Calcul Mental', 'Sport'],
+  'Maternelle': ['Langage', 'Graphisme', 'Mathématiques', 'Activités Physiques', 'Découverte'],
+};
+
+export const DUMMY_CLASSES = [
+  { id: 'CL-001', name: '6ème A', level: '6ème', room_number: 'B-101', teacher_name: 'M. Kouassi', students_count: 35 },
+  { id: 'CL-002', name: '3ème B', level: '3ème', room_number: 'A-202', teacher_name: 'Mme. Zohra', students_count: 28 },
+  { id: 'CL-003', name: 'Terminale C', level: 'Lycée', room_number: 'S-001', teacher_name: 'M. Diop', students_count: 22 },
+  { id: 'CL-004', name: 'Seconde S', level: 'Lycée', room_number: 'S-003', teacher_name: 'Mme. Sy', students_count: 30 },
+];
+
+export const DUMMY_SCHEDULE = [
+  { day: "Lundi", start: "08:00", end: "10:00", subject: "Mathématiques", teacher: "M. Kouassi", room: "S-101", class: "6ème A", color: "bg-blue-50 border-blue-100 text-blue-700" },
+  { day: "Lundi", start: "10:00", end: "12:00", subject: "Physique", teacher: "Mme. Traoré", room: "Labo 1", class: "6ème A", color: "bg-purple-50 border-purple-100 text-purple-700" },
+  { day: "Lundi", start: "14:00", end: "16:00", subject: "Histoire-Géo", teacher: "M. Diop", room: "S-105", class: "6ème A", color: "bg-amber-50 border-amber-100 text-amber-700" },
+  { day: "Mardi", start: "08:00", end: "10:00", subject: "Français", teacher: "Mme. Zohra", room: "S-202", class: "6ème A", color: "bg-rose-50 border-rose-100 text-rose-700" },
+  { day: "Mardi", start: "10:00", end: "11:00", subject: "Anglais", teacher: "Mr. Smith", room: "S-202", class: "6ème A", color: "bg-indigo-50 border-indigo-100 text-indigo-700" },
+  { day: "Mercredi", start: "08:00", end: "12:00", subject: "EPS / Sport", teacher: "M. Diallo", room: "Gymnase", class: "6ème A", color: "bg-emerald-50 border-emerald-100 text-emerald-700" },
+  { day: "Jeudi", start: "09:00", end: "11:00", subject: "SVT", teacher: "Mme. Sy", room: "Labo 2", class: "6ème A", color: "bg-teal-50 border-teal-100 text-teal-700" },
+  { day: "Vendredi", start: "15:00", end: "17:00", subject: "Informatique", teacher: "M. Bakari", room: "Salle Info", class: "6ème A", color: "bg-slate-50 border-slate-100 text-slate-700" },
+];

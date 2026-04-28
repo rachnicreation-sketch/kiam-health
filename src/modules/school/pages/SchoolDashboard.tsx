@@ -30,10 +30,9 @@ import { DUMMY_SCHOOL_STATS } from "@/lib/mock-data";
 // Role-based dashboards
 import { SchoolAdminDashboard } from "../components/AdminDashboard";
 import { TeacherDashboard } from "../components/TeacherDashboard";
-import { StudentDashboard } from "../components/StudentDashboard";
-import { ParentDashboard } from "../components/ParentDashboard";
-import { AccountantDashboard } from "../components/AccountantDashboard";
-import { SecretariatDashboard } from "../components/SecretariatDashboard";
+import { DirectionDashboard } from "../components/DirectionDashboard";
+import { FinanceDashboard } from "../components/FinanceDashboard";
+import { ScolariteDashboard } from "../components/ScolariteDashboard";
 
 export default function SchoolDashboard() {
   const { user, isPresentationMode } = useAuth();
@@ -88,21 +87,19 @@ export default function SchoolDashboard() {
 
   // Render dashboard based on role
   const renderDashboard = () => {
-    const role = user?.role?.toLowerCase() || 'admin_ecole';
+    const role = user?.role || 'school_admin';
     
     switch (role) {
-      case 'enseignant':
+      case 'school_direction':
+        return <DirectionDashboard stats={stats} user={user} />;
+      case 'school_admin':
+        return <SchoolAdminDashboard stats={stats} onAddStudent={() => setIsAddStudentOpen(true)} />;
+      case 'school_finance':
+        return <FinanceDashboard stats={stats} user={user} />;
+      case 'school_scolarite':
+        return <ScolariteDashboard stats={stats} user={user} />;
+      case 'school_teacher':
         return <TeacherDashboard stats={stats} user={user} />;
-      case 'eleve':
-        return <StudentDashboard stats={stats} user={user} />;
-      case 'parent':
-        return <ParentDashboard stats={stats} user={user} />;
-      case 'comptable':
-        return <AccountantDashboard stats={stats} user={user} />;
-      case 'secretariat':
-        return <SecretariatDashboard stats={stats} user={user} onAddStudent={() => setIsAddStudentOpen(true)} />;
-      case 'clinic_admin':
-      case 'admin_ecole':
       default:
         return <SchoolAdminDashboard stats={stats} onAddStudent={() => setIsAddStudentOpen(true)} />;
     }

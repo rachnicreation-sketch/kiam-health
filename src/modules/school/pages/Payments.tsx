@@ -34,25 +34,42 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Payments() {
-  const { user } = useAuth();
+  const { user, isPresentationMode } = useAuth();
   const { toast } = useToast();
   const [payments, setPayments] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
 
-  const [paymentForm, setPaymentForm] = useState({
-    student_id: "",
-    amount: "",
-    date: new Date().toISOString().split('T')[0],
-    type: "Scolarité",
-    method: "Espèces",
-    status: "paid"
-  });
+  // Strict Role Checking
+  const isFinance = user?.role === 'school_finance';
+  const isDirection = user?.role === 'school_direction';
+  const isAdminOrScolarite = ['school_admin', 'school_scolarite', 'school_teacher'].includes(user?.role || '');
+  const isGlobalAdmin = user?.role === 'clinic_admin' || user?.role === 'saas_admin';
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    if (isPresentationMode) {
+      // Mock some data for presentation
+      setPayments([
+        { id: 'PAY-001', first_name: 'Jean', name: 'Mabiala', amount: 125000, payment_date: '2026-04-28', type: 'Scolarité' },
+        { id: 'PAY-002', first_name: 'Sarah', name: 'Okombi', amount: 45000, payment_date: '2026-04-27', type: 'Inscription' },
+      ]);
+      setStudents(DUMMY_STUDENTS);
+    } else if (user?.clinicId) {
+      loadData();
+    }
+  }, [user, isPresentationMode]);
+
+  if (isAdminOrScolarite && !isGlobalAdmin) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center text-slate-400 italic">
+        <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+          <CreditCard className="h-10 w-10 opacity-10" />
+        </div>
+        <p>Accès Refusé. La gestion financière est réservée au service Comptabilité.</p>
+      </div>
+    );
+  }
 
   const loadData = async () => {
     if (!user?.clinicId) return;
@@ -93,6 +110,15 @@ export default function Payments() {
     }
   };
 
+  const [paymentForm, setPaymentForm] = useState({
+    student_id: "",
+    amount: "",
+    date: new Date().toISOString().split('T')[0],
+    type: "Scolarité",
+    method: "Espèces",
+    status: "paid"
+  });
+
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 p-2 sm:p-6 italic-none">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -102,65 +128,67 @@ export default function Payments() {
           </h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">Suivi des encaissements et gestion des impayés.</p>
         </div>
-        <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 font-bold gap-2">
-              <Plus className="w-4 h-4" /> Encaisser Frais
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Enregistrer un Paiement</DialogTitle>
-              <CardDescription>Saisissez les détails du règlement</CardDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label>Élève *</Label>
-                <Select value={paymentForm.student_id} onValueChange={v => setPaymentForm({...paymentForm, student_id: v})}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner l'élève..." /></SelectTrigger>
-                  <SelectContent>
-                    {students.map(s => <SelectItem key={s.id} value={s.id}>{s.first_name} {s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+        {(isFinance || isGlobalAdmin) && (
+          <Dialog open={isAddPaymentOpen} onOpenChange={setIsAddPaymentOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-indigo-600 hover:bg-indigo-700 font-bold gap-2">
+                <Plus className="w-4 h-4" /> Encaisser Frais
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Enregistrer un Paiement</DialogTitle>
+                <CardDescription>Saisissez les détails du règlement</CardDescription>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Élève *</Label>
+                  <Select value={paymentForm.student_id} onValueChange={v => setPaymentForm({...paymentForm, student_id: v})}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner l'élève..." /></SelectTrigger>
+                    <SelectContent>
+                      {students.map(s => <SelectItem key={s.id} value={s.id}>{s.first_name} {s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <Label>Montant (CFA) *</Label>
+                     <Input type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} />
+                   </div>
+                   <div className="space-y-2">
+                     <Label>Date</Label>
+                     <Input type="date" value={paymentForm.date} onChange={e => setPaymentForm({...paymentForm, date: e.target.value})} />
+                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Type de Frais</Label>
+                  <Select value={paymentForm.type} onValueChange={v => setPaymentForm({...paymentForm, type: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Scolarité">Mensualité Scolarité</SelectItem>
+                      <SelectItem value="Inscription">Inscription / Dossier</SelectItem>
+                      <SelectItem value="Examen">Frais d'Examen</SelectItem>
+                      <SelectItem value="Uniforme">Uniforme & Fournitures</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Mode de Règlement</Label>
+                  <Select value={paymentForm.method} onValueChange={v => setPaymentForm({...paymentForm, method: v})}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Espèces">Espèces</SelectItem>
+                      <SelectItem value="Mobile Money">Mobile Money (Airtel/MTN)</SelectItem>
+                      <SelectItem value="Virement">Virement Bancaire</SelectItem>
+                      <SelectItem value="Chèque">Chèque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button className="w-full bg-indigo-600 mt-4" onClick={handleAddPayment}>Valider & Imprimer Reçu</Button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                   <Label>Montant (CFA) *</Label>
-                   <Input type="number" value={paymentForm.amount} onChange={e => setPaymentForm({...paymentForm, amount: e.target.value})} />
-                 </div>
-                 <div className="space-y-2">
-                   <Label>Date</Label>
-                   <Input type="date" value={paymentForm.date} onChange={e => setPaymentForm({...paymentForm, date: e.target.value})} />
-                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Type de Frais</Label>
-                <Select value={paymentForm.type} onValueChange={v => setPaymentForm({...paymentForm, type: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Scolarité">Mensualité Scolarité</SelectItem>
-                    <SelectItem value="Inscription">Inscription / Dossier</SelectItem>
-                    <SelectItem value="Examen">Frais d'Examen</SelectItem>
-                    <SelectItem value="Uniforme">Uniforme & Fournitures</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Mode de Règlement</Label>
-                <Select value={paymentForm.method} onValueChange={v => setPaymentForm({...paymentForm, method: v})}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Espèces">Espèces</SelectItem>
-                    <SelectItem value="Mobile Money">Mobile Money (Airtel/MTN)</SelectItem>
-                    <SelectItem value="Virement">Virement Bancaire</SelectItem>
-                    <SelectItem value="Chèque">Chèque</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button className="w-full bg-indigo-600 mt-4" onClick={handleAddPayment}>Valider & Imprimer Reçu</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

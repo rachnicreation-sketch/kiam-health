@@ -42,7 +42,7 @@ export default function SaaSTenantProfile() {
     if (res.success) {
       toast({ title: "Mode Présentation Activé", description: `Vous visualisez l'interface de ${tenant.name} sans accès aux données réelles.` });
       
-      // Dynamic redirection based on sector
+      // Dynamic redirection based on sector with a small delay for stability
       const sector = tenant.sector || 'health';
       const sectorRoutes: Record<string, string> = {
         health: '/dashboard',
@@ -54,7 +54,9 @@ export default function SaaSTenantProfile() {
         enterprise: '/enterprise/dashboard'
       };
       
-      navigate(sectorRoutes[sector] || '/dashboard');
+      setTimeout(() => {
+        navigate(sectorRoutes[sector] || '/dashboard');
+      }, 100);
     } else {
       toast({ title: "Erreur", description: res.message, variant: "destructive" });
       setIsImpersonating(false);

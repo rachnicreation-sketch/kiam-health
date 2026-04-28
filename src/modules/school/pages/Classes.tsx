@@ -24,8 +24,13 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { DUMMY_CLASSES } from "@/lib/mock-data";
+import { api } from "@/lib/api-service";
+
 export default function Classes() {
-  const { user } = useAuth();
+  const { user, isPresentationMode } = useAuth();
   const { toast } = useToast();
   const [classes, setClasses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,13 +44,18 @@ export default function Classes() {
   });
 
   useEffect(() => {
-    loadData();
-  }, [user]);
+    if (isPresentationMode) {
+      setClasses(DUMMY_CLASSES);
+      setIsLoading(false);
+    } else if (user?.clinicId) {
+      loadData();
+    }
+  }, [user, isPresentationMode]);
 
   const loadData = async () => {
-    if (!user?.clinicId) return;
     setIsLoading(true);
     try {
+      // For now, if api-service doesn't have listClasses, we use manual fetch or empty
       const data = await apiRequest("school.php?action=list_classes");
       setClasses(data);
     } catch (error) {
@@ -59,7 +69,7 @@ export default function Classes() {
     try {
       await apiRequest("school.php?action=add_class", {
         method: "POST",
-        body: JSON.stringify({ ...classForm, clinicId: user.clinicId })
+        body: JSON.stringify({ ...classForm, clinicId: user!.clinicId })
       });
       toast({ title: "Classe créée", description: `La classe ${classForm.name} a été ajoutée.` });
       setIsAddClassOpen(false);
@@ -71,81 +81,89 @@ export default function Classes() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 p-2 sm:p-6 italic-none">
+    <div className="space-y-6 p-2 sm:p-6 italic-none">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-3">
-            <Building2 className="w-8 h-8 text-emerald-600" /> Gestion des Classes
+            <div className="h-10 w-10 rounded-2xl bg-edu-gradient flex items-center justify-center shadow-lg shadow-sky-200">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            Gestion des Classes
           </h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">Organisation des salles et des niveaux scolaires.</p>
         </div>
         <Dialog open={isAddClassOpen} onOpenChange={setIsAddClassOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 font-bold gap-2">
+            <Button className="bg-edu-gradient text-white font-bold gap-2 shadow-lg shadow-sky-200 h-11 px-6 rounded-xl">
               <Plus className="w-4 h-4" /> Nouvelle Classe
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="rounded-[2rem] border-none shadow-2xl">
             <DialogHeader>
-              <DialogTitle>Créer une Classe</DialogTitle>
-              <CardDescription>Configurez une nouvelle section pédagogique</CardDescription>
+              <DialogTitle className="text-2xl font-black flex items-center gap-2">
+                <Building2 className="text-sky-600" /> Créer une Classe
+              </DialogTitle>
+              <CardDescription className="font-medium">Configurez une nouvelle section pédagogique</CardDescription>
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div className="space-y-2">
-                <Label>Nom de la Classe *</Label>
-                <Input placeholder="ex: 6ème A, Terminale C" value={classForm.name} onChange={e => setClassForm({...classForm, name: e.target.value})} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Nom de la Classe *</Label>
+                <Input placeholder="ex: 6ème A, Terminale C" className="rounded-xl border-slate-200 h-11" value={classForm.name} onChange={e => setClassForm({...classForm, name: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Niveau Scolaire</Label>
-                <Input placeholder="ex: 6ème, Lycée" value={classForm.level} onChange={e => setClassForm({...classForm, level: e.target.value})} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Niveau Scolaire</Label>
+                <Input placeholder="ex: 6ème, Lycée" className="rounded-xl border-slate-200 h-11" value={classForm.level} onChange={e => setClassForm({...classForm, level: e.target.value})} />
               </div>
               <div className="space-y-2">
-                <Label>Salle / Localisation</Label>
-                <Input placeholder="ex: B-102" value={classForm.room_number} onChange={e => setClassForm({...classForm, room_number: e.target.value})} />
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Salle / Localisation</Label>
+                <Input placeholder="ex: B-102" className="rounded-xl border-slate-200 h-11" value={classForm.room_number} onChange={e => setClassForm({...classForm, room_number: e.target.value})} />
               </div>
-              <Button className="w-full bg-emerald-600" onClick={handleAddClass}>Enregistrer la classe</Button>
+              <Button className="w-full bg-edu-gradient text-white h-12 rounded-xl font-bold mt-4 shadow-lg shadow-sky-100" onClick={handleAddClass}>Enregistrer la classe</Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {classes.length === 0 ? (
-           <Card className="md:col-span-3 border-dashed bg-slate-50/50">
-             <CardContent className="h-60 flex flex-col items-center justify-center text-slate-400 italic">
+           <div className="md:col-span-3 h-60 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center justify-center text-slate-400 italic bg-white/50">
                 <Building2 className="h-12 w-12 mb-2 opacity-20" />
                 <p>Aucune classe enregistrée pour le moment.</p>
-             </CardContent>
-           </Card>
+           </div>
         ) : (
           classes.map(cls => (
-            <Card key={cls.id} className="border-none shadow-md hover:shadow-lg transition-shadow bg-white overflow-hidden group">
-              <CardHeader className="bg-slate-50 border-b p-4 relative">
+            <Card key={cls.id} className="border-none shadow-2xl bg-white overflow-hidden rounded-[2.5rem] group hover:translate-y-[-4px] transition-all duration-300">
+              <CardHeader className="bg-slate-50/50 border-b p-6 relative">
                 <div className="flex justify-between items-start">
-                   <div className="h-10 w-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center font-black">
+                   <div className="h-12 w-12 bg-gradient-to-br from-sky-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center font-black shadow-lg shadow-sky-100 group-hover:scale-110 transition-transform">
                       {cls.name[0]}
                    </div>
-                   <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 group-hover:text-slate-900"><MoreVertical className="w-4 h-4" /></Button>
+                   <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-slate-900 rounded-xl transition-colors"><MoreVertical className="w-5 h-5" /></Button>
                 </div>
-                <div className="mt-3">
-                   <CardTitle className="text-lg font-black text-slate-900">{cls.name}</CardTitle>
-                   <CardDescription className="text-xs uppercase font-bold text-emerald-600">{cls.level}</CardDescription>
+                <div className="mt-4">
+                   <CardTitle className="text-xl font-black text-slate-900">{cls.name}</CardTitle>
+                   <CardDescription className="text-xs uppercase font-bold text-sky-600 mt-1 flex items-center gap-2">
+                     <div className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
+                     {cls.level}
+                   </CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 space-y-4">
+              <CardContent className="p-6 space-y-4">
                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2 text-slate-500"><Users className="h-4 w-4" /> Effectif</div>
-                    <span className="font-bold text-slate-900">-- élèves</span>
+                    <div className="flex items-center gap-3 text-slate-500 font-medium"><Users className="h-4 w-4" /> Effectif</div>
+                    <Badge className="bg-sky-50 text-sky-700 border-none font-bold">{cls.students_count || '--'} élèves</Badge>
                  </div>
                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2 text-slate-500"><UserCog className="h-4 w-4" /> Prof. Principal</div>
-                    <span className="font-medium text-slate-700 text-xs">{cls.teacher_name || 'Non assigné'}</span>
+                    <div className="flex items-center gap-3 text-slate-500 font-medium"><UserCog className="h-4 w-4" /> Prof. Principal</div>
+                    <span className="font-bold text-slate-800 text-xs">{cls.teacher_name || 'Non assigné'}</span>
                  </div>
                  <div className="flex justify-between items-center text-sm">
-                    <div className="flex items-center gap-2 text-slate-500"><BookOpen className="h-4 w-4" /> Salle</div>
-                    <Badge variant="outline" className="text-[10px] uppercase">{cls.room_number || 'TBD'}</Badge>
+                    <div className="flex items-center gap-3 text-slate-500 font-medium"><BookOpen className="h-4 w-4" /> Localisation</div>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold border-slate-200 px-3 py-0.5 rounded-lg">{cls.room_number || 'TBD'}</Badge>
                  </div>
-                 <Button variant="ghost" className="w-full h-9 text-[10px] uppercase font-black text-emerald-600 border border-emerald-50 mt-2">Voir la liste d'appel</Button>
+                 <div className="pt-4 border-t border-slate-50">
+                    <Button variant="ghost" className="w-full h-11 text-[11px] uppercase font-black text-sky-600 bg-sky-50/50 hover:bg-sky-100 rounded-xl transition-all">Gérer les présences</Button>
+                 </div>
               </CardContent>
             </Card>
           ))
@@ -162,5 +180,6 @@ async function apiRequest(endpoint: string, options: any = {}) {
       ...options,
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, ...options.headers }
     });
+    if (!response.ok) throw new Error("API Error");
     return response.json();
 }
