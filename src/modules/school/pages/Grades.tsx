@@ -24,7 +24,8 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { DUMMY_CLASSES, DUMMY_STUDENTS, SCHOOL_SUBJECTS } from "@/lib/mock-data";
+import { SCHOOL_SUBJECTS } from "@/lib/mock-data";
+import { api } from "@/lib/api-service";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -41,6 +42,7 @@ export default function Grades() {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [period, setPeriod] = useState("Trimestre 1");
   const [gradeData, setGradeData] = useState<Record<string, string>>({});
+  const [commentData, setCommentData] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   // Role-based permissions
@@ -48,25 +50,48 @@ export default function Grades() {
   const canSeeFullBulletin = ['school_direction', 'school_admin', 'school_scolarite'].includes(user?.role || '');
 
   useEffect(() => {
-    if (isPresentationMode) {
-      setClasses(DUMMY_CLASSES);
-      setStudents(DUMMY_STUDENTS);
+    if (user?.clinicId) {
+      loadData();
     }
-  }, [isPresentationMode]);
+  }, [user]);
 
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [classesData, studentsData, subjectsData] = await Promise.all([
+        api.school.classes(user!.clinicId!),
+        api.school.students(user!.clinicId!),
+        api.school.subjects(user!.clinicId!)
+      ]);
+      setClasses(classesData);
+      setStudents(studentsData);
+      setSubjects(subjectsData.map((s: any) => s.name));
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les données." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // No longer needed to mock subjects here as we load them from API
+  /*
   useEffect(() => {
     if (selectedClass) {
       const cls = classes.find(c => c.id === selectedClass);
       if (cls) {
-        // Mock subjects based on cycle
         const cycle = cls.level.includes('6') || cls.level.includes('3') ? 'Collège' : 'Lycée';
         setSubjects(SCHOOL_SUBJECTS[cycle as keyof typeof SCHOOL_SUBJECTS] || []);
       }
     }
   }, [selectedClass, classes]);
+  */
 
   const handleGradeChange = (studentId: string, value: string) => {
     setGradeData(prev => ({ ...prev, [studentId]: value }));
+  };
+
+  const handleCommentChange = (studentId: string, value: string) => {
+    setCommentData(prev => ({ ...prev, [studentId]: value }));
   };
 
   const handleSaveGrades = async () => {
@@ -74,7 +99,30 @@ export default function Grades() {
       toast({ variant: "destructive", title: "Erreur", description: "Veuillez sélectionner une matière." });
       return;
     }
-    toast({ title: "Notes enregistrées", description: `Les notes de ${selectedSubject} ont été mises à jour.` });
+    
+    setIsLoading(true);
+    try {
+      const studentIds = Object.keys(gradeData);
+      for (const studentId of studentIds) {
+        if (gradeData[studentId] && gradeData[studentId] !== "") {
+          await api.school.addGrade({
+            student_id: studentId,
+            subject: selectedSubject,
+            score: parseFloat(gradeData[studentId]),
+            period: period,
+            comment: commentData[studentId] || ""
+          });
+        }
+      }
+      toast({ title: "Notes enregistrées", description: `Les notes de ${selectedSubject} ont été mises à jour.` });
+      // Reset after save
+      setGradeData({});
+      setCommentData({});
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: "Une erreur est survenue lors de l'enregistrement." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -193,6 +241,8 @@ export default function Grades() {
                         <Input 
                           placeholder="Appréciation..." 
                           className="h-11 border-none bg-transparent text-sm font-medium text-slate-500 italic-none"
+                          value={commentData[student.id] || ""}
+                          onChange={e => handleCommentChange(student.id, e.target.value)}
                         />
                      </TableCell>
                      <TableCell className="text-right pr-8 py-4">
@@ -213,13 +263,4 @@ export default function Grades() {
       </Card>
     </div>
   );
-}
-
-async function apiRequest(endpoint: string, options: any = {}) {
-    const token = localStorage.getItem('kiam_jwt_token');
-    const response = await fetch(`/kiam/api/${endpoint}`, {
-      ...options,
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, ...options.headers }
-    });
-    return response.json();
 }

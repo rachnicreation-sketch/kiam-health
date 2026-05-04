@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
-import { apiRequest } from "@/lib/api-service";
+import { api } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ErpTransactions() {
@@ -39,7 +39,7 @@ export default function ErpTransactions() {
     if (!user?.clinicId) return;
     setIsLoading(true);
     try {
-      const data = await apiRequest(`erp.php?action=list_sales&clinicId=${user.clinicId}`);
+      const data = await api.erp.listSales(user.clinicId);
       setTransactions(data);
     } catch (error) {
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger l'historique." });

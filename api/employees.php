@@ -28,29 +28,42 @@ if ($method === 'GET') {
             ];
         }
         sendResponse($formatted);
+    } elseif ($action === 'list_documents') {
+        $empId = $_GET['employee_id'];
+        $stmt = $pdo->prepare("SELECT * FROM user_docs WHERE tenant_id = ? AND user_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$clinicId, $empId]);
+        sendResponse($stmt->fetchAll());
     }
 } elseif ($method === 'POST') {
-    $data = getRequestData();
-    if (!$data['name'] || !$data['clinicId']) {
-        sendResponse(["status" => "error", "message" => "Données manquantes"], 400);
+    if ($action === 'add_document') {
+        $data = getRequestData();
+        $id = "DOC-" . time() . rand(10, 99);
+        $stmt = $pdo->prepare("INSERT INTO user_docs (id, tenant_id, user_id, type, name, file_url) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$id, $clinicId, $data['employee_id'], $data['type'], $data['name'], $data['file_url']]);
+        sendResponse(["status" => "success", "id" => $id]);
+    } else {
+        $data = getRequestData();
+        if (!$data['name'] || !$data['clinicId']) {
+            sendResponse(["status" => "error", "message" => "Données manquantes"], 400);
+        }
+
+        $id = "EMP-" . time();
+        $stmt = $pdo->prepare("INSERT INTO employees (id, clinic_id, name, first_name, department, position, base_salary, hire_date, status, cnss_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([
+            $id,
+            $data['clinicId'],
+            $data['name'],
+            $data['firstName'] ?? '',
+            $data['department'] ?? 'Général',
+            $data['position'] ?? '',
+            $data['baseSalary'] ?? 0,
+            $data['hireDate'] ?? date('Y-m-d'),
+            $data['status'] ?? 'active',
+            $data['cnssNumber'] ?? null
+        ]);
+
+        sendResponse(["status" => "success", "id" => $id]);
     }
-
-    $id = "EMP-" . time();
-    $stmt = $pdo->prepare("INSERT INTO employees (id, clinic_id, name, first_name, department, position, base_salary, hire_date, status, cnss_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([
-        $id,
-        $data['clinicId'],
-        $data['name'],
-        $data['firstName'] ?? '',
-        $data['department'] ?? 'Général',
-        $data['position'] ?? '',
-        $data['baseSalary'] ?? 0,
-        $data['hireDate'] ?? date('Y-m-d'),
-        $data['status'] ?? 'active',
-        $data['cnssNumber'] ?? null
-    ]);
-
-    sendResponse(["status" => "success", "id" => $id]);
 }
 ?>
 

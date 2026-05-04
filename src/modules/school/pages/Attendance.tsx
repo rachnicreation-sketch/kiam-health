@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-service";
 
 export default function Attendance() {
   const { user } = useAuth();
@@ -44,7 +45,7 @@ export default function Attendance() {
   const loadSelectors = async () => {
     if (!user?.clinicId) return;
     try {
-      const classData = await apiRequest("school.php?action=list_classes");
+      const classData = await api.school.classes(user.clinicId);
       setClasses(classData);
     } catch (error) {
       console.error(error);
@@ -60,7 +61,7 @@ export default function Attendance() {
   const loadStudents = async () => {
     setIsLoading(true);
     try {
-      const data = await apiRequest("school.php?action=list_students");
+      const data = await api.school.students(user!.clinicId!);
       const currentClass = classes.find(c => c.id === selectedClass);
       if (currentClass) {
          const filtered = data.filter((s: any) => s.class_level === currentClass.level);
@@ -91,13 +92,10 @@ export default function Attendance() {
         status: status
       }));
 
-      await apiRequest("school.php?action=take_attendance", {
-        method: "POST",
-        body: JSON.stringify({
-          date: date,
-          records: records,
-          clinicId: user.clinicId
-        })
+      await api.school.takeAttendance({
+        date: date,
+        records: records,
+        clinicId: user.clinicId
       });
 
       toast({ title: "Appel validé", description: "Les présences ont été enregistrées." });
@@ -214,11 +212,4 @@ export default function Attendance() {
   );
 }
 
-async function apiRequest(endpoint: string, options: any = {}) {
-    const token = localStorage.getItem('kiam_jwt_token');
-    const response = await fetch(`/kiam/api/${endpoint}`, {
-      ...options,
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, ...options.headers }
-    });
-    return response.json();
-}
+

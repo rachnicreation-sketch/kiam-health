@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api-service";
 
 export default function Payments() {
   const { user, isPresentationMode } = useAuth();
@@ -48,17 +49,10 @@ export default function Payments() {
   const isGlobalAdmin = user?.role === 'clinic_admin' || user?.role === 'saas_admin';
 
   useEffect(() => {
-    if (isPresentationMode) {
-      // Mock some data for presentation
-      setPayments([
-        { id: 'PAY-001', first_name: 'Jean', name: 'Mabiala', amount: 125000, payment_date: '2026-04-28', type: 'Scolarité' },
-        { id: 'PAY-002', first_name: 'Sarah', name: 'Okombi', amount: 45000, payment_date: '2026-04-27', type: 'Inscription' },
-      ]);
-      setStudents(DUMMY_STUDENTS);
-    } else if (user?.clinicId) {
+    if (user?.clinicId) {
       loadData();
     }
-  }, [user, isPresentationMode]);
+  }, [user]);
 
   if (isAdminOrScolarite && !isGlobalAdmin) {
     return (
@@ -76,8 +70,8 @@ export default function Payments() {
     setIsLoading(true);
     try {
       const [payData, studData] = await Promise.all([
-        apiRequest("school.php?action=list_payments"),
-        apiRequest("school.php?action=list_students")
+        api.school.payments(user.clinicId),
+        api.school.students(user.clinicId)
       ]);
       setPayments(payData);
       setStudents(studData);
@@ -90,10 +84,7 @@ export default function Payments() {
 
   const handleAddPayment = async () => {
     try {
-      await apiRequest("school.php?action=add_payment", {
-        method: "POST",
-        body: JSON.stringify({ ...paymentForm, clinicId: user.clinicId })
-      });
+      await api.school.addPayment({ ...paymentForm, clinicId: user.clinicId });
       toast({ title: "Paiement enregistré", description: "Le reçu a été généré avec succès." });
       setIsAddPaymentOpen(false);
       loadData();
@@ -272,11 +263,4 @@ export default function Payments() {
   );
 }
 
-async function apiRequest(endpoint: string, options: any = {}) {
-    const token = localStorage.getItem('kiam_jwt_token');
-    const response = await fetch(`/kiam/api/${endpoint}`, {
-      ...options,
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}`, ...options.headers }
-    });
-    return response.json();
-}
+

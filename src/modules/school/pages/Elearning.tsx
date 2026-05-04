@@ -5,7 +5,8 @@ import {
   Search, 
   Clock, 
   Award,
-  Video
+  Video,
+  PlusCircle
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,9 +29,14 @@ export default function Elearning() {
           </h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">Cours en ligne, ressources et e-learning.</p>
         </div>
-        <div className="relative w-full md:w-64">
-           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-           <Input placeholder="Rechercher un cours..." className="pl-10 h-10 border-slate-200" />
+        <div className="flex gap-2">
+           <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input placeholder="Rechercher un cours..." className="pl-10 h-10 border-slate-200" />
+           </div>
+           <Button className="bg-slate-900 text-white font-bold h-10 rounded-xl gap-2">
+              <PlusCircle className="w-4 h-4" /> Publier un cours
+           </Button>
         </div>
       </div>
 

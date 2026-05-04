@@ -10,7 +10,8 @@ import {
   User, 
   Box,
   Zap,
-  ArrowLeft
+  ArrowLeft,
+  Printer
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -19,7 +20,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api-service";
-import { apiRequest } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog, 
@@ -36,8 +36,12 @@ export default function PointOfSale() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<any[]>([]);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [lastTransaction, setLastTransaction] = useState<any>(null);
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>("anonymous");
+  const [discount, setDiscount] = useState<string>("0");
 
   useEffect(() => {
     loadProducts();
@@ -46,10 +50,14 @@ export default function PointOfSale() {
   const loadProducts = async () => {
     if (!user?.clinicId) return;
     try {
-      const data = await api.inventory.list(user.clinicId);
-      setProducts(data);
+      const [prodData, custData] = await Promise.all([
+        api.inventory.list(user.clinicId),
+        api.erp.customers(user.clinicId)
+      ]);
+      setProducts(prodData);
+      setCustomers(custData);
     } catch (error) {
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les produits." });
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les données." });
     }
   };
 
@@ -84,26 +92,57 @@ export default function PointOfSale() {
     }));
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + (item.price_sell * item.quantity), 0);
+  const subTotal = cart.reduce((sum, item) => sum + (item.price_sell * item.quantity), 0);
+  const discountAmount = parseInt(discount) || 0;
+  const cartTotal = Math.max(0, subTotal - discountAmount);
 
   const handleCheckout = async () => {
     try {
-      await apiRequest('erp.php?action=pos_sale', {
-        method: 'POST',
-        body: JSON.stringify({
-          clinicId: user.clinicId,
-          items: cart,
-          total: cartTotal,
-          payment_method: paymentMethod
-        })
+      const response = await api.erp.posSale({
+        clinicId: user.clinicId,
+        items: cart,
+        total: cartTotal,
+        payment_method: paymentMethod,
+        customer_id: selectedCustomer === 'anonymous' ? null : selectedCustomer,
+        discount: discountAmount
       });
+      
+      const customerName = selectedCustomer === 'anonymous' ? 'Client Passager' : customers.find(c => c.id === selectedCustomer)?.name;
+      
+      setLastTransaction({
+        id: response.transaction_id,
+        items: [...cart],
+        total: cartTotal,
+        subtotal: subTotal,
+        discount: discountAmount,
+        payment_method: paymentMethod,
+        customer_name: customerName,
+        date: new Date().toLocaleString()
+      });
+      
       toast({ title: "Vente réussie", description: "La transaction a été enregistrée." });
       setCart([]);
       setIsCheckoutOpen(false);
+      setIsReceiptOpen(true);
       loadProducts();
     } catch (error) {
       toast({ variant: "destructive", title: "Erreur", description: "La validation de la vente a échoué." });
     }
+  };
+
+  const handleBarcodeSearch = (val: string) => {
+    setSearchTerm(val);
+    // Check if the value matches a SKU exactly
+    const product = products.find(p => p.sku === val);
+    if (product) {
+      addToCart(product);
+      setSearchTerm("");
+      toast({ title: "Produit ajouté", description: product.name });
+    }
+  };
+
+  const printReceipt = () => {
+    window.print();
   };
 
   const filteredProducts = products.filter(p => 
@@ -133,7 +172,7 @@ export default function PointOfSale() {
                 placeholder="Rechercher un produit..." 
                 className="pl-10 h-12 rounded-2xl border-none shadow-sm bg-white"
                 value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
+                onChange={e => handleBarcodeSearch(e.target.value)}
                 autoFocus
               />
            </div>
@@ -201,10 +240,28 @@ export default function PointOfSale() {
                  )}
               </div>
            </CardContent>
-           <CardFooter className="flex-col gap-4 p-6 bg-slate-50 border-t">
-              <div className="w-full flex justify-between items-center">
-                 <span className="text-sm font-bold text-slate-500 uppercase tracking-widest leading-none border-none">TOTAL</span>
-                 <span className="text-3xl font-black text-slate-900 border-none">{cartTotal.toLocaleString()} <span className="text-lg">CFA</span></span>
+            <CardFooter className="flex-col gap-4 p-6 bg-slate-50 border-t">
+              <div className="w-full space-y-2">
+                 <div className="flex justify-between items-center opacity-60">
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">SOUS-TOTAL</span>
+                    <span className="text-sm font-black">{subTotal.toLocaleString()} CFA</span>
+                 </div>
+                 <div className="flex justify-between items-center text-rose-600">
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">REMISE</span>
+                    <div className="flex items-center gap-2">
+                       <Input 
+                         type="number" 
+                         className="h-6 w-20 text-right font-black border-slate-200 bg-white" 
+                         value={discount} 
+                         onChange={e => setDiscount(e.target.value)} 
+                       />
+                       <span className="text-[10px] font-bold">CFA</span>
+                    </div>
+                 </div>
+                 <div className="flex justify-between items-center py-2 border-t border-slate-200">
+                    <span className="text-sm font-bold text-slate-500 uppercase tracking-widest leading-none">À PAYER</span>
+                    <span className="text-3xl font-black text-slate-900 leading-none">{cartTotal.toLocaleString()} <span className="text-lg font-bold">CFA</span></span>
+                 </div>
               </div>
               <Button 
                 className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg gap-3 rounded-2xl shadow-xl shadow-emerald-100 border-none"
@@ -223,30 +280,121 @@ export default function PointOfSale() {
               <DialogTitle className="text-2xl font-black text-slate-900 border-none">Finaliser l'Encaissement</DialogTitle>
               <CardDescription>Choisir le mode de règlement pour les {cartTotal.toLocaleString()} CFA</CardDescription>
            </DialogHeader>
-           <div className="grid grid-cols-2 gap-4 pt-6">
-              <Button 
-                variant={paymentMethod === 'cash' ? 'default' : 'outline'} 
-                className={`h-24 flex flex-col gap-2 rounded-2xl ${paymentMethod === 'cash' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
-                onClick={() => setPaymentMethod('cash')}
-              >
-                 <Banknote className="h-6 w-6" />
-                 <span className="text-xs font-black uppercase">Espèces</span>
-              </Button>
-              <Button 
-                variant={paymentMethod === 'mobile' ? 'default' : 'outline'} 
-                className={`h-24 flex flex-col gap-2 rounded-2xl ${paymentMethod === 'mobile' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
-                onClick={() => setPaymentMethod('mobile')}
-              >
-                 <CreditCard className="h-6 w-6" />
-                 <span className="text-xs font-black uppercase">Mobile Money</span>
-              </Button>
-           </div>
-           <DialogFooter className="pt-6">
+            <div className="space-y-4 pt-6">
+               <div className="space-y-2">
+                  <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Sélectionner un Client</Label>
+                  <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
+                     <SelectTrigger className="h-12 rounded-xl bg-slate-50 border-none font-bold">
+                        <SelectValue placeholder="Client Passager" />
+                     </SelectTrigger>
+                     <SelectContent className="rounded-xl border-none shadow-2xl">
+                        <SelectItem value="anonymous" className="font-bold text-slate-500">Client Passager (Anonyme)</SelectItem>
+                        {customers.map(c => (
+                          <SelectItem key={c.id} value={c.id} className="font-medium">{c.name} ({c.phone || 'Pas de tél'})</SelectItem>
+                        ))}
+                     </SelectContent>
+                  </Select>
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                  <Button 
+                    variant={paymentMethod === 'cash' ? 'default' : 'outline'} 
+                    className={`h-24 flex flex-col gap-2 rounded-2xl ${paymentMethod === 'cash' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                     <Banknote className="h-6 w-6" />
+                     <span className="text-xs font-black uppercase">Espèces</span>
+                  </Button>
+                  <Button 
+                    variant={paymentMethod === 'mobile' ? 'default' : 'outline'} 
+                    className={`h-24 flex flex-col gap-2 rounded-2xl ${paymentMethod === 'mobile' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
+                    onClick={() => setPaymentMethod('mobile')}
+                  >
+                     <CreditCard className="h-6 w-6" />
+                     <span className="text-xs font-black uppercase">Mobile Money</span>
+                  </Button>
+               </div>
+            </div>
+            <DialogFooter className="pt-6">
               <Button variant="ghost" onClick={() => setIsCheckoutOpen(false)} className="font-bold border-none">Annuler</Button>
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 rounded-xl" onClick={handleCheckout}>CONFIRMER LE PAIEMENT</Button>
            </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isReceiptOpen} onOpenChange={setIsReceiptOpen}>
+        <DialogContent className="max-w-sm bg-white border-none rounded-3xl p-0 overflow-hidden">
+           <div className="p-8 space-y-6 print:p-0 print:m-0" id="receipt-content">
+              <div className="text-center space-y-2">
+                 <h2 className="text-xl font-black uppercase tracking-tighter">KIAM ERP</h2>
+                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{user?.clinicName || 'Boutique KIAM'}</p>
+                 <div className="border-y border-dashed border-slate-200 py-2 my-4">
+                    <p className="text-[9px] font-bold">REÇU DE VENTE #{lastTransaction?.id}</p>
+                    <p className="text-[8px] text-slate-400">{lastTransaction?.date}</p>
+                    <p className="text-[9px] font-black uppercase mt-1">CLIENT: {lastTransaction?.customer_name}</p>
+                 </div>
+              </div>
+
+              <div className="space-y-3">
+                 {lastTransaction?.items.map((item: any) => (
+                    <div key={item.id} className="flex justify-between text-[10px] font-bold">
+                       <span>{item.quantity}x {item.name}</span>
+                       <span>{(item.price_sell * item.quantity).toLocaleString()}</span>
+                    </div>
+                 ))}
+              </div>
+
+              <div className="border-t border-dashed border-slate-200 pt-4 space-y-1">
+                 <div className="flex justify-between text-[10px] font-bold opacity-60">
+                    <span>SOUS-TOTAL</span>
+                    <span>{lastTransaction?.subtotal.toLocaleString()}</span>
+                 </div>
+                 {lastTransaction?.discount > 0 && (
+                    <div className="flex justify-between text-[10px] font-bold text-rose-600">
+                       <span>REMISE</span>
+                       <span>-{lastTransaction?.discount.toLocaleString()}</span>
+                    </div>
+                 )}
+                 <div className="flex justify-between text-xs font-black pt-1">
+                    <span>TOTAL À PAYER</span>
+                    <span>{lastTransaction?.total.toLocaleString()} CFA</span>
+                 </div>
+                 <div className="flex justify-between text-[9px] font-bold text-slate-500">
+                    <span>MODE DE PAIEMENT</span>
+                    <span className="uppercase">{lastTransaction?.payment_method}</span>
+                 </div>
+              </div>
+
+              <div className="text-center pt-6 pb-2">
+                 <p className="text-[9px] font-black uppercase tracking-widest italic-none">Merci de votre visite !</p>
+                 <p className="text-[7px] text-slate-400 mt-1">Logiciel Kiam ERP - www.kiam-erp.com</p>
+              </div>
+           </div>
+           <div className="p-4 bg-slate-50 flex gap-2 print:hidden">
+              <Button variant="outline" className="flex-1 rounded-xl font-bold" onClick={() => setIsReceiptOpen(false)}>Fermer</Button>
+              <Button className="flex-1 bg-slate-900 text-white rounded-xl font-bold gap-2" onClick={printReceipt}>
+                 <Printer className="h-4 w-4" /> Imprimer
+              </Button>
+           </div>
+        </DialogContent>
+      </Dialog>
+
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #receipt-content, #receipt-content * {
+            visibility: visible;
+          }
+          #receipt-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 20px;
+          }
+        }
+      `}</style>
     </div>
   );
 }

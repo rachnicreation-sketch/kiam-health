@@ -190,6 +190,7 @@ export default function PatientDetail() {
           <Tabs defaultValue="overview" className="border rounded-lg bg-white shadow-sm overflow-hidden">
             <TabsList className="w-full justify-start border-b rounded-none bg-muted/20 h-12 p-0">
               <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full border-r">Aperçu</TabsTrigger>
+              <TabsTrigger value="timeline" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full border-r">Fil d'actualité</TabsTrigger>
               {can('consultations', 'read') && !['receptionist', 'nurse_aide'].includes(user?.role || '') && (
                 <TabsTrigger value="consultations" className="data-[state=active]:bg-white data-[state=active]:shadow-none rounded-none px-6 h-full border-r">Consultations ({consultations.length})</TabsTrigger>
               )}
@@ -274,6 +275,37 @@ export default function PatientDetail() {
                   )}
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="timeline" className="p-6 m-0">
+               <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                  {consultations.length === 0 ? (
+                    <p className="text-center py-12 text-muted-foreground italic">Aucun historique disponible</p>
+                  ) : (
+                    consultations.map((c, index) => (
+                      <div key={c.id} className="relative flex items-start gap-6 group">
+                        <div className="absolute left-0 mt-1 h-10 w-10 rounded-full border-4 border-white bg-primary flex items-center justify-center text-white shadow-md group-hover:scale-110 transition-transform z-10">
+                           <Stethoscope className="h-5 w-5" />
+                        </div>
+                        <div className="ml-12 flex-1 pt-1">
+                           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2">
+                              <h4 className="font-black text-slate-800 uppercase text-xs tracking-wider">{c.reason}</h4>
+                              <time className="text-[10px] font-bold text-slate-400">{c.date}</time>
+                           </div>
+                           <Card className="border-none shadow-sm bg-slate-50 group-hover:bg-indigo-50 transition-colors">
+                              <CardContent className="p-4">
+                                 <p className="text-xs text-slate-600 mb-3 italic">"{renderSensitive(c.notes)}"</p>
+                                 <div className="flex flex-wrap gap-2">
+                                    <Badge variant="outline" className="text-[9px] font-bold bg-white">{renderSensitive(c.diagnosis)}</Badge>
+                                    <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px] font-black uppercase">Soins validés</Badge>
+                                 </div>
+                              </CardContent>
+                           </Card>
+                        </div>
+                      </div>
+                    ))
+                  )}
+               </div>
             </TabsContent>
 
             <TabsContent value="consultations" className="m-0 p-6">

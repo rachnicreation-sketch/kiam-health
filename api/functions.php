@@ -55,4 +55,10 @@ function ensureClinicForTenant(PDO $pdo, ?string $tenantId): string {
 
     return $tenantId;
 }
+
+function logActivity(PDO $pdo, $tenantId, $userId, $action, $details = null) {
+    $id = "LOG-" . time() . rand(10, 99);
+    $stmt = $pdo->prepare("INSERT INTO activity_logs (id, tenant_id, user_id, action, details) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$id, $tenantId, $userId, $action, $details ? json_encode($details) : null]);
+}
 ?>

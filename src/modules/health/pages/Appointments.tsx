@@ -76,7 +76,7 @@ export default function Appointments() {
     setIsLoading(true);
     try {
       const [appsData, patsData, usersData] = await Promise.all([
-        api.appointments.list(user.clinicId),
+        api.health.appointments.list(user.clinicId),
         api.patients.list(user.clinicId),
         api.users.list(user.clinicId)
       ]);
@@ -97,7 +97,7 @@ export default function Appointments() {
     }
 
     try {
-      await api.appointments.create({
+      await api.health.appointments.create({
         ...form,
         clinicId: user.clinicId,
         status: 'pending'
@@ -114,7 +114,7 @@ export default function Appointments() {
 
   const handleStatusUpdate = async (id: string, newStatus: Appointment['status']) => {
     try {
-      await api.appointments.updateStatus(id, newStatus);
+      await api.health.appointments.updateStatus(id, newStatus);
       loadData();
       toast({ title: "Statut mis à jour", description: "Le statut du rendez-vous a été modifié." });
     } catch (error: any) {

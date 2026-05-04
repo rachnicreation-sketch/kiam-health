@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { UserPlus, UserCog, Mail, Lock, Shield, FileText, Download, Banknote, CalendarDays, Calculator, Info } from "lucide-react";
+import { UserPlus, UserCog, Mail, Lock, Shield, FileText, Download, Banknote, CalendarDays, Calculator, Info, Camera, Upload, File } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +42,54 @@ export default function HumanResources() {
 
   const [selectedPayroll, setSelectedPayroll] = useState<Payroll | null>(null);
   const [isPayslipViewOpen, setIsPayslipViewOpen] = useState(false);
+
+  // Digital Dossier
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const loadDocuments = async (empId: string) => {
+    try {
+      const data = await api.hr.listDocuments(empId);
+      setDocuments(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const openDossier = (emp: Employee) => {
+    setSelectedEmployee(emp);
+    setIsDossierOpen(true);
+    loadDocuments(emp.id);
+  };
+
+  const handleUpload = async (type: string, name: string) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file || !selectedEmployee) return;
+      
+      setIsUploading(true);
+      try {
+        const fileUrl = `docs/hr/${selectedEmployee.id}/${type}_${file.name}`;
+        await api.hr.addDocument({
+          employee_id: selectedEmployee.id,
+          type,
+          name: name + ' (' + file.name + ')',
+          file_url: fileUrl
+        });
+        toast({ title: "Document ajouté", description: `${name} a été enregistré.` });
+        loadDocuments(selectedEmployee.id);
+      } catch (error) {
+        toast({ variant: "destructive", title: "Erreur", description: "Échec de l'upload." });
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    input.click();
+  };
 
   // New User Form
   const [userForm, setUserForm] = useState({
@@ -280,13 +328,14 @@ export default function HumanResources() {
                      <TableHead>Salaire de base</TableHead>
                      <TableHead>Date d'embauche</TableHead>
                      <TableHead>Statut</TableHead>
+                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {employees.length === 0 ? (
-                    <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Aucun employé enregistré</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Aucun employé enregistré</TableCell></TableRow>
                   ) : employees.map(emp => (
-                    <TableRow key={emp.id}>
+                    <TableRow key={emp.id} className="group">
                       <TableCell>
                         <div className="font-bold">{emp.name} {emp.firstName}</div>
                         <div className="text-[10px] text-muted-foreground">{emp.id}</div>
@@ -298,6 +347,16 @@ export default function HumanResources() {
                       <TableCell className="font-mono">{(Number(emp.baseSalary) || 0).toLocaleString()} CFA</TableCell>
                       <TableCell className="text-sm">{emp.hireDate || emp.hire_date || '—'}</TableCell>
                       <TableCell><Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-none">Actif</Badge></TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => openDossier(emp)}
+                          className="text-primary hover:bg-primary/5 font-bold gap-2"
+                        >
+                          <FileText className="h-4 w-4" /> Dossier
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -560,6 +619,80 @@ export default function HumanResources() {
                </Button>
             </div>
          </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDossierOpen} onOpenChange={setIsDossierOpen}>
+        <DialogContent className="max-w-4xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+           <div className="bg-slate-900 p-8 text-white">
+              <div className="flex justify-between items-start">
+                 <div>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">Dossier Numérique Employé</h2>
+                    <p className="text-slate-400 font-medium">{selectedEmployee?.name} {selectedEmployee?.firstName}</p>
+                 </div>
+                 <Badge className="bg-primary text-white border-none px-4 py-1 rounded-full uppercase text-[10px] font-black tracking-widest">{selectedEmployee?.position}</Badge>
+              </div>
+           </div>
+           
+           <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-50">
+              <div className="md:col-span-1 space-y-4">
+                 <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-4">Télécharger un document</h3>
+                 
+                 {[
+                   { id: 'photo', label: 'Photo d\'identité', icon: Camera, color: 'bg-blue-500' },
+                   { id: 'id_card', label: 'Pièce d\'identité / Passeport', icon: FileText, color: 'bg-indigo-500' },
+                   { id: 'cv', label: 'Curriculum Vitae (CV)', icon: File, color: 'bg-orange-500' },
+                   { id: 'contract', label: 'Contrat de travail', icon: FileText, color: 'bg-emerald-500' },
+                   { id: 'criminal_record', label: 'Casier judiciaire', icon: Shield, color: 'bg-rose-500' },
+                   { id: 'diplomas', label: 'Diplômes / Certificats', icon: GraduationCap, color: 'bg-amber-500' },
+                   { id: 'other', label: 'Autre document...', icon: FileText, color: 'bg-slate-500' }
+                 ].map(doc => (
+                   <button 
+                     key={doc.id}
+                     disabled={isUploading}
+                     onClick={() => handleUpload(doc.id, doc.label)}
+                     className="w-full flex items-center gap-4 p-4 bg-white rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all group border border-slate-100"
+                   >
+                     <div className={`h-10 w-10 rounded-xl ${doc.color} text-white flex items-center justify-center shrink-0`}>
+                        <doc.icon className="h-5 w-5" />
+                     </div>
+                     <div className="text-left">
+                        <p className="text-xs font-black text-slate-800">{doc.label}</p>
+                        <p className="text-[10px] text-slate-400 font-medium">Cliquer pour charger</p>
+                     </div>
+                     <Upload className="h-4 w-4 ml-auto text-slate-200 group-hover:text-primary transition-colors" />
+                   </button>
+                 ))}
+              </div>
+
+              <div className="md:col-span-2 space-y-4">
+                 <h3 className="text-xs font-black uppercase text-slate-400 tracking-widest mb-4">Documents Archivés ({documents.length})</h3>
+                 
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {documents.length === 0 ? (
+                       <div className="col-span-2 h-64 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center text-slate-300 italic">
+                          <FileText className="h-12 w-12 mb-2 opacity-20" />
+                          <p>Aucun document archivé</p>
+                       </div>
+                    ) : (
+                      documents.map(doc => (
+                        <div key={doc.id} className="p-4 bg-white rounded-2xl border border-slate-100 flex items-center gap-3 group hover:border-primary/30 transition-colors">
+                           <div className="h-10 w-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                              <File className="h-5 w-5" />
+                           </div>
+                           <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-800 truncate">{doc.name}</p>
+                              <p className="text-[10px] text-slate-400">Ajouté le {new Date().toLocaleDateString()}</p>
+                           </div>
+                           <Button variant="ghost" size="icon" className="h-8 w-8 ml-auto rounded-lg text-slate-300 hover:text-primary">
+                              <Download className="h-4 w-4" />
+                           </Button>
+                        </div>
+                      ))
+                    )}
+                 </div>
+              </div>
+           </div>
+        </DialogContent>
       </Dialog>
     </div>
   );

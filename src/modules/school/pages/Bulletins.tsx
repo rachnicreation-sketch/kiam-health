@@ -24,7 +24,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { DUMMY_STUDENTS, SCHOOL_SUBJECTS } from "@/lib/mock-data";
+import { api } from "@/lib/api-service";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -34,12 +34,46 @@ export default function Bulletins() {
   const [searchQuery, setSearchQuery] = useState("");
   const [period, setPeriod] = useState("Trimestre 1");
   const [students, setStudents] = useState<any[]>([]);
+  const [grades, setGrades] = useState<any[]>([]);
 
   useEffect(() => {
-    if (isPresentationMode) {
-      setStudents(DUMMY_STUDENTS);
+    if (user?.clinicId) {
+      loadData();
     }
-  }, [isPresentationMode]);
+  }, [user]);
+
+  const loadData = async () => {
+    try {
+      const [studentsData, gradesData] = await Promise.all([
+        api.school.students(user!.clinicId!),
+        api.school.grades(user!.clinicId!)
+      ]);
+      
+      // Process grades into averages per student
+      const studentsWithAverages = studentsData.map((student: any) => {
+        const studentGrades = gradesData.filter((g: any) => g.student_id === student.id);
+        const averages: Record<string, number> = {};
+        
+        // Group by subject and calculate average
+        const bySubject: Record<string, number[]> = {};
+        studentGrades.forEach((g: any) => {
+          if (!bySubject[g.subject]) bySubject[g.subject] = [];
+          bySubject[g.subject].push(Number(g.score));
+        });
+        
+        Object.entries(bySubject).forEach(([subject, scores]) => {
+          averages[subject] = scores.reduce((a, b) => a + b, 0) / scores.length;
+        });
+
+        return { ...student, averages, cycle: student.class_level?.includes('6') || student.class_level?.includes('3') ? 'Collège' : 'Lycée' };
+      });
+      
+      setStudents(studentsWithAverages);
+      setGrades(gradesData);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const filteredStudents = students.filter(s => 
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 

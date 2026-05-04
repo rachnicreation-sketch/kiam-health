@@ -77,10 +77,10 @@ export default function Laboratory() {
     setIsLoading(true);
     try {
       const [testsData, patsData, docsData, servicesData] = await Promise.all([
-        api.lab.tests(user.clinicId),
+        api.health.lab.tests(user.clinicId),
         api.patients.list(user.clinicId),
         api.users.list(user.clinicId),
-        api.lab.services(user.clinicId)
+        api.health.lab.services(user.clinicId)
       ]);
       
       setTests(testsData.map((t: any) => ({
@@ -142,7 +142,7 @@ export default function Laboratory() {
 
     try {
       // 1. Créer le test labo
-      const response = await api.lab.createTest({
+      const response = await api.health.lab.createTest({
         ...form,
         clinicId: user.clinicId,
         status: 'pending'
@@ -185,7 +185,7 @@ export default function Laboratory() {
     if (!selectedTest || !resultForm.result) return;
 
     try {
-      await api.lab.updateTest({
+      await api.health.lab.updateTest({
         id: selectedTest.id,
         result: resultForm.result,
         unit: resultForm.unit,

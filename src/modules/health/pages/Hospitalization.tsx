@@ -83,10 +83,10 @@ export default function Hospitalization() {
     setIsLoading(true);
     try {
       const [bedsData, patientsData, admissionsData, transfersData] = await Promise.all([
-        api.hospitalization.beds(user.clinicId),
+        api.health.beds.list(user.clinicId),
         api.patients.list(user.clinicId),
-        api.hospitalization.admissions(user.clinicId),
-        api.hospitalization.transfers(user.clinicId)
+        api.health.admissions.list(user.clinicId),
+        api.health.admissions.transfers(user.clinicId)
       ]);
       
       setBeds(bedsData);
@@ -117,7 +117,7 @@ export default function Hospitalization() {
     }
 
     try {
-      await api.hospitalization.createAdmission({
+      await api.health.admissions.create({
         clinicId: user.clinicId,
         patientId: form.patientId,
         bedId: form.bedId,
@@ -137,7 +137,7 @@ export default function Hospitalization() {
   const handleDischarge = async (admission: Admission) => {
     if (!user?.clinicId) return;
     try {
-      await api.hospitalization.discharge({
+      await api.health.admissions.discharge({
         id: admission.id,
         bedId: admission.bedId
       });
@@ -165,7 +165,7 @@ export default function Hospitalization() {
     const newBed = beds.find(b => b.id === transferForm.newBedId);
     
     try {
-      await api.hospitalization.transfer({
+      await api.health.admissions.transfer({
         clinicId: user.clinicId,
         admissionId: admissionToTransfer.id,
         patientId: admissionToTransfer.patientId,
@@ -188,7 +188,7 @@ export default function Hospitalization() {
     if (!user?.clinicId || !bedForm.ward || !bedForm.room || !bedForm.bedNum) return;
 
     try {
-      await api.hospitalization.createBed({
+      await api.health.beds.create({
         clinicId: user.clinicId,
         ward: bedForm.ward,
         room: bedForm.room,

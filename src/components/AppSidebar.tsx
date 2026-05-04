@@ -36,7 +36,11 @@ import {
   History,
   Shield,
   ShieldAlert,
-  Activity
+  Activity,
+  Award,
+  CreditCard,
+  Wallet,
+  TrendingDown
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink } from "@/components/NavLink";
@@ -148,10 +152,15 @@ const schoolTeacherItems: SidebarItem[] = [
 // ========================
 const erpMainItems: SidebarItem[] = [
   { title: "Tableau de bord", url: "/erp/dashboard", icon: LayoutDashboard, module: 'erp' },
-  { title: "Point de Vente (POS)", url: "/erp/pos", icon: Zap, module: 'erp' },
+  { title: "Point de Vente (POS)", url: "/erp/pos", icon: ShoppingCart, module: 'erp' },
   { title: "Gestion des Stocks", url: "/erp/inventory", icon: Box, module: 'erp' },
   { title: "Journal des Ventes", url: "/erp/transactions", icon: History, module: 'erp' },
+  { title: "Clients & Fidélité", url: "/erp/customers", icon: Users, module: 'erp' },
   { title: "Fournisseurs", url: "/erp/suppliers", icon: Truck, module: 'erp' },
+  { title: "Dépenses & Charges", url: "/erp/expenses", icon: TrendingDown, module: 'erp' },
+  { title: "Analyse & Rapports", url: "/erp/reports", icon: BarChart3, module: 'erp' },
+  { title: "Clôture de Caisse", url: "/erp/closing", icon: Lock, module: 'erp' },
+  { title: "Paramètres", url: "/erp/settings", icon: Settings, module: 'erp' },
   { title: "Facturation", url: "/erp/billing", icon: Receipt, module: 'erp' },
   { title: "Retours / SAV", url: "/erp/returns", icon: RotateCcw, module: 'erp' },
   { title: "Paramètres ERP", url: "/erp/settings", icon: Settings, module: 'erp' },
@@ -217,9 +226,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     api.saas.modules(tenantId)
       .then((data: any) => {
-        if (Array.isArray(data)) {
+        if (data && Array.isArray(data)) {
           setActiveModules(data.map((module: any) => module.module_name || module.name || module.id));
-        } else if (data.modules) {
+        } else if (data && data.modules && Array.isArray(data.modules)) {
           setActiveModules(data.modules.map((module: any) => module.module_name || module.name || module.id));
         } else {
           setActiveModules([]);

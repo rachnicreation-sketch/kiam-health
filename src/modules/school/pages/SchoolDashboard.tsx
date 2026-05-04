@@ -44,13 +44,22 @@ export default function SchoolDashboard() {
   const [studentForm, setStudentForm] = useState({
     name: "",
     first_name: "",
-    class_level: "6ème",
+    class_level: "CP",
     tutor_name: "",
     tutor_phone: "",
     address: ""
   });
 
-  const classes = ["6ème", "5ème", "4ème", "3ème", "Seconde", "Première", "Terminale"];
+  const classes = [
+    // Maternelle
+    "Petite Section (PS)", "Moyenne Section (MS)", "Grande Section (GS)",
+    // Primaire
+    "CP", "CE1", "CE2", "CM1", "CM2",
+    // Collège
+    "6ème", "5ème", "4ème", "3ème",
+    // Lycée
+    "Seconde", "Première", "Terminale A", "Terminale C", "Terminale D"
+  ];
 
   useEffect(() => {
     if (isPresentationMode) {

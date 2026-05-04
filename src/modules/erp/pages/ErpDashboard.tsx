@@ -56,7 +56,7 @@ const salesData = [
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/api-service";
+import { api } from "@/lib/api-service";
 
 // Components
 import { ErpAdminDashboard } from "../components/ErpAdminDashboard";
@@ -77,7 +77,7 @@ export default function ErpDashboard() {
     if (!user?.clinicId) return;
     setIsLoading(true);
     try {
-      const data = await apiRequest(`erp.php?action=stats&clinicId=${user.clinicId}`);
+      const data = await api.erp.stats(user.clinicId);
       setStats(data);
     } catch (error) {
       toast({ 

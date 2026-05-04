@@ -63,11 +63,15 @@ export default function Billing() {
     items: { description: string; amount: number }[];
     status: 'paid' | 'pending';
     paymentMethod: 'cash' | 'card' | 'transfer';
+    insuranceCompany: string;
+    insuranceCoverage: number;
   }>({
     patientId: "",
     items: [{ description: "Consultation générale", amount: 5000 }],
     status: 'paid',
-    paymentMethod: 'cash'
+    paymentMethod: 'cash',
+    insuranceCompany: "none",
+    insuranceCoverage: 0
   });
 
   useEffect(() => {
@@ -145,10 +149,15 @@ export default function Billing() {
 
     try {
       const total = calculateTotal();
+      const amountInsurance = (total * form.insuranceCoverage) / 100;
+      const amountPatient = total - amountInsurance;
+      
       const invoiceData = {
         ...form,
         clinicId: user.clinicId,
         total: total,
+        amountInsurance,
+        amountPatient
       };
 
       const response = await api.invoices.create(invoiceData);
@@ -304,6 +313,44 @@ export default function Billing() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                <div className="space-y-2">
+                  <Label className="text-primary font-bold">Assurance / Partenaire</Label>
+                  <Select value={form.insuranceCompany} onValueChange={v => setForm({...form, insuranceCompany: v})}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Aucune" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Aucune (100% Patient)</SelectItem>
+                      <SelectItem value="ASCOMA">ASCOMA</SelectItem>
+                      <SelectItem value="NSIA">NSIA</SelectItem>
+                      <SelectItem value="GRAS_SAVOYE">GRAS SAVOYE</SelectItem>
+                      <SelectItem value="MUCODEC">MUCODEC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-primary font-bold">Taux de Prise en Charge (%)</Label>
+                  <Select 
+                    value={String(form.insuranceCoverage)} 
+                    onValueChange={v => setForm({...form, insuranceCoverage: Number(v)})}
+                    disabled={form.insuranceCompany === "none"}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">0%</SelectItem>
+                      <SelectItem value="20">20%</SelectItem>
+                      <SelectItem value="50">50%</SelectItem>
+                      <SelectItem value="70">70%</SelectItem>
+                      <SelectItem value="80">80%</SelectItem>
+                      <SelectItem value="100">100%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-bold uppercase tracking-wider">Détails Prestation</Label>
@@ -389,9 +436,20 @@ export default function Billing() {
                     >Virement</Button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase">Total à payer</p>
-                  <p className="text-2xl font-black text-primary font-mono">{calculateTotal().toLocaleString()} <span className="text-xs">FCFA</span></p>
+                <div className="text-right space-y-1">
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">Résumé Facture</p>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs font-medium text-slate-500">Total : {calculateTotal().toLocaleString()} CFA</span>
+                    {form.insuranceCoverage > 0 && (
+                      <>
+                        <span className="text-xs font-bold text-indigo-600">Part Assurance ({form.insuranceCoverage}%) : - {((calculateTotal() * form.insuranceCoverage) / 100).toLocaleString()} CFA</span>
+                        <span className="text-2xl font-black text-primary font-mono mt-1">{(calculateTotal() - (calculateTotal() * form.insuranceCoverage) / 100).toLocaleString()} <span className="text-xs">FCFA (Net Patient)</span></span>
+                      </>
+                    )}
+                    {form.insuranceCoverage === 0 && (
+                       <p className="text-2xl font-black text-primary font-mono">{calculateTotal().toLocaleString()} <span className="text-xs">FCFA</span></p>
+                    )}
+                  </div>
                 </div>
               </div>
 

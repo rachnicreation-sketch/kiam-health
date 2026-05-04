@@ -53,22 +53,35 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [stats, setStats] = useState<any>(null);
+  const [activities, setActivities] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isPresentationMode) {
       setStats(DUMMY_STATS);
+      setActivities([
+        { action: "Consultation", user_name: "Dr. Koua", created_at: new Date().toISOString(), details: '{"id":"CONS-1"}' },
+        { action: "Paiement", user_name: "Caisse", created_at: new Date().toISOString(), details: '{"total":5000}' }
+      ]);
       setIsLoading(false);
     } else if (user?.clinicId) {
       loadStats();
+      loadActivities();
     }
   }, [user, isPresentationMode]);
+
+  const loadActivities = async () => {
+    try {
+      const data = await apiRequest("logs.php");
+      setActivities(data);
+    } catch (e) {}
+  };
 
   const loadStats = async () => {
     if (!user?.clinicId) return;
     setIsLoading(true);
     try {
-      const data = await api.stats.get(user.clinicId);
+      const data = await api.health.stats(user.clinicId);
       setStats(data);
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les statistiques." });
@@ -277,6 +290,32 @@ export default function Dashboard() {
                 <Button variant="ghost" onClick={() => navigate('/planning')} className="w-full mt-4 h-8 text-[11px] text-white hover:bg-white/10 font-bold uppercase tracking-wider">
                   Planning complet →
                 </Button>
+              </CardContent>
+           </Card>
+
+           <Card className="border-none shadow-md bg-white">
+              <CardHeader className="py-4 border-b">
+                <CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-primary" />
+                  Journal d'Audit
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                 {activities.length === 0 ? (
+                   <p className="text-center py-4 text-xs italic text-muted-foreground">Aucune activité récente</p>
+                 ) : (
+                   activities.slice(0, 5).map(log => (
+                     <div key={log.id} className="flex gap-3 border-b border-muted/30 pb-3 last:border-0 last:pb-0">
+                        <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0 uppercase">
+                           {log.user_name?.[0] || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                           <p className="text-xs font-bold text-slate-800">{log.action}</p>
+                           <p className="text-[10px] text-muted-foreground">{log.user_name} — {new Date(log.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
+                        </div>
+                     </div>
+                   ))
+                 )}
               </CardContent>
            </Card>
 

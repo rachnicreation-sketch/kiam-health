@@ -12,6 +12,10 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare("SELECT * FROM inventory_items WHERE clinic_id = ? ORDER BY name ASC");
         $stmt->execute([$clinicId]);
         sendResponse($stmt->fetchAll());
+    } elseif ($action === 'list_movements') {
+        $stmt = $pdo->prepare("SELECT m.*, i.name as item_name FROM inventory_movements m JOIN inventory_items i ON m.item_id = i.id WHERE m.clinic_id = ? ORDER BY m.created_at DESC");
+        $stmt->execute([$clinicId]);
+        sendResponse($stmt->fetchAll());
     } elseif ($action === 'stats') {
         $stats = [
             "total_items" => $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE clinic_id = '$clinicId'")->fetchColumn(),
@@ -37,6 +41,24 @@ if ($method === 'GET') {
             $data['threshold'] ?? 5, $data['warehouse'] ?? 'Main'
         ]);
         sendResponse(["status" => "success", "id" => $id]);
+    } elseif ($action === 'update') {
+        if (!$data['id'] || !$data['name']) {
+            sendResponse(["status" => "error", "message" => "Données manquantes"], 400);
+        }
+        $stmt = $pdo->prepare("UPDATE inventory_items SET name = ?, category = ?, sku = ?, unit = ?, price_buy = ?, price_sell = ?, threshold = ? WHERE id = ? AND clinic_id = ?");
+        $stmt->execute([
+            $data['name'], $data['category'], $data['sku'], $data['unit'], 
+            $data['price_buy'], $data['price_sell'], $data['threshold'],
+            $data['id'], $clinicId
+        ]);
+        sendResponse(["status" => "success"]);
+    } elseif ($action === 'delete') {
+        if (!$data['id']) {
+            sendResponse(["status" => "error", "message" => "ID manquant"], 400);
+        }
+        $stmt = $pdo->prepare("DELETE FROM inventory_items WHERE id = ? AND clinic_id = ?");
+        $stmt->execute([$data['id'], $clinicId]);
+        sendResponse(["status" => "success"]);
     }
 } elseif ($method === 'PUT') {
     $data = getRequestData();
@@ -44,8 +66,23 @@ if ($method === 'GET') {
         if (!$data['id'] || !isset($data['adjustment'])) {
             sendResponse(["status" => "error", "message" => "Données manquantes"], 400);
         }
+        $pdo->beginTransaction();
         $stmt = $pdo->prepare("UPDATE inventory_items SET stock = stock + ? WHERE id = ? AND clinic_id = ?");
         $stmt->execute([$data['adjustment'], $data['id'], $clinicId]);
+        
+        $mId = "MOV-" . time() . rand(10, 99);
+        $stmt = $pdo->prepare("INSERT INTO inventory_movements (id, clinic_id, item_id, type, quantity, reason, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([
+            $mId, $clinicId, $data['id'], 
+            $data['adjustment'] > 0 ? 'in' : 'out', 
+            abs($data['adjustment']), 
+            $data['reason'] ?? 'Ajustement manuel',
+            $auth['id']
+        ]);
+        
+        logActivity($pdo, $clinicId, $auth['id'], "Ajustement Stock", ["id" => $data['id'], "adj" => $data['adjustment']]);
+        
+        $pdo->commit();
         sendResponse(["status" => "success"]);
     }
 }

@@ -33,7 +33,7 @@ if ($method === 'GET') {
 
     $pdo->beginTransaction();
     try {
-        $stmt = $pdo->prepare("INSERT INTO invoices (id, clinic_id, patient_id, invoice_date, total_amount, status, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO invoices (id, clinic_id, patient_id, invoice_date, total_amount, status, payment_method, insurance_company, insurance_coverage, amount_insurance, amount_patient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $id,
             $data['clinicId'],
@@ -41,13 +41,19 @@ if ($method === 'GET') {
             $itemDate,
             $data['total'] ?? 0,
             $data['status'] ?? 'pending',
-            $data['paymentMethod'] ?? 'cash'
+            $data['paymentMethod'] ?? 'cash',
+            $data['insuranceCompany'] ?? null,
+            $data['insuranceCoverage'] ?? 0,
+            $data['amountInsurance'] ?? 0,
+            $data['amountPatient'] ?? $data['total']
         ]);
 
         $itemStmt = $pdo->prepare("INSERT INTO invoice_items (invoice_id, description, amount) VALUES (?, ?, ?)");
         foreach ($data['items'] as $item) {
             $itemStmt->execute([$id, $item['description'], $item['amount']]);
         }
+
+        logActivity($pdo, $data['clinicId'], $auth['id'], "Émission Facture", ["id" => $id, "total" => $data['total']]);
 
         $pdo->commit();
         sendResponse(["status" => "success", "id" => $id]);

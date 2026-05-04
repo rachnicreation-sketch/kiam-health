@@ -10,7 +10,8 @@ import {
   History,
   ArrowLeft,
   Trash2,
-  Edit2
+  Edit2,
+  Barcode
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -38,16 +39,30 @@ export default function InventoryManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [adjustmentValue, setAdjustmentValue] = useState("0");
   
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     category: "Général",
+    sku: "",
     stock: "0",
     price_buy: "0",
     price_sell: "0",
     unit: "unité",
     threshold: "5"
   });
+
+  const generateBarcode = () => {
+    // Generate a random 13-digit barcode (EAN-13 style)
+    const prefix = "200"; // Local/Instore prefix
+    const randomPart = Math.floor(Math.random() * 899999999) + 100000000;
+    const barcode = `${prefix}${randomPart}`;
+    setFormData(prev => ({ ...prev, sku: barcode }));
+    toast({ title: "Code-barres généré", description: barcode });
+  };
 
   useEffect(() => {
     loadData();
@@ -66,17 +81,107 @@ export default function InventoryManager() {
     }
   };
 
-  const handleAdd = async () => {
+  const handleAddOrUpdate = async () => {
     try {
-      await api.inventory.add({ ...formData, clinicId: user.clinicId });
-      toast({ title: "Produit ajouté", description: `${formData.name} est enregistré.` });
+      if (formData.id) {
+        await api.inventory.update({ ...formData, clinicId: user.clinicId });
+        toast({ title: "Produit mis à jour", description: `${formData.name} a été modifié.` });
+      } else {
+        await api.inventory.add({ 
+          ...formData, 
+          sku: formData.sku || `SKU-${Date.now()}`,
+          clinicId: user.clinicId 
+        });
+        toast({ title: "Produit ajouté", description: `${formData.name} est enregistré.` });
+      }
       setIsAddOpen(false);
       loadData();
-      setFormData({ name: "", category: "Général", stock: "0", price_buy: "0", price_sell: "0", unit: "unité", threshold: "5" });
+      resetForm();
     } catch (error) {
-      toast({ variant: "destructive", title: "Erreur", description: "Échec de l'ajout." });
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de l'enregistrement." });
     }
   };
+
+  const handleAdjustStock = async () => {
+    try {
+      await api.inventory.adjust({
+        id: selectedProduct.id,
+        adjustment: parseInt(adjustmentValue),
+        clinicId: user.clinicId
+      });
+      toast({ title: "Stock mis à jour", description: `Le stock de ${selectedProduct.name} a été modifié.` });
+      setIsAdjustOpen(false);
+      loadData();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de l'ajustement." });
+    }
+  };
+
+  const openAdjust = (product: any) => {
+    setSelectedProduct(product);
+    setAdjustmentValue("0");
+    setIsAdjustOpen(true);
+  };
+
+  const resetForm = () => {
+    setFormData({ id: "", name: "", category: "Général", sku: "", stock: "0", price_buy: "0", price_sell: "0", unit: "unité", threshold: "5" });
+  };
+
+  const handleEdit = (product: any) => {
+    setFormData({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      sku: product.sku,
+      stock: product.stock.toString(),
+      price_buy: product.price_buy.toString(),
+      price_sell: product.price_sell.toString(),
+      unit: product.unit,
+      threshold: product.threshold.toString()
+    });
+    setIsAddOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Voulez-vous vraiment supprimer ce produit ?")) return;
+    try {
+      await api.inventory.delete(id);
+      toast({ title: "Produit supprimé", description: "Le produit a été retiré du stock." });
+      loadData();
+    } catch (error) {
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de la suppression." });
+    }
+  };
+
+  const handlePrintLabel = (product: any) => {
+    const printWindow = window.open('', '_blank', 'width=400,height=300');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Étiquette - ${product.name}</title>
+          <style>
+            body { font-family: 'Courier New', Courier, monospace; text-align: center; padding: 20px; }
+            .label { border: 2px solid black; padding: 15px; display: inline-block; width: 280px; }
+            .name { font-weight: bold; font-size: 18px; margin-bottom: 5px; text-transform: uppercase; }
+            .sku { font-size: 24px; font-weight: black; margin: 10px 0; letter-spacing: 5px; }
+            .price { font-size: 20px; font-weight: bold; margin-top: 5px; }
+            .barcode-sim { height: 40px; background: repeating-linear-gradient(90deg, black, black 2px, white 2px, white 4px); margin-bottom: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="label">
+            <div class="name">${product.name}</div>
+            <div class="barcode-sim"></div>
+            <div class="sku">${product.sku}</div>
+            <div class="price">${Number(product.price_sell).toLocaleString()} CFA</div>
+          </div>
+          <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
+        </body>
+      </html>
+    `);
+  };
+
 
   const filtered = inventory.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -107,14 +212,21 @@ export default function InventoryManager() {
             </DialogTrigger>
             <DialogContent className="max-w-xl bg-white rounded-[2.5rem] p-8 border-none italic-none">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black border-none">Ajouter au Stock Global</DialogTitle>
+                <DialogTitle className="text-2xl font-black border-none">{formData.id ? "Modifier l'Article" : "Ajouter au Stock Global"}</DialogTitle>
                 <CardDescription className="italic-none border-none">Remplissez les détails techniques du produit.</CardDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-6 pt-6 italic-none border-none">
-                 <div className="col-span-2 space-y-2 border-none">
-                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 border-none">Désignation *</Label>
-                    <Input className="h-12 rounded-xl bg-slate-50 border-none" placeholder="Nom du produit..." value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-                 </div>
+                  <div className="col-span-2 space-y-2 border-none">
+                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 border-none">Désignation *</Label>
+                     <Input className="h-12 rounded-xl bg-slate-50 border-none" placeholder="Nom du produit..." value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  </div>
+                  <div className="col-span-2 space-y-2 border-none">
+                     <div className="flex items-center justify-between">
+                       <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 border-none">Code-Barres (SKU)</Label>
+                       <Button variant="ghost" size="sm" onClick={generateBarcode} className="h-6 text-[10px] uppercase font-bold text-emerald-600 gap-1"><Barcode className="w-3 h-3"/> Générer Code</Button>
+                     </div>
+                     <Input className="h-12 rounded-xl bg-slate-50 border-none font-mono" placeholder="Scannez ou saisissez..." value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} />
+                  </div>
                  <div className="space-y-2 border-none">
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 border-none">Catégorie</Label>
                     <Input className="h-12 rounded-xl bg-slate-50 border-none" placeholder="Ex: Matériaux, Électro..." value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} />
@@ -139,10 +251,12 @@ export default function InventoryManager() {
                     <Label className="text-xs font-bold uppercase tracking-widest text-slate-500 border-none">Seuil d'Alerte</Label>
                     <Input type="number" className="h-12 rounded-xl bg-slate-50 border-none" value={formData.threshold} onChange={e => setFormData({...formData, threshold: e.target.value})} />
                  </div>
-              </div>
-              <div className="pt-6 border-none italic-none">
-                 <Button className="w-full h-14 bg-emerald-600 font-black text-white rounded-2xl border-none shadow-xl shadow-emerald-100" onClick={handleAdd}>ENREGISTRER L'ARTICLE</Button>
-              </div>
+               </div>
+               <div className="pt-6 border-none italic-none">
+                  <Button className="w-full h-14 bg-emerald-600 font-black text-white rounded-2xl border-none shadow-xl shadow-emerald-100" onClick={handleAddOrUpdate}>
+                     {formData.id ? "METTRE À JOUR" : "ENREGISTRER L'ARTICLE"}
+                  </Button>
+               </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -237,8 +351,15 @@ export default function InventoryManager() {
                            </TableCell>
                            <TableCell className="text-right p-6">
                               <div className="flex justify-end gap-2 border-none">
-                                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50"><Edit2 className="h-4 w-4" /></Button>
-                                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50"><Trash2 className="h-4 w-4" /></Button>
+                                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50" title="Approvisionner" onClick={() => openAdjust(item)}>
+                                    <Plus className="h-4 w-4" />
+                                 </Button>
+                                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50" onClick={() => handleEdit(item)}>
+                                    <Edit2 className="h-4 w-4" />
+                                 </Button>
+                                 <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(item.id)}>
+                                    <Trash2 className="h-4 w-4" />
+                                 </Button>
                               </div>
                            </TableCell>
                         </TableRow>
@@ -249,8 +370,37 @@ export default function InventoryManager() {
          </CardContent>
          <CardFooter className="p-6 border-t bg-slate-50/50 italic-none">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length} PRODUITS RÉPERTORIÉS</p>
-         </CardFooter>
+          </CardFooter>
       </Card>
+
+      <Dialog open={isAdjustOpen} onOpenChange={setIsAdjustOpen}>
+        <DialogContent className="max-w-md bg-white rounded-[2rem] p-8 border-none">
+           <DialogHeader>
+              <DialogTitle className="text-2xl font-black">Approvisionnement</DialogTitle>
+              <CardDescription>Ajouter ou retirer du stock pour {selectedProduct?.name}</CardDescription>
+           </DialogHeader>
+           <div className="space-y-4 pt-6">
+              <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+                 <span className="text-xs font-bold text-slate-500 uppercase">Stock Actuel</span>
+                 <span className="text-lg font-black">{selectedProduct?.stock} {selectedProduct?.unit}</span>
+              </div>
+              <div className="space-y-2">
+                 <Label className="text-xs font-bold uppercase text-slate-500">Quantité à ajouter (+ ou -)</Label>
+                 <Input 
+                   type="number" 
+                   className="h-14 rounded-xl bg-slate-50 border-none text-xl font-black text-center" 
+                   value={adjustmentValue} 
+                   onChange={e => setAdjustmentValue(e.target.value)} 
+                 />
+              </div>
+           </div>
+           <div className="pt-6">
+              <Button className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 font-black text-white rounded-2xl border-none shadow-xl shadow-indigo-100" onClick={handleAdjustStock}>
+                 VALIDER L'AJUSTEMENT
+              </Button>
+           </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

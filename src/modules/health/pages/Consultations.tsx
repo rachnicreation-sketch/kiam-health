@@ -95,7 +95,7 @@ export default function Consultations() {
         api.consultations.list(user.clinicId),
         api.patients.list(user.clinicId),
         api.users.list(user.clinicId),
-        api.lab.services(user.clinicId),
+        api.health.lab.services(user.clinicId),
         api.pharmacy.medications(user.clinicId)
       ]);
       
@@ -153,7 +153,7 @@ export default function Consultations() {
               description: `Lab: ${service?.testName || "Examen"}`, 
               amount: Number(service?.price) || 0 
             });
-            return api.lab.createTest({
+            return api.health.lab.createTest({
               clinicId: user.clinicId,
               patientId: form.patientId,
               doctorId: form.doctorId || user.id,
