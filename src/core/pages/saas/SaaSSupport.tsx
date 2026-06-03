@@ -4,10 +4,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api-service";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SaaSSupport() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     loadTickets();
@@ -21,6 +27,43 @@ export default function SaaSSupport() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTicketDetails = async (id: number) => {
+    try {
+      const data = await api.saas.ticketDetails(id);
+      setSelectedTicket(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleReply = async () => {
+    if (!replyMessage.trim() || !selectedTicket) return;
+    setIsProcessing(true);
+    try {
+      await api.saas.replyTicket({ ticket_id: selectedTicket.id, message: replyMessage });
+      setReplyMessage("");
+      loadTicketDetails(selectedTicket.id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleClose = async () => {
+    if (!selectedTicket) return;
+    setIsProcessing(true);
+    try {
+      await api.saas.closeTicket(selectedTicket.id);
+      setSelectedTicket(null);
+      loadTickets();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -101,9 +144,17 @@ export default function SaaSSupport() {
                               </div>
                            </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="rounded-full hover:bg-rose-50 hover:text-rose-600">
-                           Traiter <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
+                         <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="rounded-full hover:bg-rose-50 hover:text-rose-600"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              loadTicketDetails(ticket.id);
+                            }}
+                         >
+                            Traiter <ArrowRight className="w-4 h-4 ml-2" />
+                         </Button>
                      </div>
                    )) : (
                      <div className="p-20 text-center text-slate-400 italic">
@@ -115,6 +166,75 @@ export default function SaaSSupport() {
           </div>
         </div>
       </div>
+
+      {/* TICKET DETAIL DIALOG */}
+      <Dialog open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
+        <DialogContent className="sm:max-w-2xl rounded-[2rem] max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3 text-xl font-black">
+              <ShieldAlert className="w-6 h-6 text-rose-600" />
+              {selectedTicket?.subject}
+            </DialogTitle>
+            <div className="flex items-center gap-2 mt-1">
+               <Badge variant="outline" className="text-[10px] uppercase">{selectedTicket?.tenant_name}</Badge>
+               <Badge className={selectedTicket?.status === 'open' ? "bg-rose-500" : "bg-slate-400"}>{selectedTicket?.status}</Badge>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-6 space-y-6">
+             {/* Original Message */}
+             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Message Initial</p>
+                <p className="text-sm text-slate-700 leading-relaxed">{selectedTicket?.message}</p>
+             </div>
+
+             {/* Conversation */}
+             <div className="space-y-4">
+                {selectedTicket?.replies?.map((reply: any, i: number) => (
+                  <div key={i} className={`flex flex-col ${reply.author_role === 'saas_admin' ? 'items-end' : 'items-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${
+                      reply.author_role === 'saas_admin' 
+                      ? 'bg-rose-600 text-white rounded-tr-none' 
+                      : 'bg-white border border-slate-200 text-slate-700 rounded-tl-none'
+                    }`}>
+                      {reply.message}
+                    </div>
+                    <span className="text-[9px] text-slate-400 mt-1 uppercase font-bold">
+                      {reply.author_role === 'saas_admin' ? 'Vous' : 'Client'} • {new Date(reply.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))}
+             </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100">
+             <div className="flex gap-2">
+                <Input 
+                   placeholder="Tapez votre réponse..." 
+                   className="rounded-xl border-slate-200" 
+                   value={replyMessage}
+                   onChange={e => setReplyMessage(e.target.value)}
+                   onKeyPress={e => e.key === 'Enter' && handleReply()}
+                />
+                <Button 
+                   className="bg-rose-600 hover:bg-rose-700 rounded-xl"
+                   onClick={handleReply}
+                   disabled={isProcessing || !replyMessage.trim()}
+                >
+                   Envoyer
+                </Button>
+             </div>
+             <div className="flex justify-between items-center mt-4">
+                <Button variant="ghost" className="text-xs font-bold text-slate-400 hover:text-rose-600" onClick={handleClose}>
+                   Clôturer le ticket
+                </Button>
+                <Button variant="ghost" className="text-xs font-bold text-slate-400" onClick={() => setSelectedTicket(null)}>
+                   Fermer
+                </Button>
+             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

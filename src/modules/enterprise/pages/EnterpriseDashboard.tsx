@@ -37,9 +37,26 @@ const corporateData = [
   { month: "Jun", revenue: 7800000, expenses: 4200000 },
 ];
 
+import { useState, useEffect } from "react";
+import { apiRequest } from "@/lib/api-service";
+
 export default function EnterpriseDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const data = await apiRequest("enterprise.php?action=stats");
+      setStats(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const quickActions = [
     { label: "Nouveau Projet", icon: Target, color: "bg-indigo-600", url: "/enterprise/projects" },
@@ -73,17 +90,17 @@ export default function EnterpriseDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Clients Actifs"
-          value="84"
-          change="+12% ce mois"
+          title="Équipe Kiam"
+          value={stats?.team_size || "0"}
+          change="Membres actifs"
           changeType="positive"
           icon={Users}
           className="border-none shadow-md"
         />
         <StatCard
           title="Projets en cours"
-          value="15"
-          change="3 terminés"
+          value={stats?.active_projects || "0"}
+          change="En production"
           changeType="neutral"
           icon={Target}
           iconClassName="bg-blue-100 text-blue-600"
@@ -91,9 +108,9 @@ export default function EnterpriseDashboard() {
         />
         <StatCard
           title="Tasks Pending"
-          value="42"
-          change="Haute priorité"
-          changeType="negative"
+          value={stats?.pending_tasks || "0"}
+          change="À traiter"
+          changeType={stats?.pending_tasks > 10 ? "negative" : "positive"}
           icon={CheckSquare}
           iconClassName="bg-orange-100 text-orange-600"
           className="border-none shadow-md"

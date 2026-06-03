@@ -38,9 +38,26 @@ const pharmacyData = [
   { day: "Dim", sales: 400000, prescriptions: 20 },
 ];
 
+import { useState, useEffect } from "react";
+import { apiRequest } from "@/lib/api-service";
+
 export default function PharmacyDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const data = await apiRequest("pharmacy.php?action=stats");
+      setStats(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const quickActions = [
     { label: "Nouvelle Vente", icon: ShoppingCart, color: "bg-emerald-600", url: "/pharmacy/sales" },
@@ -75,7 +92,7 @@ export default function PharmacyDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Ventes du Jour"
-          value="452 000 CFA"
+          value={`${Number(stats?.sales_today || 0).toLocaleString()} CFA`}
           change="+8% vs hier"
           changeType="positive"
           icon={TrendingUp}
@@ -92,9 +109,9 @@ export default function PharmacyDashboard() {
         />
         <StatCard
           title="Médicaments en Stock"
-          value="2,140"
-          change="8 alertes"
-          changeType="negative"
+          value={stats?.total_items || "0"}
+          change={`${stats?.low_stock || 0} alertes`}
+          changeType={stats?.low_stock > 0 ? "negative" : "positive"}
           icon={Pill}
           iconClassName="bg-emerald-100 text-emerald-600"
           className="border-none shadow-md"

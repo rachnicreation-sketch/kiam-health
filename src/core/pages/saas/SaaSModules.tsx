@@ -1,19 +1,62 @@
-import { useState } from "react";
-import { Blocks, Plus, Stethoscope, Pill, Hotel, GraduationCap, Briefcase, Store } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Blocks, Plus, Stethoscope, Pill, Hotel, GraduationCap, Briefcase, Store, Eye } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { api } from "@/lib/api-service";
 
 export default function SaaSModules() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
   const [modules, setModules] = useState([
-    { name: "Kiam Health", icon: Stethoscope, description: "Gestion hospitalière complète et dossier patient", clients: 45, status: "active", version: "v3.2" },
-    { name: "Kiam Pharmacy", icon: Pill, description: "Inventaire, ventes et ordonnances", clients: 38, status: "active", version: "v2.1" },
-    { name: "Kiam Hotel", icon: Hotel, description: "Réservations, chambres et services hôteliers", clients: 12, status: "beta", version: "v1.0-beta" },
-    { name: "Kiam School", icon: GraduationCap, description: "Administration scolaire et notes", clients: 8, status: "active", version: "v1.5" },
-    { name: "Kiam ERP", icon: Briefcase, description: "Système de point de vente et gestion globale", clients: 25, status: "active", version: "v4.0" },
-    { name: "Kiam Commerce", icon: Store, description: "Gestion de boutiquiers", clients: 0, status: "coming_soon", version: "dev" },
+    { id: "health", name: "Kiam Health", icon: Stethoscope, description: "Gestion hospitalière complète et dossier patient", clients: 0, status: "active", version: "v3.2" },
+    { id: "pharmacy", name: "Kiam Pharmacy", icon: Pill, description: "Inventaire, ventes et ordonnances", clients: 0, status: "active", version: "v2.1" },
+    { id: "hotel", name: "Kiam Hotel", icon: Hotel, description: "Réservations, chambres et services hôteliers", clients: 0, status: "beta", version: "v1.0-beta" },
+    { id: "school", name: "Kiam School", icon: GraduationCap, description: "Administration scolaire et notes", clients: 0, status: "active", version: "v1.5" },
+    { id: "erp", name: "Kiam ERP", icon: Briefcase, description: "Système de point de vente et gestion globale", clients: 0, status: "active", version: "v4.0" },
+    { id: "shop", name: "Kiam Commerce", icon: Store, description: "Gestion de boutiquiers", clients: 0, status: "coming_soon", version: "dev" },
   ]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [statsData, modulesData] = await Promise.all([
+          api.saas.stats(),
+          api.saas.listModules()
+        ]);
+        setStats(statsData);
+        
+        // Map icon dynamically based on id
+        const iconMap: Record<string, any> = {
+          health: Stethoscope,
+          pharmacy: Pill,
+          hotel: Hotel,
+          school: GraduationCap,
+          erp: Briefcase,
+          shop: Store
+        };
+
+        if (modulesData && Array.isArray(modulesData)) {
+          const mappedModules = modulesData.map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            icon: iconMap[m.id] || Blocks,
+            description: m.description,
+            clients: statsData?.modulesUsage?.[m.id] || 0,
+            status: m.status,
+            version: m.version
+          }));
+          setModules(mappedModules);
+        }
+      } catch (err) {
+        console.error("Error loading module data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
   return (
     <div className="min-h-full bg-slate-50 text-slate-900 pb-12">
@@ -68,6 +111,38 @@ export default function SaaSModules() {
                 <div className="flex justify-between items-center text-sm">
                    <div className="text-slate-500 font-bold uppercase tracking-wider text-xs">État Global</div>
                    <Switch defaultChecked={module.status === 'active'} disabled={module.status === 'coming_soon'} />
+                </div>
+                
+                <div className="pt-2">
+                  <Button
+                    variant="outline"
+                    className="w-full font-bold text-sky-600 hover:text-sky-700 hover:bg-sky-50 border-sky-100"
+                    disabled={module.status === 'coming_soon'}
+                    onClick={async () => {
+                      try {
+                        const res = await api.auth.impersonateDemo(module.id, module.name);
+                        
+                        // Save admin session to allow returning
+                        const currentAdminUser = localStorage.getItem('kiam_auth_user');
+                        const currentAdminToken = localStorage.getItem('kiam_jwt_token');
+                        if (currentAdminUser) localStorage.setItem('kiam_admin_session', currentAdminUser);
+                        if (currentAdminToken) localStorage.setItem('kiam_admin_token', currentAdminToken);
+                        
+                        // Set demo session
+                        localStorage.setItem('kiam_jwt_token', res.token);
+                        localStorage.setItem('kiam_auth_user', JSON.stringify(res.user));
+                        localStorage.setItem('kiam_auth_clinic', JSON.stringify(res.clinic));
+                        localStorage.setItem('kiam_presentation_mode', 'true');
+                        
+                        window.location.href = '/kiam/dist/#/';
+                        window.location.reload();
+                      } catch(e: any) {
+                        console.error(e);
+                      }
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-2" /> Visualiser l'interface
+                  </Button>
                 </div>
               </div>
             </Card>

@@ -26,6 +26,12 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "Erreur inconnue" }));
+    
+    // Si le locataire est suspendu, rediriger vers la page dédiée
+    if (response.status === 403 && error.code === 'TENANT_SUSPENDED') {
+      window.location.hash = "#/suspended";
+    }
+    
     throw new Error(error.message || `HTTP error! status: ${response.status}`);
   }
 
@@ -41,6 +47,10 @@ export const api = {
     impersonate: (tenantId: string) => apiRequest("auth.php?action=impersonate", {
       method: "POST",
       body: JSON.stringify({ tenantId })
+    }),
+    impersonateDemo: (sector: string, name: string) => apiRequest("auth.php?action=impersonate_demo", {
+      method: "POST",
+      body: JSON.stringify({ sector, name })
     }),
   },
   tenants: {
@@ -163,6 +173,62 @@ export const api = {
     addSupplier: (data: any) => apiRequest("erp.php?action=add_supplier", { method: "POST", body: JSON.stringify(data) }),
     expenses: (clinicId: string) => apiRequest(`erp.php?action=list_expenses&clinicId=${clinicId}`),
     addExpense: (data: any) => apiRequest("erp.php?action=add_expense", { method: "POST", body: JSON.stringify(data) }),
+    // Advanced OHADA Accounts & General Ledger
+    ohadaAccounts: (clinicId: string) => apiRequest(`erp.php?action=ohada_accounts_list&clinicId=${clinicId}`),
+    ohadaJournalEntries: (clinicId: string) => apiRequest(`erp.php?action=ohada_journal_entries&clinicId=${clinicId}`),
+    ohadaEntryDetails: (clinicId: string, id: string) => apiRequest(`erp.php?action=ohada_entry_details&clinicId=${clinicId}&id=${id}`),
+    ohadaLedger: (clinicId: string) => apiRequest(`erp.php?action=ohada_general_ledger&clinicId=${clinicId}`),
+    ohadaTrialBalance: (clinicId: string) => apiRequest(`erp.php?action=ohada_trial_balance&clinicId=${clinicId}`),
+    ohadaFinancialReports: (clinicId: string) => apiRequest(`erp.php?action=ohada_financial_reports&clinicId=${clinicId}`),
+    // Physical Inventory Audits
+    physicalInventories: (clinicId: string) => apiRequest(`erp.php?action=physical_inventories_list&clinicId=${clinicId}`),
+    physicalInventoryGet: (clinicId: string, id: string) => apiRequest(`erp.php?action=physical_inventories_get&clinicId=${clinicId}&id=${id}`),
+    physicalInventoryCreate: (data: any) => apiRequest("erp.php?action=physical_inventories_create", { method: "POST", body: JSON.stringify(data) }),
+    physicalInventoryValidate: (data: any) => apiRequest("erp.php?action=physical_inventories_validate", { method: "POST", body: JSON.stringify(data) }),
+    // Commercial Quotes & Delivery Slips
+    quotesList: (clinicId: string) => apiRequest(`erp.php?action=quotes_list&clinicId=${clinicId}`),
+    quoteCreate: (data: any) => apiRequest("erp.php?action=quotes_create", { method: "POST", body: JSON.stringify(data) }),
+    quoteUpdateStatus: (data: any) => apiRequest("erp.php?action=quotes_update_status", { method: "POST", body: JSON.stringify(data) }),
+    deliverySlipsList: (clinicId: string) => apiRequest(`erp.php?action=delivery_slips_list&clinicId=${clinicId}`),
+    deliverySlipCreate: (data: any) => apiRequest("erp.php?action=delivery_slips_create", { method: "POST", body: JSON.stringify(data) }),
+    deliverySlipUpdateStatus: (data: any) => apiRequest("erp.php?action=delivery_slips_update_status", { method: "POST", body: JSON.stringify(data) }),
+    // Fractional Units Conversions
+    addProductUnitConversion: (data: any) => apiRequest("erp.php?action=add_unit_conversion", { method: "POST", body: JSON.stringify(data) }),
+    listProductUnits: (clinicId: string, productId: string) => apiRequest(`erp.php?action=list_product_units&clinicId=${clinicId}&product_id=${productId}`),
+  },
+  procurement: {
+    dashboard:       (clinicId: string) => apiRequest(`procurement.php?action=dashboard&clinicId=${clinicId}`),
+    // Suppliers
+    suppliers:       (clinicId: string, search = '', rating = '') => apiRequest(`procurement.php?action=suppliers_list&clinicId=${clinicId}&search=${search}&rating=${rating}`),
+    supplier:        (clinicId: string, id: string) => apiRequest(`procurement.php?action=suppliers_get&clinicId=${clinicId}&id=${id}`),
+    supplierBalance: (clinicId: string) => apiRequest(`procurement.php?action=supplier_balance&clinicId=${clinicId}`),
+    createSupplier:  (data: any) => apiRequest(`procurement.php?action=suppliers_create`, { method: 'POST', body: JSON.stringify(data) }),
+    updateSupplier:  (data: any) => apiRequest(`procurement.php?action=suppliers_update`, { method: 'PUT',  body: JSON.stringify(data) }),
+    deleteSupplier:  (clinicId: string, id: string) => apiRequest(`procurement.php?action=suppliers_delete&clinicId=${clinicId}&id=${id}`, { method: 'DELETE' }),
+    // Purchase Requests
+    prList:          (clinicId: string, status = '') => apiRequest(`procurement.php?action=pr_list&clinicId=${clinicId}&status=${status}`),
+    prGet:           (clinicId: string, id: string)  => apiRequest(`procurement.php?action=pr_get&clinicId=${clinicId}&id=${id}`),
+    prCreate:        (data: any) => apiRequest(`procurement.php?action=pr_create`,        { method: 'POST', body: JSON.stringify(data) }),
+    prUpdateStatus:  (data: any) => apiRequest(`procurement.php?action=pr_update_status`, { method: 'PUT',  body: JSON.stringify(data) }),
+    prToPo:          (data: any) => apiRequest(`procurement.php?action=pr_to_po`,         { method: 'POST', body: JSON.stringify(data) }),
+    // Purchase Orders
+    poList:          (clinicId: string, status = '') => apiRequest(`procurement.php?action=po_list&clinicId=${clinicId}&status=${status}`),
+    poGet:           (clinicId: string, id: string)  => apiRequest(`procurement.php?action=po_get&clinicId=${clinicId}&id=${id}`),
+    poCreate:        (data: any) => apiRequest(`procurement.php?action=po_create`,        { method: 'POST', body: JSON.stringify(data) }),
+    poUpdateStatus:  (data: any) => apiRequest(`procurement.php?action=po_update_status`, { method: 'PUT',  body: JSON.stringify(data) }),
+    // Goods Receipts
+    grList:          (clinicId: string) => apiRequest(`procurement.php?action=gr_list&clinicId=${clinicId}`),
+    grGet:           (clinicId: string, id: string) => apiRequest(`procurement.php?action=gr_get&clinicId=${clinicId}&id=${id}`),
+    grCreate:        (data: any) => apiRequest(`procurement.php?action=gr_create`,   { method: 'POST', body: JSON.stringify(data) }),
+    grValidate:      (data: any) => apiRequest(`procurement.php?action=gr_validate`, { method: 'PUT',  body: JSON.stringify(data) }),
+    // Supplier Invoices
+    invList:         (clinicId: string, status = '') => apiRequest(`procurement.php?action=inv_list&clinicId=${clinicId}&status=${status}`),
+    invGet:          (clinicId: string, id: string)  => apiRequest(`procurement.php?action=inv_get&clinicId=${clinicId}&id=${id}`),
+    invCreate:       (data: any) => apiRequest(`procurement.php?action=inv_create`,        { method: 'POST', body: JSON.stringify(data) }),
+    invUpdateStatus: (data: any) => apiRequest(`procurement.php?action=inv_update_status`, { method: 'PUT',  body: JSON.stringify(data) }),
+    // Payments
+    payList:         (clinicId: string) => apiRequest(`procurement.php?action=pay_list&clinicId=${clinicId}`),
+    payCreate:       (data: any) => apiRequest(`procurement.php?action=pay_create`, { method: 'POST', body: JSON.stringify(data) }),
   },
   pharmacy: {
     medications: (clinicId: string) => apiRequest(`medications.php?action=list&clinicId=${clinicId}`),
@@ -218,12 +284,51 @@ export const api = {
     }),
   },
   saas: {
+    stats: () => apiRequest("saas_admin.php?action=stats"),
+    tenants: () => apiRequest("saas_admin.php?action=tenants"),
+    tickets: () => apiRequest("saas_support.php?action=list"),
+    plans: () => apiRequest("saas_admin.php?action=list_plans"),
+    invoices: () => apiRequest("saas_admin.php?action=saas_invoices"),
+    savePlan: (data: any) => apiRequest("saas_admin.php?action=save_plan", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    listModules: () => apiRequest("saas_admin.php?action=list_modules"),
     modules: (tenantId: string) => apiRequest(`saas_admin.php?action=active_modules&tenant_id=${tenantId}`),
     updateTenantStatus: (id: string, status: string) => apiRequest(`saas_admin.php?action=update_status`, {
       method: "POST",
       body: JSON.stringify({ id, status })
     }),
     deleteTenant: (id: string) => apiRequest(`saas_admin.php?action=delete_tenant`, {
+      method: "POST",
+      body: JSON.stringify({ id })
+    }),
+    announcements: () => apiRequest("saas_admin.php?action=announcements"),
+    createAnnouncement: (data: any) => apiRequest("saas_admin.php?action=create_announcement", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    ticketDetails: (id: number) => apiRequest(`saas_admin.php?action=ticket_details&id=${id}`),
+    replyTicket: (data: any) => apiRequest("saas_admin.php?action=reply_ticket", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    closeTicket: (id: number) => apiRequest("saas_admin.php?action=close_ticket", {
+      method: "POST",
+      body: JSON.stringify({ id })
+    }),
+    auditLogs: (limit?: number) => apiRequest(`saas_admin.php?action=audit_logs${limit ? `&limit=${limit}` : ''}`),
+    aiAnalysis: () => apiRequest("saas_admin.php?action=ai_analysis"),
+    users: () => apiRequest("saas_admin.php?action=users"),
+    saveUser: (data: any) => apiRequest("saas_admin.php?action=save_user", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }),
+    deleteUser: (id: string) => apiRequest("saas_admin.php?action=delete_user", {
+      method: "POST",
+      body: JSON.stringify({ id })
+    }),
+    toggleUser: (id: string) => apiRequest("saas_admin.php?action=toggle_user", {
       method: "POST",
       body: JSON.stringify({ id })
     }),

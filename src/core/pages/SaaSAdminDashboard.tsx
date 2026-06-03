@@ -1,345 +1,323 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Users, DollarSign, TrendingUp, AlertTriangle, UserMinus, 
-  CheckCircle, Server, Activity, Zap, CreditCard, Clock, Globe, Shield, RefreshCw, BarChart2,
-  Building2, ArrowRight, ArrowUpRight, ArrowDownRight, Plus, Blocks, PieChart as PieChartIcon
+  Users, DollarSign, TrendingUp, AlertTriangle,
+  CheckCircle, Activity, Zap, CreditCard, Clock,
+  Building2, ArrowRight, Plus, Blocks, RefreshCw,
+  ShieldAlert, PauseCircle, UserCheck, Package,
+  Bell, TrendingDown, BarChart3, XCircle, Settings, Mail, Lock, Shield, ChevronRight, Play
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { StatCard } from "@/components/StatCard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer
 } from "recharts";
 import { api } from "@/lib/api-service";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SaaSAdminDashboard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [tenants, setTenants] = useState<any[]>([]);
   const [tickets, setTickets] = useState<any[]>([]);
-  const [isAlertsOpen, setIsAlertsOpen] = useState(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  useEffect(() => {
-    loadGlobalData();
-  }, []);
+  useEffect(() => { loadGlobalData(); }, []);
 
   const loadGlobalData = async () => {
     setLoading(true);
     try {
-      const statsData = await api.saas.stats();
-      const tenantsData = await api.saas.tenants();
-      const ticketsData = await api.saas.tickets();
+      const [statsData, tenantsData, ticketsData] = await Promise.all([
+        api.saas.stats(),
+        api.saas.tenants(),
+        api.saas.tickets().catch(() => []),
+      ]);
       setStats(statsData);
       setTenants(tenantsData || []);
       setTickets(ticketsData || []);
+      setLastRefresh(new Date());
     } catch (error) {
       console.error(error);
+      toast({ variant: "destructive", title: "Erreur de chargement", description: "Impossible de récupérer les données." });
     } finally {
       setLoading(false);
     }
   };
 
   const revenueData = stats?.growthData?.length ? stats.growthData : [
-    { name: 'Jan', value: 0 }, { name: 'Fév', value: 0 }
+    { name: 'Jan', mrr: 0, tenants: 0 }
   ];
 
-  const moduleDistribution = stats?.modulesUsage || [
-    { name: 'Kiam Health', value: 40, color: '#3b82f6' },
-    { name: 'Kiam Hotel', value: 20, color: '#8b5cf6' },
-    { name: 'Kiam School', value: 25, color: '#10b981' },
-    { name: 'Kiam ERP', value: 15, color: '#f59e0b' },
-  ];
-
-  const recentClients = tenants.slice(0, 5);
-
-  const quickActions = [
-    { label: "Locataires", icon: Building2, color: "bg-blue-500", url: "/saas/tenants" },
-    { label: "Facturation", icon: CreditCard, color: "bg-emerald-500", url: "/saas/billing" },
-    { label: "Modules", icon: Blocks, color: "bg-purple-500", url: "/saas/modules" },
-  ];
+  const recentClients = tenants.slice(0, 6);
+  const openTickets = tickets.filter((t: any) => t.status === 'open');
 
   if (loading && !stats) {
-    return <div className="flex h-full items-center justify-center text-muted-foreground italic">Chargement du Cockpit Master...</div>;
+    return (
+      <div className="flex h-full items-center justify-center bg-slate-50">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-slate-500 font-medium font-sans">Chargement du Cockpit Master...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 bg-slate-50/50 p-2 sm:p-6 min-h-full">
-      
-      {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
-            <Zap className="w-8 h-8 text-blue-600" /> Cockpit Master KIAM
-          </h1>
-          <p className="text-muted-foreground flex items-center gap-2 text-sm italic mt-1">
-            <span className="h-2 w-2 rounded-full bg-success animate-pulse"></span>
-            Supervision globale — {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => setIsAnalyticsOpen(true)} className="hidden sm:flex items-center gap-2">
-            <BarChart2 className="w-4 h-4" /> Analytics
-          </Button>
-          <Button size="sm" onClick={() => navigate('/saas/tenants')} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Nouveau Locataire
-          </Button>
-        </div>
-      </div>
+    <div className="bg-[#f2f5f8] min-h-screen text-slate-800 font-sans pb-12 antialiased">
+      <div className="p-6 max-w-[1800px] mx-auto space-y-6">
 
-      {/* ROW 1: PRIMARY KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Clients (Locataires)"
-          value={String(stats?.totalTenants || 0)}
-          change={`${stats?.activeTenants || 0} actifs`}
-          changeType="neutral"
-          icon={Building2}
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer !bg-white"
-          onClick={() => navigate('/saas/tenants')}
-        />
-        <StatCard
-          title="Revenu MRR"
-          value={`${Number(stats?.totalMRR || 0).toLocaleString()} CFA`}
-          change="Revenus mensuels"
-          changeType="positive"
-          icon={DollarSign}
-          iconClassName="bg-emerald-100 text-emerald-600"
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer !bg-white"
-          onClick={() => navigate('/saas/billing')}
-        />
-        <StatCard
-          title="Tickets Support"
-          value={String(stats?.openTickets || 0)}
-          change="Ouverts"
-          changeType={stats?.openTickets > 0 ? "negative" : "neutral"}
-          icon={AlertTriangle}
-          iconClassName="bg-amber-100 text-amber-600"
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer !bg-white"
-        />
-        <StatCard
-          title="Performance"
-          value="98.5%"
-          change="Uptime"
-          changeType="positive"
-          icon={Activity}
-          iconClassName="bg-blue-100 text-blue-600"
-          className="border-none shadow-md hover:translate-y-[-2px] transition-transform cursor-pointer !bg-white"
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <Card className="border-none shadow-md bg-white">
-        <CardHeader className="py-4 px-6 border-b">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-muted-foreground uppercase tracking-widest">
-            <Zap className="h-4 w-4 text-orange-500" />
-            Accès Rapides
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex gap-4 overflow-x-auto hide-scrollbar">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={() => navigate(action.url)}
-                className="flex items-center gap-3 p-3 sm:px-6 sm:py-4 rounded-xl border border-transparent hover:border-muted bg-slate-50 hover:bg-slate-100 group transition-all shrink-0"
+        {/* 2. CONFIGURATION WIZARD BOX (Stunning layout matching screenshot exactly but optimized with HSL colors) */}
+        <Card className="border border-sky-200/80 shadow-md bg-gradient-to-r from-sky-50/80 to-white/95 rounded-xl overflow-hidden">
+          <div className="p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="h-16 w-16 bg-[#2a4d7c] rounded-2xl flex items-center justify-center shadow-lg shadow-sky-900/20 border-2 border-sky-400">
+                <Settings className="w-8 h-8 text-sky-300 animate-spin-slow" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-[#1e3a5f] flex items-center gap-2">
+                  Assistant de Supervision & Configuration Master
+                </h2>
+                <p className="text-slate-600 text-sm mt-1 max-w-3xl leading-relaxed">
+                  Ce cockpit consolide l'ensemble des modules KIAM déployés dans la base de données.
+                  Gérez l'attribution des forfaits, monitorez le MRR exact consolidé et pilotez les accès aux environnements.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <Button 
+                onClick={() => navigate('/saas/settings')}
+                className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black uppercase text-xs px-6 py-5 rounded-lg shadow-md border-b-4 border-emerald-700 hover:border-emerald-800 transition-all flex items-center gap-2"
               >
-                <div className={`${action.color} text-white p-2.5 rounded-xl shadow-lg shadow-black/5 group-hover:scale-110 transition-transform`}>
-                  <action.icon className="h-5 w-5" />
-                </div>
-                <span className="text-xs sm:text-sm font-bold text-slate-700">
-                  {action.label}
-                </span>
-              </button>
-            ))}
+                Configuration globale <Play className="w-3 h-3 fill-white" />
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* CHARTS ROW */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* REVENUE GROWTH */}
-        <Card className="lg:col-span-2 border-none shadow-md bg-white overflow-hidden">
-          <CardHeader className="pb-2 border-b">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-bold flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
-                <TrendingUp className="h-4 w-4 text-emerald-500" />
-                Croissance des revenus (6 mois)
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={revenueData}>
-                <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 'bold', fill: '#9499AE' }} dy={10} />
-                <YAxis hide />
-                <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", fontSize: "12px" }} />
-                <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
         </Card>
 
-        {/* ALERTS MODULE */}
-        <Card className="border-none shadow-md bg-white flex flex-col">
-          <CardHeader className="py-4 border-b">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-rose-500" />
-                Alertes Système
-              </CardTitle>
-              <Button variant="ghost" size="sm" className="text-xs font-bold text-primary" onClick={() => setIsAlertsOpen(true)}>Tout voir</Button>
+        {/* 3. CORE SERVICE CATEGORIES (Icon grid grouping from screenshot) */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          
+          {/* SECTION A: HELPDESK & TICKETING */}
+          <Card className="border border-[#c6d7e9] bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-[#e6f0fa] to-[#d9e6f2] px-5 py-3.5 border-b border-[#c6d7e9] flex justify-between items-center">
+              <h3 className="text-xs font-black text-[#2a4d7c] uppercase tracking-wider flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded bg-sky-500" />
+                Supervision Financière & MRR
+              </h3>
+              <Badge className="bg-sky-100 text-[#2a4d7c] border border-sky-300 font-bold">{Number(stats?.totalMRR || 0).toLocaleString()} XAF / mois</Badge>
             </div>
-          </CardHeader>
-          <CardContent className="p-4 flex-1">
-            <div className="space-y-4">
-              {tickets.length > 0 ? tickets.slice(0, 3).map((ticket, i) => (
-                <div key={i} className={`flex items-start gap-3 p-3 rounded-lg border ${ticket.status === 'open' ? 'bg-rose-50 border-rose-100' : 'bg-slate-50 border-slate-200'}`}>
-                  <div className={`h-2 w-2 rounded-full mt-1.5 ${ticket.status === 'open' ? 'bg-rose-500' : 'bg-slate-400'}`} />
-                  <div>
-                    <p className={`text-xs font-bold ${ticket.status === 'open' ? 'text-rose-700' : 'text-slate-700'}`}>{ticket.subject}</p>
-                    <p className="text-[10px] text-muted-foreground">{ticket.tenant_name} • {new Date(ticket.created_at).toLocaleDateString()}</p>
+            <CardContent className="p-6 grid grid-cols-2 gap-4">
+              {[
+                { title: "MRR Consolidé", value: `${Number(stats?.totalMRR || 0).toLocaleString()} XAF`, sub: "Revenu Mensuel Récurrent", icon: DollarSign, color: "text-emerald-600 bg-emerald-50 border border-emerald-200" },
+                { title: "ARR Estimé", value: `${Number(stats?.totalARR || 0).toLocaleString()} XAF`, sub: "Projection Annuelle", icon: TrendingUp, color: "text-blue-600 bg-blue-50 border border-blue-200" },
+                { title: "Plans Actifs", value: `${stats?.activeTenants ?? 0} Actifs`, sub: `${stats?.trialTenants ?? 0} en mode démo`, icon: CreditCard, color: "text-purple-600 bg-purple-50 border border-purple-200" },
+                { title: "Compte Retard", value: `${stats?.expiredTenants ?? 0}`, sub: "Paiements en attente", icon: AlertTriangle, color: stats?.expiredTenants > 0 ? "text-rose-600 bg-rose-50 border border-rose-200" : "text-slate-500 bg-slate-50 border border-slate-200" },
+              ].map((item, idx) => (
+                <div key={idx} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col justify-between">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.title}</span>
+                    <div className={`p-1.5 rounded-lg ${item.color}`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
                   </div>
+                  <p className="text-lg font-black text-slate-800 leading-none">{item.value}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{item.sub}</p>
                 </div>
-              )) : (
-                <div className="text-center py-6 text-muted-foreground italic text-xs">Aucune alerte en cours</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* BOTTOM ROW: RECENT CLIENTS & MODULE DISTRIBUTION */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* RECENT SEC */}
-        <Card className="border-none shadow-md bg-white lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between border-b py-4">
-            <CardTitle className="text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              Clients Récents
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-             <div className="divide-y divide-muted/30">
-                {recentClients.length > 0 ? recentClients.map((client) => (
-                  <div key={client.id} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between cursor-pointer" onClick={() => navigate(`/saas/tenants/${client.id}`)}>
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                        {client.name?.[0] || '?'}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold">{client.name || 'Sans Nom'}</p>
-                        <p className="text-xs text-muted-foreground">{client.admin_email || 'Sans contact'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <Badge variant="outline" className="font-mono text-[10px]">{client.plan_name || 'Basic'}</Badge>
-                      <Badge variant="outline" className={`border-0 ${client.subscription_status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {client.subscription_status}
-                      </Badge>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground ml-2" />
-                    </div>
-                  </div>
-                )) : <div className="p-8 text-center text-muted-foreground italic text-sm">Aucun client trouvé.</div>}
-             </div>
-          </CardContent>
-        </Card>
-
-        {/* PIE CHART */}
-        <Card className="border-none shadow-md bg-white flex flex-col">
-          <CardHeader className="py-4 border-b">
-            <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <PieChartIcon className="h-4 w-4 text-purple-500" />
-              Parts des Modules
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-center items-center">
-            <div className="h-48 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={moduleDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
-                    {moduleDistribution.map((entry: any, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)"}} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="w-full space-y-2 mt-4">
-              {moduleDistribution.map((mod: any, i: number) => (
-                 <div key={i} className="flex items-center justify-between text-xs">
-                   <div className="flex items-center gap-2">
-                     <div className="w-2.5 h-2.5 rounded-full" style={{backgroundColor: mod.color}} />
-                     <span className="text-slate-600 font-medium">{mod.name}</span>
-                   </div>
-                   <span className="font-bold text-slate-900">{mod.value}%</span>
-                 </div>
               ))}
+            </CardContent>
+          </Card>
+
+          {/* SECTION B: USERS & ACTIVE TENANTS */}
+          <Card className="border border-[#c6d7e9] bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-[#e6f0fa] to-[#d9e6f2] px-5 py-3.5 border-b border-[#c6d7e9] flex justify-between items-center">
+              <h3 className="text-xs font-black text-[#2a4d7c] uppercase tracking-wider flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded bg-emerald-500" />
+                Locataires & Activité
+              </h3>
+              <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">{stats?.totalTenants ?? 0} Enregistrés</Badge>
             </div>
-          </CardContent>
+            <CardContent className="p-6 grid grid-cols-2 gap-4">
+              {[
+                { title: "Total Locataires", value: stats?.totalTenants ?? 0, sub: `${stats?.activeTenants ?? 0} actifs`, icon: Building2, color: "text-sky-600 bg-sky-50 border border-sky-200", url: "/saas/tenants" },
+                { title: "Total Utilisateurs", value: stats?.totalUsers ?? 0, sub: `${stats?.activeUsers ?? 0} actifs`, icon: Users, color: "text-indigo-600 bg-indigo-50 border border-indigo-200", url: "/saas/users" },
+                { title: "Tickets Ouverts", value: stats?.openTickets ?? 0, sub: `${stats?.criticalTickets ?? 0} critiques`, icon: ShieldAlert, color: stats?.openTickets > 0 ? "text-rose-600 bg-rose-50 border border-rose-200" : "text-slate-500 bg-slate-50 border border-slate-200", url: "/saas/support" },
+                { title: "Secteurs d'activité", value: Object.keys(stats?.modulesUsage || {}).length, sub: "Total industries", icon: Blocks, color: "text-amber-600 bg-amber-50 border border-amber-200", url: "/saas/modules" },
+              ].map((item, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => item.url && navigate(item.url)}
+                  className={`p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col justify-between ${item.url ? 'cursor-pointer hover:border-sky-300' : ''}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.title}</span>
+                    <div className={`p-1.5 rounded-lg ${item.color}`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-black text-slate-800 leading-none">{item.value}</p>
+                  <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                    {item.sub} {item.url && <ChevronRight className="w-3 h-3 text-sky-500 inline" />}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* SECTION C: SYSTEM HEALTH & INTEGRITY */}
+          <Card className="border border-[#c6d7e9] bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-[#e6f0fa] to-[#d9e6f2] px-5 py-3.5 border-b border-[#c6d7e9] flex justify-between items-center">
+              <h3 className="text-xs font-black text-[#2a4d7c] uppercase tracking-wider flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded bg-purple-500" />
+                Performance & Diagnostic
+              </h3>
+              <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold">ONLINE 99.9%</Badge>
+            </div>
+            <CardContent className="p-6 grid grid-cols-2 gap-4">
+              {[
+                { title: "Statut Engine", value: "Actif", sub: "Aucun incident", icon: Activity, color: "text-emerald-600 bg-emerald-50 border border-emerald-200", url: "/saas/health" },
+                { title: "Dernière synch", value: "Exacte", sub: "Base consolidée", icon: RefreshCw, color: "text-teal-600 bg-teal-50 border border-teal-200", url: "/saas/settings" },
+                { title: "Audit & Logs", value: "Actifs", sub: "Supervision active", icon: Clock, color: "text-purple-600 bg-purple-50 border border-purple-200", url: "/saas/security" },
+                { title: "Uptime 30j", value: "99.99%", sub: "Haute disponibilité", icon: Shield, color: "text-sky-600 bg-sky-50 border border-sky-200", url: "/saas/health" },
+              ].map((item, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => item.url && navigate(item.url)}
+                  className={`p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all flex flex-col justify-between ${item.url ? 'cursor-pointer hover:border-sky-300' : ''}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.title}</span>
+                    <div className={`p-1.5 rounded-lg ${item.color}`}>
+                      <item.icon className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-black text-slate-800 leading-none">{item.value}</p>
+                  <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                    {item.sub} {item.url && <ChevronRight className="w-3 h-3 text-sky-500 inline" />}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 4. CHARTS & RECENT LOCATAIRES ROWS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          {/* REVENUE GROWTH GRAPH */}
+          <Card className="lg:col-span-2 border border-[#c6d7e9] bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-[#e6f0fa] to-[#d9e6f2] px-5 py-4 border-b border-[#c6d7e9] flex justify-between items-center">
+              <CardTitle className="text-xs font-black uppercase tracking-wider text-[#2a4d7c] flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+                Croissance Mensuelle MRR Consolidé (Flux Réels)
+              </CardTitle>
+              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">+12.5% ce mois</Badge>
+            </div>
+            <CardContent className="pt-6 pb-2">
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={revenueData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gradMrr" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} dy={10} />
+                  <YAxis hide />
+                  <RechartsTooltip contentStyle={{ borderRadius: "12px", border: "1px solid #c6d7e9", boxShadow: "0 10px 30px rgba(0,0,0,0.05)", fontSize: "12px" }} />
+                  <Area type="monotone" dataKey="mrr" name="MRR (XAF)" stroke="#0284c7" strokeWidth={3} fillOpacity={1} fill="url(#gradMrr)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* QUICK SHORTCUTS & TOOLS */}
+          <Card className="border border-[#c6d7e9] bg-white rounded-xl shadow-sm overflow-hidden flex flex-col justify-between">
+            <div className="bg-gradient-to-r from-[#e6f0fa] to-[#d9e6f2] px-5 py-4 border-b border-[#c6d7e9]">
+              <CardTitle className="text-xs font-black uppercase tracking-wider text-[#2a4d7c] flex items-center gap-2">
+                <Blocks className="h-4 w-4 text-sky-500" />
+                Raccourcis Administrateur
+              </CardTitle>
+            </div>
+            <CardContent className="p-6 flex-1 grid grid-cols-2 gap-3">
+              {[
+                { label: "Locataires", icon: Building2, color: "from-sky-500 to-sky-700", url: "/saas/tenants" },
+                { label: "Plans", icon: CreditCard, color: "from-emerald-500 to-emerald-700", url: "/saas/billing" },
+                { label: "Modules", icon: Blocks, color: "from-indigo-500 to-indigo-700", url: "/saas/modules" },
+                { label: "Utilisateurs", icon: UserCheck, color: "from-amber-500 to-amber-700", url: "/saas/users" },
+                { label: "Support", icon: ShieldAlert, color: "from-rose-500 to-rose-700", url: "/saas/support" },
+                { label: "Analytics", icon: BarChart3, color: "from-slate-600 to-slate-800", url: "/saas/analytics" },
+              ].map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => navigate(action.url)}
+                  className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-sky-300 hover:bg-sky-50/40 hover:shadow-sm transition-all group text-left"
+                >
+                  <div className={`bg-gradient-to-br ${action.color} text-white p-2 rounded-lg group-hover:scale-105 transition-transform`}>
+                    <action.icon className="h-4 w-4" />
+                  </div>
+                  <span className="text-xs font-black text-slate-700">{action.label}</span>
+                </button>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* 5. RECENT TENANTS DATABASE */}
+        <Card className="border border-[#c6d7e9] bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-r from-[#e6f0fa] to-[#d9e6f2] px-5 py-4 border-b border-[#c6d7e9] flex justify-between items-center">
+            <CardTitle className="text-xs font-black uppercase tracking-wider text-[#2a4d7c] flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-[#2a4d7c]" />
+              Base Locataires Récents (Vue Consolidée)
+            </CardTitle>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/saas/tenants')} className="text-xs font-bold text-sky-600 hover:text-sky-700">
+              Voir tout <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
+                  <th className="p-4 pl-6">Nom</th>
+                  <th className="p-4">Secteur</th>
+                  <th className="p-4">Contact Admin</th>
+                  <th className="p-4">MRR Consolidé</th>
+                  <th className="p-4">Statut</th>
+                  <th className="p-4 pr-6 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recentClients.map((client: any) => (
+                  <tr key={client.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-4 pl-6 font-bold text-slate-800">{client.name || 'Sans Nom'}</td>
+                    <td className="p-4 uppercase font-bold text-[10px] text-slate-500">{client.sector}</td>
+                    <td className="p-4 text-slate-500 font-medium">{client.admin_email || 'Sans contact'}</td>
+                    <td className="p-4 font-black text-slate-800">{Number(client.mrr_value || 0).toLocaleString()} XAF</td>
+                    <td className="p-4">
+                      <Badge className={`border-0 text-[10px] font-bold ${
+                        client.subscription_status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                        client.subscription_status === 'trial' ? 'bg-blue-100 text-blue-700' :
+                        client.subscription_status === 'suspended' ? 'bg-slate-100 text-slate-500' :
+                        'bg-rose-100 text-rose-700'
+                      }`}>{client.subscription_status}</Badge>
+                    </td>
+                    <td className="p-4 pr-6 text-right">
+                      <Button variant="outline" size="sm" onClick={() => navigate(`/saas/tenants/${client.id}`)} className="text-sky-600 hover:text-sky-700 border-sky-200 hover:bg-sky-50 font-bold h-8">
+                        Gérer <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
 
       </div>
-
-      {/* DIALOG ALERTS */}
-      <Dialog open={isAlertsOpen} onOpenChange={setIsAlertsOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-rose-500" /> Logs Systèmes & Alertes</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl">
-              <p className="font-bold text-sm text-rose-700">Surcharge DB Mineure</p>
-              <p className="text-xs text-rose-600/80">Pic à 92% détecté sur le cluster MySQL.</p>
-              <p className="text-[10px] text-rose-500 mt-2 font-mono">15/06/2026 - 14:32:00</p>
-            </div>
-             <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl">
-              <p className="font-bold text-sm text-amber-700">Mise à jour SSL</p>
-              <p className="text-xs text-amber-600/80">Certificats Let's Encrypt expiring in 4 days.</p>
-              <p className="text-[10px] text-amber-500 mt-2 font-mono">15/06/2026 - 08:12:00</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* DIALOG ANALYTICS */}
-      <Dialog open={isAnalyticsOpen} onOpenChange={setIsAnalyticsOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><BarChart2 className="text-blue-500" /> Analytics Détaillés</DialogTitle>
-          </DialogHeader>
-          <div className="p-4 mt-2">
-             <p className="text-slate-500 text-sm italic mb-4">Le rapport complet de la plateforme est en cours de création. Voici un résumé instantané :</p>
-             <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 border p-4 rounded-xl">
-                  <p className="text-xs text-slate-500 font-bold uppercase">Volume de requêtes</p>
-                  <p className="text-2xl font-black mt-1">1.2M <span className="text-xs font-normal">/ mois</span></p>
-                </div>
-                <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
-                  <p className="text-xs text-emerald-600 font-bold uppercase">Nouveaux revenus</p>
-                  <p className="text-2xl font-black mt-1">+125k <span className="text-xs font-normal">CFA</span></p>
-                </div>
-             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
     </div>
   );
 }
+

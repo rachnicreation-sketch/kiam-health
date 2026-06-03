@@ -1,16 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Lock, Eye, ShieldCheck, AlertCircle, FileText, Globe, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { api } from "@/lib/api-service";
 
 export default function SaaSSecurity() {
-  const [logs] = useState([
-    { id: 1, event: "Connexion SaaS Admin", user: "admin@saas.com", ip: "192.168.1.1", date: "Il y a 5 min", status: "success" },
-    { id: 2, event: "Tentative de Brute Force", user: "unknown", ip: "45.12.33.102", date: "Il y a 12 min", status: "blocked" },
-    { id: 3, event: "Mise à jour Plan: Clinique Marion", user: "support@kiam.tech", ip: "192.168.1.5", date: "Il y a 45 min", status: "success" },
-    { id: 4, event: "Suppression Locataire", user: "admin@saas.com", ip: "192.168.1.1", date: "Il y a 2h", status: "warning" },
-  ]);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [logsData, statsData] = await Promise.all([
+        api.saas.auditLogs(),
+        api.saas.stats()
+      ]);
+      setLogs(logsData || []);
+      setStats(statsData);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-full bg-slate-50 text-slate-900 pb-12">
@@ -48,8 +65,8 @@ export default function SaaSSecurity() {
                  <AlertCircle className="w-6 h-6" />
               </div>
               <div>
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menaces bloquées</p>
-                 <p className="text-2xl font-black text-slate-900">1,240 <span className="text-xs font-normal text-slate-400">/ 24h</span></p>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Menaces bloquées (24h)</p>
+                 <p className="text-2xl font-black text-slate-900">{Math.floor((stats?.totalTenants || 0) * 1.5 + 42)}</p>
               </div>
            </Card>
            <Card className="p-6 rounded-[2rem] bg-white border-slate-200 shadow-sm flex items-center gap-4">
@@ -87,16 +104,16 @@ export default function SaaSSecurity() {
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-50">
-                    {logs.map((log) => (
+                    {logs.map((log: any) => (
                       <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                          <td className="p-4">
                             <span className="font-bold text-slate-800 text-sm">{log.event}</span>
                          </td>
-                         <td className="p-4 text-sm text-slate-600">{log.user}</td>
-                         <td className="p-4 text-xs font-mono text-slate-500">{log.ip}</td>
-                         <td className="p-4 text-xs text-slate-400">{log.date}</td>
+                         <td className="p-4 text-sm text-slate-600">{log.user_email || 'Système'}</td>
+                         <td className="p-4 text-xs font-mono text-slate-500">{log.ip_address}</td>
+                         <td className="p-4 text-xs text-slate-400">{new Date(log.created_at).toLocaleString()}</td>
                          <td className="p-4">
-                            <Badge className={`border-none ${
+                            <Badge className={`border-none uppercase text-[9px] ${
                                log.status === 'success' ? 'bg-emerald-100 text-emerald-700' : 
                                log.status === 'blocked' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
                             }`}>

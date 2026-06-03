@@ -5,7 +5,21 @@ require_once 'functions.php';
 $auth = requireAuth();
 $clinicId = $auth['tenant_id'];
 
-$stmt = $pdo->prepare("SELECT l.*, u.name as user_name FROM activity_logs l JOIN users u ON l.user_id = u.id WHERE l.tenant_id = ? ORDER BY l.created_at DESC LIMIT 50");
+// Get activity logs for this tenant
+// We join with global users to get the name, or fall back to local users
+$stmt = $pdo->prepare("
+    SELECT 
+        l.*, 
+        COALESCE(gu.email, u.name, 'Système') as user_display_name
+    FROM kiam_audit_logs l
+    LEFT JOIN kiam_global_users gu ON l.user_id = gu.id
+    LEFT JOIN users u ON l.user_id = u.id
+    WHERE l.tenant_id = ?
+    ORDER BY l.created_at DESC
+    LIMIT 100
+");
 $stmt->execute([$clinicId]);
-sendResponse($stmt->fetchAll());
+$logs = $stmt->fetchAll();
+
+sendResponse($logs);
 ?>

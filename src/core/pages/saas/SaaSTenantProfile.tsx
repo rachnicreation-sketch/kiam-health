@@ -11,10 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 export default function SaaSTenantProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { impersonate } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [isImpersonating, setIsImpersonating] = useState(false);
   const [tenant, setTenant] = useState<any>(null);
   const domainPrefix = tenant?.domain_prefix || tenant?.name?.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -35,35 +33,7 @@ export default function SaaSTenantProfile() {
     }
   };
 
-  const handleImpersonate = async () => {
-    if (!id) return;
-    setIsImpersonating(true);
-    const res = await impersonate(id);
-    if (res.success) {
-      toast({ title: "Mode Présentation Activé", description: `Vous visualisez l'interface de ${tenant.name} sans accès aux données réelles.` });
-      
-      // Dynamic redirection based on sector with a small delay for stability
-      const sector = tenant.sector || 'health';
-      const sectorRoutes: Record<string, string> = {
-        health: '/dashboard',
-        hotel: '/hotel',
-        school: '/school/dashboard',
-        erp: '/erp/dashboard',
-        shop: '/erp/dashboard',
-        pharmacy: '/pharmacy/dashboard',
-        enterprise: '/enterprise/dashboard'
-      };
-      
-      setTimeout(() => {
-        navigate(sectorRoutes[sector] || '/dashboard');
-      }, 100);
-    } else {
-      toast({ title: "Erreur", description: res.message, variant: "destructive" });
-      setIsImpersonating(false);
-    }
-  };
-
-  const handleDelete = async () => {
+const handleDelete = async () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir supprimer définitivement le compte de "${tenant.name}" ?`)) return;
     try {
       await api.saas.deleteTenant(id!);
@@ -114,14 +84,14 @@ export default function SaaSTenantProfile() {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <Button 
-               disabled={isImpersonating} 
-               onClick={handleImpersonate} 
-               className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm font-bold"
-            >
-              <Activity className="w-4 h-4 mr-2" />
-              {isImpersonating ? "Connexion..." : "Voir Interface (Démo)"}
-            </Button>
+            <Button
+               disabled
+               className="bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed font-bold"
+               title="Fonctionnalité disponible prochainement — le KIAM SaaS respecte la confidentialité des données de chaque client"
+             >
+               <Activity className="w-4 h-4 mr-2 opacity-50" />
+               Accès Interface (À venir)
+             </Button>
             
             <Button variant="outline" onClick={handleToggleStatus} className={tenant.subscription_status === 'active' ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}>
               {tenant.subscription_status === 'active' ? <ShieldAlert className="w-4 h-4 mr-2" /> : <CheckCircle className="w-4 h-4 mr-2" />}

@@ -202,6 +202,7 @@ const saasItems: SidebarItem[] = [
   { title: "Support Client", url: "/saas/support", icon: ShieldAlert, module: 'saas' },
   { title: "Audit & Sécurité", url: "/saas/security", icon: Shield, module: 'saas' },
   { title: "Santé Système", url: "/saas/health", icon: Activity, module: 'saas' },
+  { title: "Statistiques & KPIs", url: "/saas/analytics", icon: BarChart3, module: 'saas' },
   { title: "IA Insights", url: "/saas/ai", icon: Zap, module: 'saas' },
   { title: "Utilisateurs", url: "/saas/users", icon: Users, module: 'saas' },
   { title: "Paramètres", url: "/saas/settings", icon: Settings, module: 'saas' },
@@ -279,9 +280,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar className="notranslate border-r-0 shadow-2xl" {...props}>
       <SidebarHeader className="h-16 border-b flex items-center px-6 bg-slate-950 notranslate">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <span className="text-primary-foreground font-black text-lg">K</span>
-          </div>
+          {clinic?.logo ? (
+            <img src={clinic.logo} alt="Logo" className="h-8 w-8 object-contain rounded-lg bg-white p-0.5" />
+          ) : (
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+              <span className="text-primary-foreground font-black text-lg">K</span>
+            </div>
+          )}
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-black text-white tracking-tight">Kiam</span>
@@ -409,6 +414,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarGroupContent>
               </SidebarGroup>
             )}
+            {/* MY KIAM SECTION */}
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-primary text-[10px] uppercase tracking-wider font-black">
+                Mon Kiam
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <NavLink
+                      to="/subscription"
+                      className={itemBaseClasses}
+                      activeClassName="bg-gradient-to-r from-indigo-500/20 to-transparent text-indigo-400 font-bold border-l-2 border-l-indigo-500 !translate-x-0"
+                    >
+                      <Shield className="h-5 w-5" />
+                      {!collapsed && <span className="tracking-wide text-[13px]">Mon Abonnement</span>}
+                    </NavLink>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </div>
         ) : null}
 

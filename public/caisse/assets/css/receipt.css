@@ -1,0 +1,162 @@
+/* ==========================================================================
+   80MM THERMAL RECEIPT PRINT STYLES - KIAM CAISSE
+   ========================================================================== */
+
+/* Non-print Preview Style (within modal) */
+.receipt-preview-container {
+    background-color: #f1f5f9;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    max-height: 500px;
+    overflow-y: auto;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.ticket {
+    width: 80mm;
+    background-color: #ffffff;
+    color: #000000;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 5mm;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+}
+
+.ticket-header {
+    text-align: center;
+    margin-bottom: 4mm;
+}
+
+.ticket-logo {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: -0.5px;
+    margin-bottom: 1mm;
+}
+
+.ticket-info {
+    font-size: 10px;
+    margin-bottom: 2mm;
+}
+
+.ticket-separator {
+    border-top: 1px dashed #000000;
+    margin: 3mm 0;
+}
+
+.ticket-meta {
+    font-size: 10px;
+    margin-bottom: 3mm;
+}
+
+.ticket-meta-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.ticket-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.ticket-items-table th {
+    text-align: left;
+    border-bottom: 1px dashed #000000;
+    padding-bottom: 1mm;
+    font-weight: bold;
+}
+
+.ticket-items-table td {
+    padding: 1.5mm 0;
+}
+
+.ticket-item-name {
+    font-weight: bold;
+}
+
+.ticket-item-calc {
+    font-size: 10px;
+    padding-left: 2mm;
+}
+
+.ticket-item-subtotal {
+    text-align: right;
+    vertical-align: bottom;
+}
+
+.ticket-totals {
+    font-size: 11px;
+    margin-top: 2mm;
+}
+
+.ticket-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5mm 0;
+}
+
+.ticket-total-row.grand-total {
+    font-size: 14px;
+    font-weight: bold;
+    border-top: 1px dashed #000000;
+    border-bottom: 1px dashed #000000;
+    padding: 2mm 0;
+    margin-top: 1mm;
+}
+
+.ticket-footer {
+    text-align: center;
+    margin-top: 6mm;
+    font-size: 10px;
+}
+
+.ticket-barcode {
+    margin-top: 3mm;
+    font-size: 8px;
+    letter-spacing: 2px;
+}
+
+/* ==========================================================================
+   PRINT MEDIA OVERRIDES - AUTOMATICALLY TRIGGERS ON WINDOW.PRINT()
+   ========================================================================== */
+@media print {
+    /* Cache absolument tout le site */
+    body * {
+        visibility: hidden;
+        background: transparent !important;
+    }
+    
+    /* Affiche uniquement le conteneur du ticket actif */
+    .printable-ticket, .printable-ticket * {
+        visibility: visible;
+    }
+    
+    /* Positionne le ticket en haut à gauche sans marges */
+    .printable-ticket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        margin: 0;
+        padding: 4mm;
+        box-shadow: none !important;
+    }
+    
+    /* Configuration de la page d'impression */
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+    
+    /* Désactive les en-têtes et pieds de page par défaut du navigateur */
+    html, body {
+        background-color: #ffffff;
+        margin: 0;
+        padding: 0;
+    }
+}

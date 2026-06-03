@@ -32,8 +32,32 @@ export const ProtectedRoute = ({ children, module }: ProtectedRouteProps) => {
        return <div className="p-8 text-destructive font-bold">Erreur de permissions : Accès SaaS refusé pour votre compte.</div>;
     }
     
-    // Redirect to dashboard if trying to access restricted module
-    const target = user.role === 'saas_admin' ? '/saas/dashboard' : '/dashboard';
+    // Redirect to sector-specific dashboard if trying to access restricted module
+    const sector = user.sector || 'health';
+    const sectorHome: Record<string, string> = {
+      health:     '/dashboard',
+      hotel:      '/hotel/dashboard',
+      school:     '/school/dashboard',
+      erp:        '/erp',
+      shop:       '/erp',
+      pharmacy:   '/pharmacy/dashboard',
+      enterprise: '/enterprise/dashboard',
+    };
+    const target = user.role === 'saas_admin' ? '/saas/dashboard' : (sectorHome[sector] || '/apps');
+    return <Navigate to={target} replace />;
+  }
+
+  // Also prevent non-health sectors from accessing the health dashboard module directly
+  if (module === 'dashboard' && user.sector && user.sector !== 'health' && user.role !== 'saas_admin') {
+    const sectorHome: Record<string, string> = {
+      hotel:      '/hotel/dashboard',
+      school:     '/school/dashboard',
+      erp:        '/erp',
+      shop:       '/erp',
+      pharmacy:   '/pharmacy/dashboard',
+      enterprise: '/enterprise/dashboard',
+    };
+    const target = sectorHome[user.sector] || '/apps';
     return <Navigate to={target} replace />;
   }
 

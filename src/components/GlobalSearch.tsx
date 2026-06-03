@@ -1,129 +1,126 @@
-import { useState, useEffect, useRef } from "react";
-import { 
-  Search, 
-  User, 
-  Stethoscope, 
-  Receipt, 
-  FlaskConical,
-  X,
-  ChevronRight,
-  TrendingUp
-} from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, Loader2, User, FileText, Package, Bed, GraduationCap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { Patient, User as UserType, Invoice, LabTest } from "@/lib/mock-data";
-import { 
-  Command, 
-  CommandGroup, 
-  CommandItem, 
-  CommandList, 
-  CommandInput,
-  CommandEmpty 
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api-service";
+import { useTranslation } from "react-i18next";
+import { apiRequest } from "@/lib/api-service";
 
-export function GlobalSearch() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+interface SearchResult {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: "patient" | "invoice" | "staff" | "product" | "room" | "student" | "customer";
+  url: string;
+}
+
+export const GlobalSearch = () => {
   const [query, setQuery] = useState("");
-  
-  const [results, setResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
-    if (query.length < 2) {
-      setResults([]);
-      return;
-    }
-
-    const clinicId = user?.clinicId;
-    if (!clinicId) return;
-
     const delayDebounceFn = setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        const data = await api.search.query(clinicId, query);
-        setResults(data);
-      } catch (error) {
-        console.error("Search error:", error);
-      } finally {
-        setIsLoading(false);
+      if (query.length >= 2) {
+        setLoading(true);
+        try {
+          const data = await apiRequest(`search.php?query=${query}`);
+          setResults(data);
+          setOpen(true);
+        } catch (error) {
+          console.error("Search error:", error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setResults([]);
+        setOpen(false);
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [query, user]);
+  }, [query]);
 
-  const handleSelect = (path: string) => {
-    setOpen(false);
-    setQuery("");
-    navigate(path);
+  const getIcon = (type: string) => {
+    switch (type) {
+      case "patient": return <User className="mr-2 h-4 w-4 text-blue-500" />;
+      case "customer": return <User className="mr-2 h-4 w-4 text-emerald-500" />;
+      case "invoice": return <FileText className="mr-2 h-4 w-4 text-orange-500" />;
+      case "product": return <Package className="mr-2 h-4 w-4 text-purple-500" />;
+      case "room": return <Bed className="mr-2 h-4 w-4 text-indigo-500" />;
+      case "student": return <GraduationCap className="mr-2 h-4 w-4 text-sky-500" />;
+      default: return <Search className="mr-2 h-4 w-4 text-slate-400" />;
+    }
   };
 
   return (
-    <div className="relative w-full max-w-sm">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5 cursor-pointer hover:bg-muted/80 transition-colors border border-transparent focus-within:border-primary/20">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground w-48 text-left">
-              {query || "Rechercher un dossier..."}
-            </span>
-            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-white px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                <span className="text-xs">⌘</span>K
-            </kbd>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-[400px]" align="start">
-          <Command className="rounded-lg shadow-md border-none">
-            <CommandInput 
-              placeholder="Rechercher patient, médecin, facture..." 
-              value={query}
-              onValueChange={setQuery}
-              className="border-none focus:ring-0"
-            />
-            <CommandList className="max-h-[400px] overflow-y-auto">
-              <CommandEmpty>{isLoading ? "Recherche en cours..." : `Aucun résultat pour "${query}"`}</CommandEmpty>
-              
-              <CommandGroup heading="Résultats">
-                {results.map((res: any) => (
-                  <CommandItem 
-                    key={`${res.type}-${res.id}`} 
-                    onSelect={() => handleSelect(res.url)}
-                    className="flex items-center justify-between cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                        res.type === 'patient' ? 'bg-primary/10 text-primary' : 
-                        res.type === 'staff' ? 'bg-emerald-100 text-emerald-600' : 
-                        'bg-amber-100 text-amber-600'
-                      }`}>
-                        {res.type === 'patient' ? <User className="h-4 w-4" /> : 
-                         res.type === 'staff' ? <Stethoscope className="h-4 w-4" /> : 
-                         <Receipt className="h-4 w-4" />}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold uppercase">{res.title}</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">{res.subtitle}</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-20" />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+    <div className="relative w-full max-w-md">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Input
+          placeholder={t("search.placeholder")}
+          className="pl-10 pr-10 bg-slate-50 border-slate-200 focus:bg-white transition-all rounded-xl h-10 w-full"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => query.length >= 2 && setOpen(true)}
+        />
+        {loading && (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+        )}
+      </div>
 
-              <div className="p-2 mt-2 border-t bg-muted/20">
-                 <p className="text-[9px] text-muted-foreground flex items-center gap-1.5 uppercase font-bold tracking-tighter">
-                   <TrendingUp className="h-3 w-3" /> Résultats issus de la base de données MySQL.
-                 </p>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger className="hidden" />
+        <DropdownMenuContent 
+          className="w-[var(--radix-dropdown-menu-trigger-width)] max-h-[400px] overflow-y-auto rounded-xl shadow-2xl border-slate-100 mt-2"
+          align="start"
+        >
+          <DropdownMenuLabel className="text-xs font-bold text-slate-400 uppercase tracking-widest px-4 py-2">
+            {t("search.no_results")}
+          </DropdownMenuLabel>
+          
+          {results.length > 0 ? (
+            <>
+              <DropdownMenuSeparator />
+              {results.map((result) => (
+                <DropdownMenuItem
+                  key={`${result.type}-${result.id}`}
+                  className="px-4 py-3 cursor-pointer hover:bg-blue-50 transition-colors rounded-lg mx-1"
+                  onClick={() => {
+                    navigate(result.url);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                >
+                  <div className="flex items-center">
+                    {getIcon(result.type)}
+                    <div className="flex flex-col">
+                      <span className="font-bold text-slate-900">{result.title}</span>
+                      <span className="text-xs text-slate-500">{result.subtitle}</span>
+                    </div>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </>
+          ) : (
+            query.length >= 2 && !loading && (
+              <div className="px-4 py-6 text-center text-slate-400 italic text-sm">
+                {t("search.no_results")}
               </div>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+            )
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
-}
+};

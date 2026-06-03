@@ -81,6 +81,13 @@
           <span class="font-medium">Gestion Entrepôts</span>
         </router-link>
 
+        <router-link :to="{ name: 'Caisse' }" class="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-green-800 transition-colors mt-4 border border-green-700 bg-kiam-800" active-class="bg-green-800 border-l-4 border-green-400">
+          <svg class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span class="font-medium text-green-100">Point de Vente (Caisse)</span>
+        </router-link>
+
       </nav>
 
       <!-- User minimal profile at bottom -->

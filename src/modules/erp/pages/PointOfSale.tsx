@@ -1,31 +1,20 @@
 import { useState, useEffect } from "react";
 import { 
-  ShoppingCart, 
-  Search, 
-  Trash2, 
-  Plus, 
-  Minus, 
-  CreditCard, 
-  Banknote, 
-  User, 
-  Box,
-  Zap,
-  ArrowLeft,
-  Printer
+  ShoppingCart, Search, Trash2, Plus, Minus, CreditCard, 
+  Banknote, Box, Zap, ArrowLeft, Printer, AlertTriangle, Scale
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+  Dialog, DialogContent, DialogHeader, DialogTitle, 
   DialogFooter 
 } from "@/components/ui/dialog";
 
@@ -36,9 +25,10 @@ export default function PointOfSale() {
   const [products, setProducts] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [cart, setCart] = useState<any[]>([]);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // cash, mobile, credit, bank
   const [lastTransaction, setLastTransaction] = useState<any>(null);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>("anonymous");
   const [discount, setDiscount] = useState<string>("0");
@@ -61,28 +51,42 @@ export default function PointOfSale() {
     }
   };
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: any, factor = 1.0, label = "") => {
     if (product.stock <= 0) {
       toast({ variant: "destructive", title: "Rupture", description: "Ce produit n'est plus en stock." });
       return;
     }
-    const existing = cart.find(item => item.id === product.id);
+    const unitLabel = label || product.unit || "unité";
+    const key = `${product.id}-${factor}`;
+    const existing = cart.find(item => item.cartKey === key);
+
+    // Calculate proportional price sell if factor is fractional
+    const unitPrice = product.price_sell * factor;
+
     if (existing) {
-      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+      setCart(cart.map(item => item.cartKey === key ? { ...item, quantity: item.quantity + 1 } : item));
     } else {
-      setCart([...cart, { ...product, quantity: 1 }]);
+      setCart([...cart, { 
+        ...product, 
+        cartKey: key, 
+        unit: unitLabel, 
+        conversion_factor: factor, 
+        price_sell: unitPrice, 
+        base_price: product.price_sell,
+        quantity: 1 
+      }]);
     }
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(cart.filter(item => item.id !== productId));
+  const removeFromCart = (cartKey: string) => {
+    setCart(cart.filter(item => item.cartKey !== cartKey));
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
+  const updateQuantity = (cartKey: string, delta: number) => {
     setCart(cart.map(item => {
-      if (item.id === productId) {
+      if (item.cartKey === cartKey) {
         const newQty = Math.max(1, item.quantity + delta);
-        if (newQty > item.stock) {
+        if (newQty * item.conversion_factor > item.stock) {
            toast({ variant: "destructive", title: "Stock insuffisant", description: `Seulement ${item.stock} disponibles.` });
            return item;
         }
@@ -99,7 +103,7 @@ export default function PointOfSale() {
   const handleCheckout = async () => {
     try {
       const response = await api.erp.posSale({
-        clinicId: user.clinicId,
+        clinicId: user!.clinicId,
         items: cart,
         total: cartTotal,
         payment_method: paymentMethod,
@@ -125,14 +129,13 @@ export default function PointOfSale() {
       setIsCheckoutOpen(false);
       setIsReceiptOpen(true);
       loadProducts();
-    } catch (error) {
-      toast({ variant: "destructive", title: "Erreur", description: "La validation de la vente a échoué." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Règlement Refusé", description: error.message || "La validation de la vente a échoué." });
     }
   };
 
   const handleBarcodeSearch = (val: string) => {
     setSearchTerm(val);
-    // Check if the value matches a SKU exactly
     const product = products.find(p => p.sku === val);
     if (product) {
       addToCart(product);
@@ -161,9 +164,9 @@ export default function PointOfSale() {
               </Button>
               <div>
                  <h1 className="text-2xl font-black tracking-tight text-slate-900 border-none flex items-center gap-3">
-                    <Zap className="h-7 w-7 text-amber-500" /> Caisse Express
+                    <Zap className="h-7 w-7 text-amber-500" /> Caisse Express (POS)
                  </h1>
-                 <p className="text-xs text-slate-500 font-medium tracking-wide border-none italic-none">Tapez le nom ou scannez un SKU</p>
+                 <p className="text-xs text-slate-500 font-medium tracking-wide border-none italic-none">Ventes au détail fractionnées et gestion des crédits.</p>
               </div>
            </div>
            <div className="relative w-80">
@@ -180,17 +183,35 @@ export default function PointOfSale() {
 
         <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProducts.map(product => (
-            <Card key={product.id} className="border-none shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer bg-white overflow-hidden rounded-[2rem] group" onClick={() => addToCart(product)}>
-               <div className="h-32 bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+            <Card key={product.id} className="border-none shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer bg-white overflow-hidden rounded-[2rem] group flex flex-col">
+               <div className="h-28 bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden shrink-0">
                   <Box className="h-8 w-8 text-slate-300 group-hover:scale-110 transition-transform" />
                   <Badge className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-slate-600 border-none text-[10px] uppercase font-black">{product.category}</Badge>
                </div>
-               <CardContent className="p-4">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{product.sku}</p>
-                  <h3 className="text-xs font-black text-slate-900 mb-2 truncate uppercase">{product.name}</h3>
-                  <div className="flex justify-between items-center">
-                     <p className="text-xs font-black text-emerald-600 font-mono">{Number(product.price_sell).toLocaleString()} <span className="text-[8px]">CFA</span></p>
-                     <Badge variant={product.stock > product.threshold ? "secondary" : "destructive"} className="text-[9px] px-1 py-0">{product.stock} {product.unit}</Badge>
+               <CardContent className="p-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{product.sku}</p>
+                    <h3 className="text-xs font-black text-slate-900 mb-2 truncate uppercase">{product.name}</h3>
+                    <div className="flex justify-between items-center mb-3">
+                       <p className="text-xs font-black text-emerald-600 font-mono">{Number(product.price_sell).toLocaleString()} <span className="text-[8px]">CFA</span> / {product.unit}</p>
+                       <Badge variant={product.stock > product.threshold ? "secondary" : "destructive"} className="text-[9px] px-1 py-0">{product.stock} {product.unit}</Badge>
+                    </div>
+                  </div>
+                  
+                  {/* Fractional units controls */}
+                  <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100">
+                    <Button size="sm" variant="outline" className="h-7 text-[9px] font-bold py-0" onClick={(e) => { e.stopPropagation(); addToCart(product, 1.0, product.unit); }}>
+                      1.0 {product.unit}
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-[9px] font-bold py-0 text-indigo-600 border-indigo-100" onClick={(e) => { e.stopPropagation(); addToCart(product, 0.5, `0.5 ${product.unit}`); }}>
+                      1/2 (500g)
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-[9px] font-bold py-0 text-indigo-600 border-indigo-100" onClick={(e) => { e.stopPropagation(); addToCart(product, 0.25, `0.25 ${product.unit}`); }}>
+                      1/4 (250g)
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-[9px] font-bold py-0 text-indigo-600 border-indigo-100" onClick={(e) => { e.stopPropagation(); addToCart(product, 0.1, `0.1 ${product.unit}`); }}>
+                      1/10 (100g)
+                    </Button>
                   </div>
                </CardContent>
             </Card>
@@ -217,21 +238,21 @@ export default function PointOfSale() {
                     </div>
                  ) : (
                     cart.map(item => (
-                       <div key={item.id} className="p-6 space-y-4 hover:bg-slate-50 transition-colors">
+                       <div key={item.cartKey} className="p-6 space-y-4 hover:bg-slate-50 transition-colors">
                           <div className="flex justify-between items-start">
                              <div className="flex-1 pr-2">
                                 <h4 className="text-xs font-black text-slate-900 uppercase leading-snug">{item.name}</h4>
                                 <p className="text-[10px] text-slate-500 font-medium">{Number(item.price_sell).toLocaleString()} CFA / {item.unit}</p>
                              </div>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 -mt-2" onClick={(e) => { e.stopPropagation(); removeFromCart(item.id); }}>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-rose-500 -mt-2" onClick={(e) => { e.stopPropagation(); removeFromCart(item.cartKey); }}>
                                 <Trash2 className="h-4 w-4" />
                              </Button>
                           </div>
                           <div className="flex justify-between items-center">
                              <div className="flex items-center bg-slate-100 rounded-xl p-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => updateQuantity(item.id, -1)}><Minus className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => updateQuantity(item.cartKey, -1)}><Minus className="h-3 w-3" /></Button>
                                 <span className="w-10 text-center text-sm font-black text-slate-900">{item.quantity}</span>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => updateQuantity(item.id, 1)}><Plus className="h-3 w-3" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg" onClick={() => updateQuantity(item.cartKey, 1)}><Plus className="h-3 w-3" /></Button>
                              </div>
                              <p className="text-sm font-black text-slate-900">{(item.price_sell * item.quantity).toLocaleString()} CFA</p>
                           </div>
@@ -264,21 +285,21 @@ export default function PointOfSale() {
                  </div>
               </div>
               <Button 
-                className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg gap-3 rounded-2xl shadow-xl shadow-emerald-100 border-none"
+                className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg gap-3 rounded-2xl shadow-xl border-none"
                 disabled={cart.length === 0}
                 onClick={() => setIsCheckoutOpen(true)}
               >
-                 VALIDER LA VENTE (F4)
+                 VALIDER LA VENTE
               </Button>
-           </CardFooter>
+            </CardFooter>
         </Card>
       </div>
 
       <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
         <DialogContent className="max-w-md bg-white border-none rounded-[2.5rem] p-8">
            <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-slate-900 border-none">Finaliser l'Encaissement</DialogTitle>
-              <CardDescription>Choisir le mode de règlement pour les {cartTotal.toLocaleString()} CFA</CardDescription>
+              <DialogTitle className="text-2xl font-black text-slate-900 border-none">Finaliser la vente</DialogTitle>
+              <CardDescription>Mode de règlement pour {cartTotal.toLocaleString()} CFA</CardDescription>
            </DialogHeader>
             <div className="space-y-4 pt-6">
                <div className="space-y-2">
@@ -290,34 +311,51 @@ export default function PointOfSale() {
                      <SelectContent className="rounded-xl border-none shadow-2xl">
                         <SelectItem value="anonymous" className="font-bold text-slate-500">Client Passager (Anonyme)</SelectItem>
                         {customers.map(c => (
-                          <SelectItem key={c.id} value={c.id} className="font-medium">{c.name} ({c.phone || 'Pas de tél'})</SelectItem>
+                          <SelectItem key={c.id} value={c.id} className="font-medium">{c.name} (Crédit Max: {Number(c.credit_limit).toLocaleString()} CFA)</SelectItem>
                         ))}
                      </SelectContent>
                   </Select>
                </div>
-               <div className="grid grid-cols-2 gap-4">
+               
+               <div className="grid grid-cols-2 gap-3">
                   <Button 
                     variant={paymentMethod === 'cash' ? 'default' : 'outline'} 
-                    className={`h-24 flex flex-col gap-2 rounded-2xl ${paymentMethod === 'cash' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
+                    className={`h-16 flex flex-col gap-1.5 rounded-2xl ${paymentMethod === 'cash' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
                     onClick={() => setPaymentMethod('cash')}
                   >
-                     <Banknote className="h-6 w-6" />
-                     <span className="text-xs font-black uppercase">Espèces</span>
+                     <Banknote className="h-5 w-5" />
+                     <span className="text-[10px] font-black uppercase">Espèces</span>
                   </Button>
                   <Button 
                     variant={paymentMethod === 'mobile' ? 'default' : 'outline'} 
-                    className={`h-24 flex flex-col gap-2 rounded-2xl ${paymentMethod === 'mobile' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
+                    className={`h-16 flex flex-col gap-1.5 rounded-2xl ${paymentMethod === 'mobile' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
                     onClick={() => setPaymentMethod('mobile')}
                   >
-                     <CreditCard className="h-6 w-6" />
-                     <span className="text-xs font-black uppercase">Mobile Money</span>
+                     <CreditCard className="h-5 w-5" />
+                     <span className="text-[10px] font-black uppercase">Mobile Money</span>
+                  </Button>
+                  <Button 
+                    variant={paymentMethod === 'bank' ? 'default' : 'outline'} 
+                    className={`h-16 flex flex-col gap-1.5 rounded-2xl ${paymentMethod === 'bank' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
+                    onClick={() => setPaymentMethod('bank')}
+                  >
+                     <Scale className="h-5 w-5" />
+                     <span className="text-[10px] font-black uppercase">Virement/Chèque</span>
+                  </Button>
+                  <Button 
+                    variant={paymentMethod === 'credit' ? 'default' : 'outline'} 
+                    className={`h-16 flex flex-col gap-1.5 rounded-2xl ${paymentMethod === 'credit' ? 'bg-slate-900 text-white' : 'border-slate-100 hover:bg-slate-50'}`}
+                    onClick={() => setPaymentMethod('credit')}
+                  >
+                     <AlertTriangle className="h-5 w-5" />
+                     <span className="text-[10px] font-black uppercase">Vente à Crédit</span>
                   </Button>
                </div>
             </div>
             <DialogFooter className="pt-6">
               <Button variant="ghost" onClick={() => setIsCheckoutOpen(false)} className="font-bold border-none">Annuler</Button>
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-8 rounded-xl" onClick={handleCheckout}>CONFIRMER LE PAIEMENT</Button>
-           </DialogFooter>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -336,8 +374,8 @@ export default function PointOfSale() {
 
               <div className="space-y-3">
                  {lastTransaction?.items.map((item: any) => (
-                    <div key={item.id} className="flex justify-between text-[10px] font-bold">
-                       <span>{item.quantity}x {item.name}</span>
+                    <div key={item.cartKey} className="flex justify-between text-[10px] font-bold">
+                       <span>{item.quantity}x {item.name} ({item.unit})</span>
                        <span>{(item.price_sell * item.quantity).toLocaleString()}</span>
                     </div>
                  ))}
@@ -353,29 +391,29 @@ export default function PointOfSale() {
                        <span>REMISE</span>
                        <span>-{lastTransaction?.discount.toLocaleString()}</span>
                     </div>
-                 )}
-                 <div className="flex justify-between text-xs font-black pt-1">
-                    <span>TOTAL À PAYER</span>
-                    <span>{lastTransaction?.total.toLocaleString()} CFA</span>
-                 </div>
-                 <div className="flex justify-between text-[9px] font-bold text-slate-500">
-                    <span>MODE DE PAIEMENT</span>
-                    <span className="uppercase">{lastTransaction?.payment_method}</span>
-                 </div>
-              </div>
+                  )}
+                  <div className="flex justify-between text-xs font-black pt-1">
+                     <span>TOTAL PAYÉ</span>
+                     <span>{lastTransaction?.total.toLocaleString()} CFA</span>
+                  </div>
+                  <div className="flex justify-between text-[9px] font-bold text-slate-500">
+                     <span>MODE DE PAIEMENT</span>
+                     <span className="uppercase">{lastTransaction?.payment_method}</span>
+                  </div>
+               </div>
 
-              <div className="text-center pt-6 pb-2">
-                 <p className="text-[9px] font-black uppercase tracking-widest italic-none">Merci de votre visite !</p>
-                 <p className="text-[7px] text-slate-400 mt-1">Logiciel Kiam ERP - www.kiam-erp.com</p>
-              </div>
-           </div>
-           <div className="p-4 bg-slate-50 flex gap-2 print:hidden">
-              <Button variant="outline" className="flex-1 rounded-xl font-bold" onClick={() => setIsReceiptOpen(false)}>Fermer</Button>
-              <Button className="flex-1 bg-slate-900 text-white rounded-xl font-bold gap-2" onClick={printReceipt}>
-                 <Printer className="h-4 w-4" /> Imprimer
-              </Button>
-           </div>
-        </DialogContent>
+               <div className="text-center pt-6 pb-2">
+                  <p className="text-[9px] font-black uppercase tracking-widest italic-none">Merci de votre visite !</p>
+                  <p className="text-[7px] text-slate-400 mt-1">Logiciel Kiam ERP - www.kiam-erp.com</p>
+               </div>
+            </div>
+            <div className="p-4 bg-slate-50 flex gap-2 print:hidden">
+               <Button variant="outline" className="flex-1 rounded-xl font-bold" onClick={() => setIsReceiptOpen(false)}>Fermer</Button>
+               <Button className="flex-1 bg-slate-900 text-white rounded-xl font-bold gap-2" onClick={printReceipt}>
+                  <Printer className="h-4 w-4" /> Imprimer
+               </Button>
+            </div>
+         </DialogContent>
       </Dialog>
 
       <style>{`

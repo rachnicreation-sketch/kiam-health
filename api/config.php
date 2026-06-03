@@ -32,6 +32,60 @@ try {
             PDO::ATTR_EMULATE_PREPARES => false,
         ]
     );
+
+    // Auto-initialize schema from database/schema.sql if clinics table is missing
+    try {
+        $pdo->query("SELECT 1 FROM clinics LIMIT 1");
+    } catch (Exception $e) {
+        $schemaFile = dirname(__DIR__) . '/database/schema.sql';
+        if (file_exists($schemaFile)) {
+            $sql = file_get_contents($schemaFile);
+            $sql = preg_replace('/--.*\n/', '', $sql);
+            $queries = explode(';', $sql);
+            foreach ($queries as $q) {
+                $q = trim($q);
+                if (!empty($q)) {
+                    try {
+                        $pdo->exec($q);
+                    } catch (Exception $ex) {}
+                }
+            }
+        }
+    }
+
+    // Auto-run additional table setups
+    try {
+        $pdo->query("SELECT 1 FROM inventory_items LIMIT 1");
+    } catch (Exception $e) {
+        @include_once __DIR__ . '/init_tables_phase4.php';
+    }
+
+    try {
+        $pdo->query("SELECT 1 FROM erp_suppliers LIMIT 1");
+    } catch (Exception $e) {
+        @include_once __DIR__ . '/init_erp_pro.php';
+    }
+
+    try {
+        $pdo->query("SELECT 1 FROM activity_logs LIMIT 1");
+    } catch (Exception $e) {
+        @include_once __DIR__ . '/migrate_missing_tables.php';
+    }
+
+    // Auto-init procurement module tables
+    try {
+        $pdo->query("SELECT 1 FROM suppliers LIMIT 1");
+    } catch (Exception $e) {
+        @include_once __DIR__ . '/init_procurement.php';
+    }
+
+    // Auto-init advanced ERP Pro v2 tables
+    try {
+        $pdo->query("SELECT 1 FROM erp_product_units LIMIT 1");
+    } catch (Exception $e) {
+        @include_once __DIR__ . '/init_erp_pro_v2.php';
+    }
+
 } catch (PDOException $e) {
     echo json_encode(["status" => "error", "message" => "Connection failed: " . $e->getMessage()]);
     exit;

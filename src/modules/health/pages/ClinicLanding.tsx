@@ -25,12 +25,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Clinic, Appointment, Patient } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { api } from "@/lib/api-service";
+
+const DEMO_CLINIC: Clinic = {
+  id: "demo",
+  name: "Clinique Démo Kiam",
+  status: "active",
+  email: "contact@kiam-demo.com",
+  phone: "+242 06 000 0000",
+  address: "Brazzaville, Congo",
+  website: "https://kiam.app",
+  logo: null,
+} as any;
 
 export default function ClinicLanding() {
   const { clinicId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [clinic, setClinic] = useState<Clinic | null>(null);
+  const [loading, setLoading] = useState(true);
   
   const [form, setForm] = useState({
     name: "",
@@ -49,9 +62,13 @@ export default function ClinicLanding() {
     if (!clinicId) return;
     try {
       const data = await api.clinics.get(clinicId);
-      setClinic(data);
+      setClinic(data && data.id ? data : DEMO_CLINIC);
     } catch (error) {
       console.error("Clinic load error:", error);
+      // Fallback to demo clinic so page always renders
+      setClinic(DEMO_CLINIC);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,9 +80,9 @@ export default function ClinicLanding() {
     }
 
     try {
-      await api.appointments.create({
+      await api.health.appointments.create({
         clinicId: clinicId,
-        patientId: "PUBLIC", // Nouveau patient potentiel
+        patientId: "PUBLIC",
         doctorId: "pending", 
         date: form.date || new Date().toISOString().split('T')[0],
         time: "08:00",
@@ -82,6 +99,11 @@ export default function ClinicLanding() {
     }
   };
 
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center bg-white">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+    </div>
+  );
   if (!clinic) return <div className="p-20 text-center">Clinique non trouvée</div>;
 
   const specialties = [

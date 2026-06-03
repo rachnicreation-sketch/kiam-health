@@ -16,7 +16,7 @@ if ($action === 'login') {
 
     // 1. Check Global SaaS Users (Master Admins & Tenant Owners)
     $stmt = $pdo->prepare("
-        SELECT gu.*, t.name as tenant_name, t.sector 
+        SELECT gu.*, t.name as tenant_name, t.sector, t.subscription_status 
         FROM kiam_global_users gu 
         LEFT JOIN kiam_tenants t ON gu.tenant_id = t.id 
         WHERE gu.email = ?
@@ -25,6 +25,14 @@ if ($action === 'login') {
     $globalUser = $stmt->fetch();
 
     if ($globalUser && ($password === $globalUser['password_hash'] || password_verify($password, $globalUser['password_hash']))) {
+        // Block if suspended
+        if ($globalUser['subscription_status'] === 'suspended' && $globalUser['global_role'] !== 'saas_admin') {
+            sendResponse([
+                "status" => "error", 
+                "message" => "Compte suspendu. Contactez l'administrateur.",
+                "code" => "TENANT_SUSPENDED"
+            ], 403);
+        }
         ensureClinicForTenant($pdo, $globalUser['tenant_id']);
 
         // Issue JWT token
@@ -58,7 +66,7 @@ if ($action === 'login') {
 
     // 2. Fallback to Legacy/Local Users (Normal employees)
     $stmt = $pdo->prepare("
-        SELECT u.*, t.sector 
+        SELECT u.*, t.sector, t.subscription_status 
         FROM users u 
         LEFT JOIN kiam_tenants t ON u.clinic_id = t.id 
         WHERE u.email = ?
@@ -67,6 +75,14 @@ if ($action === 'login') {
     $user = $stmt->fetch();
 
     if ($user && ($password === $user['password_hash'] || password_verify($password, $user['password_hash']))) {
+        // Block if suspended
+        if ($user['subscription_status'] === 'suspended') {
+            sendResponse([
+                "status" => "error", 
+                "message" => "Compte suspendu.",
+                "code" => "TENANT_SUSPENDED"
+            ], 403);
+        }
         unset($user['password_hash']);
 
         if (!empty($user['clinic_id'])) {
@@ -105,40 +121,40 @@ if ($action === 'login') {
         sendResponse(["status" => "error", "message" => "Identifiants invalides"], 401);
     }
 } elseif ($action === 'impersonate') {
-    // SECURITY: This should only be allowed for saas_admin
-    $tenantId = $data['tenantId'];
+    // Disabled for tenant data privacy
+    sendResponse([
+        "status" => "error",
+        "message" => "Le mode présentation/impersonation est désactivé pour des raisons de confidentialité des données de chaque client."
+    ], 403);
+} elseif ($action === 'impersonate_demo') {
+    $sector = $data['sector'] ?? 'health';
+    $name = $data['name'] ?? 'Demo Tenant';
     
-    $stmt = $pdo->prepare("SELECT * FROM kiam_tenants WHERE id = ?");
-    $stmt->execute([$tenantId]);
-    $tenant = $stmt->fetch();
-    
-    if (!$tenant) {
-        sendResponse(["status" => "error", "message" => "Tenant inconnu"], 404);
-    }
-
-    ensureClinicForTenant($pdo, $tenant['id']);
-    
-    // Issue Impersonated JWT token
+    // Create a demo token with a fake tenant_id isolated from real data
     $token = JWT::encode([
-        'id' => 'impersonated',
-        'email' => 'support@kiam.tech',
-        'tenant_id' => $tenant['id'],
-        'role' => 'clinic_admin',
-        'is_impersonated' => true
+        'id' => 'demo_admin',
+        'email' => 'demo@saas.com',
+        'tenant_id' => 'demo_' . $sector,
+        'role' => 'clinic_admin'
     ]);
-
+    
     sendResponse([
         "status" => "success",
         "token" => $token,
         "user" => [
-            "id" => "impersonated",
-            "email" => "support@kiam.tech",
+            "id" => "demo_admin",
+            "email" => "demo@saas.com",
             "role" => "clinic_admin",
-            "clinicId" => $tenant['id'],
-            "sector" => $tenant['sector'],
-            "name" => $tenant['name'] . " (Impersonation)"
+            "global_role" => "tenant_admin",
+            "clinicId" => "demo_" . $sector,
+            "sector" => $sector,
+            "name" => "[DEMO] " . $name
         ],
-        "clinic" => $tenant
+        "clinic" => [
+            "id" => "demo_" . $sector,
+            "name" => "[DEMO] " . $name,
+            "sector" => $sector
+        ]
     ]);
 } else {
     sendResponse(["status" => "error", "message" => "Action non reconnue"], 404);

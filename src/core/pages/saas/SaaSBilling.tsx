@@ -16,34 +16,29 @@ export default function SaaSBilling() {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [planForm, setPlanForm] = useState({ id: '', name: '', price: '0', max_users: '1', modules_included: '' });
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
-    loadPlans();
-    loadInvoices();
+    loadData();
   }, []);
 
-  const loadInvoices = async () => {
-     try {
-       const invs = await api.saas.invoices();
-       setInvoices(invs || []);
-     } catch (e) {
-       console.error(e);
-     }
-  };
-
-  const loadPlans = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const data = await api.saas.plans();
-      // Si la base est encore vide, on utilise des fallbacks par défaut le temps d'en créer.
-      if (data && data.length > 0) {
-        setPlans(data);
-      } else {
-        setPlans([
-          { id: "plan_basic", name: "Basic", price: 25000, max_users: 5, modules_included: "health,school", color: "border-slate-800" },
-          { id: "plan_pro", name: "Pro", price: 75000, max_users: 20, modules_included: "health,school,hotel", color: "border-blue-500/50", isPopular: true },
-        ]);
-      }
+      const [plansData, invsData, statsData] = await Promise.all([
+        api.saas.plans(),
+        api.saas.invoices(),
+        api.saas.stats()
+      ]);
+      
+      if (plansData && plansData.length > 0) setPlans(plansData);
+      else setPlans([
+        { id: "plan_basic", name: "Basic", price: 25000, max_users: 5, modules_included: "health,school" },
+        { id: "plan_pro", name: "Pro", price: 75000, max_users: 20, modules_included: "health,school,hotel" },
+      ]);
+
+      setInvoices(invsData || []);
+      setStats(statsData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -63,7 +58,7 @@ export default function SaaSBilling() {
       });
       toast({ title: "Succès", description: "Le plan a été enregistré." });
       setIsPlanModalOpen(false);
-      loadPlans();
+      loadData();
     } catch(err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     }
@@ -106,37 +101,37 @@ export default function SaaSBilling() {
       <div className="p-6 lg:px-8 max-w-[1600px] mx-auto space-y-8 mt-4">
         
         {/* KPI SUMMARIES */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           <Card className="bg-white border-slate-200 p-6 rounded-[2rem] flex items-center gap-6 shadow-sm">
-             <div className="p-4 rounded-2xl bg-blue-50 text-blue-600">
-               <TrendingUp className="w-8 h-8" />
-             </div>
-             <div>
-               <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">MRR Global</p>
-               <h2 className="text-3xl font-black text-slate-800">1.25M <span className="text-sm font-normal text-slate-500">CFA</span></h2>
-             </div>
-           </Card>
-           
-           <Card className="bg-white border-slate-200 p-6 rounded-[2rem] flex items-center gap-6 shadow-sm">
-             <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-600">
-               <CheckCircle className="w-8 h-8" />
-             </div>
-             <div>
-               <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Factures ImPayées (30j)</p>
-               <h2 className="text-3xl font-black text-slate-800">2</h2>
-             </div>
-           </Card>
+         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="bg-white border-slate-200 p-6 rounded-[2rem] flex items-center gap-6 shadow-sm">
+              <div className="p-4 rounded-2xl bg-blue-50 text-blue-600">
+                <TrendingUp className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">MRR Global</p>
+                <h2 className="text-3xl font-black text-slate-800">{Number(stats?.totalMRR || 0).toLocaleString()} <span className="text-sm font-normal text-slate-500">CFA</span></h2>
+              </div>
+            </Card>
+            
+            <Card className="bg-white border-slate-200 p-6 rounded-[2rem] flex items-center gap-6 shadow-sm">
+              <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-600">
+                <CheckCircle className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Locataires Actifs</p>
+                <h2 className="text-3xl font-black text-slate-800">{stats?.activeTenants || 0}</h2>
+              </div>
+            </Card>
 
-           <Card className="bg-white border-slate-200 p-6 rounded-[2rem] flex items-center gap-6 shadow-sm">
-             <div className="p-4 rounded-2xl bg-rose-50 text-rose-600">
-               <AlertTriangle className="w-8 h-8" />
-             </div>
-             <div>
-               <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Échecs de Paiement</p>
-               <h2 className="text-3xl font-black text-rose-600">1</h2>
-             </div>
-           </Card>
-        </div>
+            <Card className="bg-white border-slate-200 p-6 rounded-[2rem] flex items-center gap-6 shadow-sm">
+              <div className="p-4 rounded-2xl bg-rose-50 text-rose-600">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-1">Tickets Ouverts</p>
+                <h2 className="text-3xl font-black text-rose-600">{stats?.pendingTickets || 0}</h2>
+              </div>
+            </Card>
+         </div>
 
         {/* PLANS SECTION */}
         <div>
@@ -202,11 +197,11 @@ export default function SaaSBilling() {
               <tbody>
                 {invoices.map((inv, i) => (
                   <tr key={i} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-mono text-slate-500">{inv.id}</td>
-                    <td className="px-6 py-4 font-bold text-slate-800">{inv.client}</td>
-                    <td className="px-6 py-4 text-slate-600">{inv.plan}</td>
-                    <td className="px-6 py-4 font-bold text-blue-600">{inv.amount.toLocaleString()} CFA</td>
-                    <td className="px-6 py-4 text-slate-500">{inv.date}</td>
+                    <td className="px-6 py-4 font-mono text-slate-500 text-xs">{inv.id}</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">{inv.client_name}</td>
+                    <td className="px-6 py-4 text-slate-600">{inv.plan_name}</td>
+                    <td className="px-6 py-4 font-bold text-blue-600">{Number(inv.amount).toLocaleString()} CFA</td>
+                    <td className="px-6 py-4 text-slate-500">{inv.payment_date ? new Date(inv.payment_date).toLocaleDateString() : 'N/A'}</td>
                     <td className="px-6 py-4 text-right">
                       <Badge variant="outline" className={`
                         ${inv.status === 'payé' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : ''}

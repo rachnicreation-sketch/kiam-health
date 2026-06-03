@@ -1,0 +1,450 @@
+/* 
+ * KIAM ERP Design System (Odoo-like)
+ */
+
+ :root {
+    /* Couleurs KIAM Caisse */
+    --erp-primary: #0066cc; /* Bleu KIAM */
+    --erp-primary-hover: #003d99;
+    --erp-secondary: #66dd00; /* Vert KIAM */
+    
+    --erp-bg-body: #f9f9f9;
+    --erp-bg-white: #ffffff;
+    
+    --erp-text-main: #212529;
+    --erp-text-muted: #666666;
+    --erp-border: #dee2e6;
+    
+    --erp-topbar-bg: #714B67;
+    --erp-topbar-text: #ffffff;
+    
+    --erp-sidebar-bg: #ffffff;
+    --erp-sidebar-border: #e0e0e0;
+    
+    --erp-radius: 4px; /* Odoo utilise des angles très peu arrondis (SaaS classique) */
+}
+
+/* Base Override */
+body.erp-mode {
+    background-color: var(--erp-bg-body);
+    color: var(--erp-text-main);
+    font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Empêche le scroll sur le body pour déléguer au main */
+}
+
+/* ==========================================
+   TOP NAVIGATION BAR
+   ========================================== */
+.erp-topbar {
+    background-color: var(--erp-topbar-bg);
+    color: var(--erp-topbar-text);
+    height: 46px;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.erp-app-switcher {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.erp-app-switcher:hover {
+    background-color: rgba(0,0,0,0.15);
+}
+
+.erp-app-switcher svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.erp-brand {
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+}
+
+.erp-nav-links {
+    display: flex;
+    height: 100%;
+}
+
+.erp-nav-links a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.erp-nav-links a:hover, .erp-nav-links a.active {
+    background-color: rgba(0,0,0,0.15);
+    color: white;
+}
+
+.erp-topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    padding-right: 15px;
+}
+
+.erp-user-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.erp-user-avatar {
+    width: 28px;
+    height: 28px;
+    background-color: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* ==========================================
+   MAIN LAYOUT (SIDEBAR + CONTENT)
+   ========================================== */
+.erp-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Sidebar contextuelle */
+.erp-sidebar {
+    width: 240px;
+    background-color: var(--erp-sidebar-bg);
+    border-right: 1px solid var(--erp-sidebar-border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.erp-sidebar-group {
+    padding: 15px 0;
+}
+
+.erp-sidebar-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--erp-text-muted);
+    padding: 0 20px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.erp-sidebar-nav a {
+    display: block;
+    padding: 8px 20px 8px 30px;
+    color: var(--erp-text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-left: 3px solid transparent;
+}
+
+.erp-sidebar-nav a:hover {
+    background-color: var(--erp-bg-body);
+}
+
+.erp-sidebar-nav a.active {
+    background-color: rgba(113, 75, 103, 0.08);
+    color: var(--erp-primary);
+    border-left-color: var(--erp-primary);
+    font-weight: 500;
+}
+
+/* Main Content Area */
+.erp-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--erp-bg-white);
+    overflow: hidden;
+}
+
+/* Control Panel (En-tête de la vue : Boutons + Breadcrumbs + Filtres) */
+.erp-control-panel {
+    border-bottom: 1px solid var(--erp-border);
+    padding: 10px 20px;
+    background-color: var(--erp-bg-white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.erp-breadcrumbs {
+    display: flex;
+    align-items: center;
+    font-size: 1.25rem;
+    color: var(--erp-text-main);
+    gap: 8px;
+}
+
+.erp-breadcrumbs .app-name {
+    color: var(--erp-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.erp-breadcrumbs .separator {
+    color: var(--erp-text-muted);
+}
+
+.erp-breadcrumbs .current {
+    font-weight: 300;
+}
+
+.erp-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.erp-btn {
+    padding: 6px 12px;
+    border-radius: var(--erp-radius);
+    font-size: 0.88rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.erp-btn-primary {
+    background-color: var(--erp-primary);
+    color: white;
+}
+
+.erp-btn-primary:hover {
+    background-color: var(--erp-primary-hover);
+}
+
+.erp-btn-secondary {
+    background-color: white;
+    border-color: var(--erp-border);
+    color: var(--erp-text-main);
+}
+
+.erp-btn-secondary:hover {
+    background-color: var(--erp-bg-body);
+}
+
+.erp-view-switcher {
+    display: flex;
+    gap: 4px;
+}
+
+.erp-view-btn {
+    background: none;
+    border: none;
+    color: var(--erp-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--erp-radius);
+}
+
+.erp-view-btn.active, .erp-view-btn:hover {
+    color: var(--erp-primary);
+    background-color: rgba(113, 75, 103, 0.1);
+}
+
+/* ==========================================
+   VIEW CONTENT (Vues Listes & Kanban)
+   ========================================== */
+.erp-view-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    background-color: var(--erp-bg-body);
+}
+
+/* LIST VIEW (Tableaux denses) */
+.erp-list-view {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+.erp-list-view th {
+    background-color: var(--erp-bg-body);
+    color: var(--erp-text-muted);
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-bottom: 2px solid var(--erp-border);
+    position: sticky;
+    top: 0;
+}
+
+.erp-list-view td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--erp-border);
+    font-size: 0.9rem;
+    color: var(--erp-text-main);
+}
+
+.erp-list-view tr:hover {
+    background-color: rgba(0,0,0,0.02);
+    cursor: pointer;
+}
+
+/* KANBAN VIEW (Cartes) */
+.erp-kanban-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+    padding: 20px;
+}
+
+.erp-kanban-card {
+    background-color: white;
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius);
+    padding: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    display: flex;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.erp-kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+}
+
+.erp-kanban-image {
+    width: 64px;
+    height: 64px;
+    background-color: var(--erp-bg-body);
+    border-radius: var(--erp-radius);
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--erp-text-muted);
+    font-size: 1.5rem;
+}
+
+.erp-kanban-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.erp-kanban-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    color: var(--erp-text-main);
+}
+
+.erp-kanban-subtitle {
+    font-size: 0.85rem;
+    color: var(--erp-text-muted);
+    margin-bottom: 8px;
+}
+
+.erp-kanban-bottom {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.erp-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 10px;
+}
+
+.erp-badge-success { background-color: rgba(16, 185, 129, 0.15); color: #059669; }
+.erp-badge-danger { background-color: rgba(244, 63, 94, 0.15); color: #e11d48; }
+
+/* ==========================================
+   APP GRID (Lanceur d'applications - Accueil)
+   ========================================== */
+.erp-app-grid-container {
+    background: url('../img/odoo-bg.jpg') center/cover, linear-gradient(135deg, #714B67 0%, #3e2938 100%);
+    min-height: calc(100vh - 46px);
+    display: flex;
+    justify-content: center;
+    align-content: flex-start;
+    padding: 40px;
+}
+
+.erp-app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 30px;
+    max-width: 1000px;
+    width: 100%;
+}
+
+.erp-app-icon-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.erp-app-icon-wrapper:hover {
+    transform: translateY(-5px);
+}
+
+.erp-app-icon {
+    width: 85px;
+    height: 85px;
+    background-color: white;
+    border-radius: 18px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.erp-app-icon svg, .erp-app-icon img {
+    width: 45px;
+    height: 45px;
+}
+
+.erp-app-name {
+    color: white;
+    font-weight: 500;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    text-align: center;
+    font-size: 0.95rem;
+}

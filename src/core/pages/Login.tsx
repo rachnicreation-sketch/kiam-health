@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +9,28 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'saas_admin') {
+        navigate('/saas/dashboard');
+      } else {
+        const sector = user.sector || 'health';
+        const sectorHome: Record<string, string> = {
+          health:     '/dashboard',
+          hotel:      '/hotel/dashboard',
+          school:     '/school/dashboard',
+          erp:        '/erp',
+          shop:       '/erp',
+          pharmacy:   '/pharmacy/dashboard',
+          enterprise: '/enterprise/dashboard',
+        };
+        navigate(sectorHome[sector] || '/apps');
+      }
+    }
+  }, [user, navigate]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -26,33 +46,22 @@ export default function Login() {
       // Let's assume we can get the role from the stored user or better, from the response.
       if (result.success) {
         const storedUser = JSON.parse(localStorage.getItem('kiam_auth_user') || '{}');
-        
-        // Dynamic Redirection based on role and sector
+
+        // Redirect based on role and sector
         if (storedUser.role === 'saas_admin') {
-          navigate("/saas/dashboard");
+          navigate('/saas/dashboard');
         } else {
           const sector = storedUser.sector || 'health';
-          switch (sector) {
-            case 'school':
-              navigate("/school/dashboard");
-              break;
-            case 'hotel':
-              navigate("/hotel/dashboard");
-              break;
-            case 'erp':
-            case 'shop':
-              navigate("/erp/dashboard");
-              break;
-            case 'pharmacy':
-              navigate("/pharmacy/dashboard");
-              break;
-            case 'enterprise':
-              navigate("/enterprise/dashboard");
-              break;
-            case 'health':
-            default:
-              navigate("/dashboard");
-          }
+          const sectorHome: Record<string, string> = {
+            health:     '/dashboard',
+            hotel:      '/hotel/dashboard',
+            school:     '/school/dashboard',
+            erp:        '/erp',
+            shop:       '/erp',
+            pharmacy:   '/pharmacy/dashboard',
+            enterprise: '/enterprise/dashboard',
+          };
+          navigate(sectorHome[sector] || '/apps');
         }
       } else {
         setError(result.message || "Erreur de connexion");
@@ -69,8 +78,10 @@ export default function Login() {
       <div className="w-full max-w-sm mx-auto space-y-6">
         {/* Logo */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary shadow-lg">
-            <span className="text-primary-foreground font-bold text-2xl">K</span>
+          <div className="inline-flex items-center justify-center h-16 w-16 bg-white shadow-lg rounded-2xl p-1 border border-slate-100">
+            <img src="/images/logo-kiam.png" alt="KIAM Logo" className="h-full w-full object-contain" onError={(e) => {
+              (e.target as HTMLImageElement).src = "/kiam/public/images/logo-kiam.png";
+            }} />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Kiam</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">Plateforme de gestion hospitalière</p>

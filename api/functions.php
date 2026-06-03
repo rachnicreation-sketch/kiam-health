@@ -18,6 +18,7 @@ function generateId($prefix = '') {
 }
 
 function requireAuth() {
+    global $pdo;
     require_once 'jwt.php';
     $token = JWT::getBearerToken();
     if (!$token) {
@@ -27,8 +28,25 @@ function requireAuth() {
     if (!$decoded) {
         sendResponse(["status" => "error", "message" => "Accès non autorisé: Token invalide ou expiré"], 401);
     }
+
+    // Vérification du statut du locataire (sauf pour l'admin SaaS)
+    if (isset($decoded['tenant_id']) && $decoded['tenant_id'] && (!isset($decoded['role']) || $decoded['role'] !== 'saas_admin')) {
+        $stmt = $pdo->prepare("SELECT subscription_status FROM kiam_tenants WHERE id = ?");
+        $stmt->execute([$decoded['tenant_id']]);
+        $status = $stmt->fetchColumn();
+
+        if ($status === 'suspended') {
+            sendResponse([
+                "status" => "error", 
+                "message" => "Votre compte est suspendu. Veuillez contacter l'administrateur KIAM.",
+                "code" => "TENANT_SUSPENDED"
+            ], 403);
+        }
+    }
+
     return $decoded;
 }
+
 function ensureClinicForTenant(PDO $pdo, ?string $tenantId): string {
     $tenantId = trim((string) $tenantId);
     if ($tenantId === '') {

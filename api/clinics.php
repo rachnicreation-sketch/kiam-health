@@ -41,9 +41,22 @@ if ($method === 'GET') {
         sendResponse(["status" => "error", "message" => "ID de la clinique requis"], 400);
     }
 
-    if (isset($data['status'])) {
+    if (isset($data['status']) && count($data) === 2) {
         $stmt = $pdo->prepare("UPDATE clinics SET status = ? WHERE id = ?");
         $stmt->execute([$data['status'], $data['id']]);
+        sendResponse(["status" => "success"]);
+    } else {
+        $stmt = $pdo->prepare("UPDATE clinics SET name = ?, email = ?, phone = ?, address = ?, website = ?, tax_id = ?, logo = ? WHERE id = ?");
+        $stmt->execute([
+            $data['name'] ?? '',
+            $data['email'] ?? '',
+            $data['phone'] ?? '',
+            $data['address'] ?? '',
+            $data['website'] ?? '',
+            $data['taxId'] ?? ($data['tax_id'] ?? ''),
+            $data['logo'] ?? null,
+            $data['id']
+        ]);
         sendResponse(["status" => "success"]);
     }
 }

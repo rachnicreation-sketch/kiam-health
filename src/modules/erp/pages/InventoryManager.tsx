@@ -87,7 +87,7 @@ export default function InventoryManager() {
         await api.inventory.update({ ...formData, clinicId: user.clinicId });
         toast({ title: "Produit mis à jour", description: `${formData.name} a été modifié.` });
       } else {
-        await api.inventory.add({ 
+        await api.inventory.create({ 
           ...formData, 
           sku: formData.sku || `SKU-${Date.now()}`,
           clinicId: user.clinicId 
@@ -104,11 +104,11 @@ export default function InventoryManager() {
 
   const handleAdjustStock = async () => {
     try {
-      await api.inventory.adjust({
-        id: selectedProduct.id,
-        adjustment: parseInt(adjustmentValue),
-        clinicId: user.clinicId
-      });
+      await api.inventory.adjustStock(
+        selectedProduct.id,
+        parseInt(adjustmentValue),
+        "Ajustement manuel"
+      );
       toast({ title: "Stock mis à jour", description: `Le stock de ${selectedProduct.name} a été modifié.` });
       setIsAdjustOpen(false);
       loadData();

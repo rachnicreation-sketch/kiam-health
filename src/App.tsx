@@ -16,6 +16,7 @@ import NotFound from "./core/pages/NotFound";
 import { ModulePlaceholder } from "./core/pages/ModulePlaceholder";
 import ClinicLanding from "./modules/health/pages/ClinicLanding";
 import PatientPortal from "./modules/health/pages/PatientPortal";
+import AuditLogs from "./pages/AuditLogs";
 
 // ─── KIAM Health Module ────────────────────────────────────────────────────────
 import Dashboard from "./modules/health/pages/Dashboard";
@@ -41,20 +42,33 @@ import HotelDashboard from "./modules/hotel/pages/HotelDashboard";
 import Rooms from "./modules/hotel/pages/Rooms";
 import Bookings from "./modules/hotel/pages/Bookings";
 
-// ─── ERP Module ───────────────────────────────────────────────────────────────
-import PointOfSale from "./modules/erp/pages/PointOfSale";
-import InventoryManager from "./modules/erp/pages/InventoryManager";
-import ErpTransactions from "./modules/erp/pages/ErpTransactions";
-import ErpDashboard from "./modules/erp/pages/ErpDashboard";
-import ErpCustomers from "./modules/erp/pages/Customers";
-import ErpSuppliers from "./modules/erp/pages/Suppliers";
-import ErpExpenses from "./modules/erp/pages/Expenses";
-import ErpReports from "./modules/erp/pages/Reports";
-import ErpRegisterClosing from "./modules/erp/pages/RegisterClosing";
+// ─── ERP Module (Native React) ─────────────────────────────────────────────
+const ERPHome      = React.lazy(() => import("./modules/erp/pages/ErpHome"));
+const ERPDashboard = React.lazy(() => import("./modules/erp/pages/ErpDashboard"));
+const POS          = React.lazy(() => import("./modules/erp/pages/PointOfSale"));
+const Inventory    = React.lazy(() => import("./modules/erp/pages/InventoryManager"));
+const Customers    = React.lazy(() => import("./modules/erp/pages/Customers"));
+const Suppliers    = React.lazy(() => import("./modules/erp/pages/Suppliers"));
+const Expenses     = React.lazy(() => import("./modules/erp/pages/Expenses"));
+const Transactions = React.lazy(() => import("./modules/erp/pages/ErpTransactions"));
+const Reports      = React.lazy(() => import("./modules/erp/pages/Reports"));
+const RegisterClosing = React.lazy(() => import("./modules/erp/pages/RegisterClosing"));
+const ErpAccounting   = React.lazy(() => import("./modules/erp/pages/ErpAccounting"));
+const PhysicalInventories = React.lazy(() => import("./modules/erp/pages/PhysicalInventories"));
+const CommercialDocs  = React.lazy(() => import("./modules/erp/pages/CommercialDocs"));
+// ─── ERP Procurement Module ────────────────────────────────────────────────
+const ProcurementDashboard = React.lazy(() => import("./modules/erp/pages/ProcurementDashboard"));
+const PurchaseRequests     = React.lazy(() => import("./modules/erp/pages/PurchaseRequests"));
+const PurchaseOrders       = React.lazy(() => import("./modules/erp/pages/PurchaseOrders"));
+const GoodsReceipts        = React.lazy(() => import("./modules/erp/pages/GoodsReceipts"));
+const SupplierInvoices     = React.lazy(() => import("./modules/erp/pages/SupplierInvoices"));
+const SupplierPayments     = React.lazy(() => import("./modules/erp/pages/SupplierPayments"));
 
 // ─── Other Modules ────────────────────────────────────────────────────────────
 import PharmacyDashboard from "./modules/pharmacy/pages/PharmacyDashboard";
 import EnterpriseDashboard from "./modules/enterprise/pages/EnterpriseDashboard";
+import EnterpriseProjects from "./modules/enterprise/pages/Projects";
+import EnterpriseTasks from "./modules/enterprise/pages/Tasks";
 
 // ─── SaaS Admin Module ────────────────────────────────────────────────────────
 import SaaSAdminDashboard from "./core/pages/SaaSAdminDashboard";
@@ -63,12 +77,16 @@ import SaaSBilling from "./core/pages/saas/SaaSBilling";
 import SaaSModules from "./core/pages/saas/SaaSModules";
 import SaaSMarketing from "./core/pages/saas/SaaSMarketing";
 import SaaSUsers from "./core/pages/saas/SaaSUsers";
+import SaaSAnalytics from "./core/pages/saas/SaaSAnalytics";
 import SaaSSettings from "./core/pages/saas/SaaSSettings";
 import SaaSTenantProfile from "./core/pages/saas/SaaSTenantProfile";
 import SaaSSupport from "./core/pages/saas/SaaSSupport";
 import SaaSSecurity from "./core/pages/saas/SaaSSecurity";
 import SaaSHealth from "./core/pages/saas/SaaSHealth";
 import SaaSAI from "./core/pages/saas/SaaSAI";
+import SaaSSubscription from "./core/pages/SaaSSubscription";
+import SuspendedAccount from "./core/pages/SuspendedAccount";
+import AppSwitcher from "./core/pages/AppSwitcher";
 
 // ─── KIAM School Module — Lazy Loaded ─────────────────────────────────────────
 const SchoolDashboard = React.lazy(() => import("./modules/school/pages/SchoolDashboard"));
@@ -110,11 +128,14 @@ const App = () => (
               <Route path="/register" element={<Register />} />
               <Route path="/:clinicId" element={<ClinicLanding />} />
               <Route path="/patient/:clinicId/login" element={<PatientPortal />} />
+              <Route path="/suspended" element={<SuspendedAccount />} />
 
               {/* ── Authenticated Layout ──────────────────────────── */}
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/apps"            element={<AppSwitcher />} />
 
                 {/* Health */}
+                <Route path="/health"          element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard"       element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
                 <Route path="/patients"        element={<ProtectedRoute module="patients"><Patients /></ProtectedRoute>} />
                 <Route path="/patients/:id"    element={<ProtectedRoute module="patients"><PatientDetail /></ProtectedRoute>} />
@@ -132,6 +153,8 @@ const App = () => (
                 <Route path="/catalogs"        element={<ProtectedRoute module="catalogs"><Catalogs /></ProtectedRoute>} />
                 <Route path="/facilities"      element={<ProtectedRoute module="facilities"><Facilities /></ProtectedRoute>} />
                 <Route path="/settings"        element={<ProtectedRoute module="settings"><SettingsPage /></ProtectedRoute>} />
+                <Route path="/subscription"    element={<SaaSSubscription />} />
+                <Route path="/logs"            element={<AuditLogs />} />
 
                 {/* SaaS Admin */}
                 <Route path="/saas/dashboard"    element={<ProtectedRoute module="saas"><SaaSAdminDashboard /></ProtectedRoute>} />
@@ -144,6 +167,7 @@ const App = () => (
                 <Route path="/saas/security"     element={<ProtectedRoute module="saas"><SaaSSecurity /></ProtectedRoute>} />
                 <Route path="/saas/health"       element={<ProtectedRoute module="saas"><SaaSHealth /></ProtectedRoute>} />
                 <Route path="/saas/ai"           element={<ProtectedRoute module="saas"><SaaSAI /></ProtectedRoute>} />
+                <Route path="/saas/analytics"    element={<ProtectedRoute module="saas"><SaaSAnalytics /></ProtectedRoute>} />
                 <Route path="/saas/users"        element={<ProtectedRoute module="saas"><SaaSUsers /></ProtectedRoute>} />
                 <Route path="/saas/settings"     element={<ProtectedRoute module="saas"><SaaSSettings /></ProtectedRoute>} />
 
@@ -172,18 +196,28 @@ const App = () => (
                 <Route path="/school/accounting"     element={<ProtectedRoute module="school"><SchoolAccounting /></ProtectedRoute>} />
                 <Route path="/school/*"              element={<ProtectedRoute module="school"><ModulePlaceholder /></ProtectedRoute>} />
 
-                {/* ERP */}
-                <Route path="/erp"               element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />
-                <Route path="/erp/dashboard"     element={<ProtectedRoute module="erp"><ErpDashboard /></ProtectedRoute>} />
-                <Route path="/erp/pos"           element={<ProtectedRoute module="erp"><PointOfSale /></ProtectedRoute>} />
-                <Route path="/erp/inventory"     element={<ProtectedRoute module="erp"><InventoryManager /></ProtectedRoute>} />
-                <Route path="/erp/transactions"  element={<ProtectedRoute module="erp"><ErpTransactions /></ProtectedRoute>} />
-                <Route path="/erp/customers"         element={<ProtectedRoute module="erp"><ErpCustomers /></ProtectedRoute>} />
-                <Route path="/erp/suppliers"         element={<ProtectedRoute module="erp"><ErpSuppliers /></ProtectedRoute>} />
-                <Route path="/erp/expenses"          element={<ProtectedRoute module="erp"><ErpExpenses /></ProtectedRoute>} />
-                <Route path="/erp/reports"           element={<ProtectedRoute module="erp"><ErpReports /></ProtectedRoute>} />
-                <Route path="/erp/closing"           element={<ProtectedRoute module="erp"><ErpRegisterClosing /></ProtectedRoute>} />
-                <Route path="/erp/settings"      element={<ProtectedRoute module="erp"><ModulePlaceholder title="Paramètres ERP" /></ProtectedRoute>} />
+                {/* ERP Module */}
+                <Route path="/erp"               element={<ProtectedRoute module="erp"><ERPHome /></ProtectedRoute>} />
+                <Route path="/erp/home"          element={<ProtectedRoute module="erp"><ERPHome /></ProtectedRoute>} />
+                <Route path="/erp/dashboard"     element={<ProtectedRoute module="erp"><ERPDashboard /></ProtectedRoute>} />
+                <Route path="/erp/pos"           element={<ProtectedRoute module="erp"><POS /></ProtectedRoute>} />
+                <Route path="/erp/inventory"     element={<ProtectedRoute module="erp"><Inventory /></ProtectedRoute>} />
+                <Route path="/erp/customers"     element={<ProtectedRoute module="erp"><Customers /></ProtectedRoute>} />
+                <Route path="/erp/suppliers"     element={<ProtectedRoute module="erp"><Suppliers /></ProtectedRoute>} />
+                <Route path="/erp/expenses"      element={<ProtectedRoute module="erp"><Expenses /></ProtectedRoute>} />
+                <Route path="/erp/reports"       element={<ProtectedRoute module="erp"><Reports /></ProtectedRoute>} />
+                <Route path="/erp/transactions"  element={<ProtectedRoute module="erp"><Transactions /></ProtectedRoute>} />
+                <Route path="/erp/closing"       element={<ProtectedRoute module="erp"><RegisterClosing /></ProtectedRoute>} />
+                <Route path="/erp/accounting"    element={<ProtectedRoute module="erp"><ErpAccounting /></ProtectedRoute>} />
+                <Route path="/erp/physical-inventories" element={<ProtectedRoute module="erp"><PhysicalInventories /></ProtectedRoute>} />
+                <Route path="/erp/commercial-docs" element={<ProtectedRoute module="erp"><CommercialDocs /></ProtectedRoute>} />
+                {/* ERP Procurement */}
+                <Route path="/erp/procurement"        element={<ProtectedRoute module="erp"><ProcurementDashboard /></ProtectedRoute>} />
+                <Route path="/erp/purchase-requests"  element={<ProtectedRoute module="erp"><PurchaseRequests /></ProtectedRoute>} />
+                <Route path="/erp/purchase-orders"    element={<ProtectedRoute module="erp"><PurchaseOrders /></ProtectedRoute>} />
+                <Route path="/erp/goods-receipts"     element={<ProtectedRoute module="erp"><GoodsReceipts /></ProtectedRoute>} />
+                <Route path="/erp/supplier-invoices"  element={<ProtectedRoute module="erp"><SupplierInvoices /></ProtectedRoute>} />
+                <Route path="/erp/supplier-payments"  element={<ProtectedRoute module="erp"><SupplierPayments /></ProtectedRoute>} />
                 <Route path="/erp/*"             element={<ProtectedRoute module="erp"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* Pharmacy */}
@@ -192,6 +226,8 @@ const App = () => (
 
                 {/* Enterprise */}
                 <Route path="/enterprise/dashboard" element={<ProtectedRoute module="enterprise"><EnterpriseDashboard /></ProtectedRoute>} />
+                <Route path="/enterprise/projects"  element={<ProtectedRoute module="enterprise"><EnterpriseProjects /></ProtectedRoute>} />
+                <Route path="/enterprise/tasks"     element={<ProtectedRoute module="enterprise"><EnterpriseTasks /></ProtectedRoute>} />
                 <Route path="/enterprise/*"         element={<ProtectedRoute module="enterprise"><ModulePlaceholder /></ProtectedRoute>} />
 
               </Route>{/* End ProtectedRoute/AppLayout */}

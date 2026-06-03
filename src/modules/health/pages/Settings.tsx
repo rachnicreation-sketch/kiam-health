@@ -63,13 +63,29 @@ export default function Settings() {
 
   const defaultTab = useMemo(() => user?.clinicId ? "clinic" : "profile", [user]);
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && clinic) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setClinic({
+          ...clinic,
+          logo: reader.result as string
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSaveClinic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clinic || !user?.clinicId) return;
 
     try {
       await api.clinics.update(clinic);
-      toast({ title: "Paramètres enregistrés", description: "Les informations de la clinique ont été mises à jour." });
+      localStorage.setItem('kiam_auth_clinic', JSON.stringify(clinic));
+      toast({ title: "Paramètres enregistrés", description: "Les informations de la clinique ont été mises à jour. Actualisation de la page..." });
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error: any) {
       toast({ variant: "destructive", title: "Erreur", description: error.message });
     }
@@ -120,7 +136,14 @@ export default function Settings() {
                   <div className="flex flex-col md:flex-row gap-8 items-start">
                     <div className="space-y-4 flex flex-col items-center">
                       <Label className="text-xs font-bold text-muted-foreground uppercase">Logo de la Clinique</Label>
-                      <div className="relative group cursor-pointer">
+                      <input
+                        type="file"
+                        id="logo-upload"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleLogoChange}
+                      />
+                      <label htmlFor="logo-upload" className="relative group cursor-pointer">
                         <div className="h-32 w-32 rounded-2xl border-2 border-dashed border-muted-foreground/20 flex items-center justify-center bg-muted/10 overflow-hidden">
                           {clinic?.logo ? (
                             <img src={clinic.logo} alt="Logo" className="h-full w-full object-cover" />
@@ -131,8 +154,16 @@ export default function Settings() {
                         <div className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                            <Camera className="h-6 w-6 text-white" />
                         </div>
-                      </div>
-                      <Button variant="outline" size="sm" type="button" className="text-xs">Changer le logo</Button>
+                      </label>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        type="button" 
+                        className="text-xs"
+                        onClick={() => document.getElementById('logo-upload')?.click()}
+                      >
+                        Changer le logo
+                      </Button>
                     </div>
 
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,15 +1,6 @@
 import { useState, useEffect } from "react";
 import { 
-  Users, 
-  Plus, 
-  Search, 
-  Phone, 
-  Mail, 
-  Award, 
-  CreditCard,
-  ArrowLeft,
-  Trash2,
-  Edit2
+  Users, Plus, Search, Phone, Mail, Award, CreditCard, ArrowLeft, Trash2, Edit2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -21,11 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api-service";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger 
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 
@@ -41,7 +28,9 @@ export default function Customers() {
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
-    email: ""
+    email: "",
+    credit_limit: "0",
+    debt_balance: "0"
   });
 
   useEffect(() => {
@@ -63,13 +52,18 @@ export default function Customers() {
 
   const handleAdd = async () => {
     try {
-      await api.erp.addCustomer({ ...formData, clinicId: user.clinicId });
-      toast({ title: "Client ajouté", description: `${formData.name} est enregistré.` });
+      await api.erp.addCustomer({ 
+        ...formData, 
+        credit_limit: parseFloat(formData.credit_limit) || 0,
+        debt_balance: parseFloat(formData.debt_balance) || 0,
+        clinicId: user!.clinicId 
+      });
+      toast({ title: "Client enregistré", description: `${formData.name} est enregistré.` });
       setIsAddOpen(false);
       loadData();
-      setFormData({ name: "", phone: "", email: "" });
+      setFormData({ name: "", phone: "", email: "", credit_limit: "0", debt_balance: "0" });
     } catch (error) {
-      toast({ variant: "destructive", title: "Erreur", description: "Échec de l'ajout." });
+      toast({ variant: "destructive", title: "Erreur", description: "Échec de l'enregistrement." });
     }
   };
 
@@ -77,6 +71,8 @@ export default function Customers() {
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.phone?.includes(searchTerm)
   );
+
+  const totalOutstanding = customers.reduce((sum, c) => sum + Number(c.debt_balance || 0), 0);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 italic-none">
@@ -89,7 +85,7 @@ export default function Customers() {
             <h1 className="text-2xl font-black tracking-tight text-slate-900 flex items-center gap-3">
               <Users className="h-8 w-8 text-blue-600" /> Gestion des Clients
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm font-medium">Suivi de la fidélité et des comptes clients.</p>
+            <p className="text-muted-foreground mt-1 text-sm font-medium">Fidélité, soldes débiteurs et autorisations de limite de crédit.</p>
           </div>
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -101,7 +97,7 @@ export default function Customers() {
           <DialogContent className="max-w-md bg-white rounded-[2.5rem] p-8 border-none italic-none">
             <DialogHeader>
               <DialogTitle className="text-2xl font-black">Enregistrer un Client</DialogTitle>
-              <CardDescription>Créez un profil pour le suivi de fidélité.</CardDescription>
+              <CardDescription>Configurez la limite de crédit accordée.</CardDescription>
             </DialogHeader>
             <div className="space-y-4 pt-6">
                <div className="space-y-2">
@@ -116,6 +112,16 @@ export default function Customers() {
                   <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Email</Label>
                   <Input className="h-12 rounded-xl bg-slate-50 border-none" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Limite Crédit (CFA)</Label>
+                    <Input type="number" className="h-12 rounded-xl bg-slate-50 border-none" value={formData.credit_limit} onChange={e => setFormData({...formData, credit_limit: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-widest text-slate-500">Solde Initial (CFA)</Label>
+                    <Input type="number" className="h-12 rounded-xl bg-slate-50 border-none" value={formData.debt_balance} onChange={e => setFormData({...formData, debt_balance: e.target.value})} />
+                 </div>
+               </div>
             </div>
             <div className="pt-6">
                <Button className="w-full h-14 bg-blue-600 font-black text-white rounded-2xl shadow-xl shadow-blue-100" onClick={handleAdd}>ENREGISTRER LE CLIENT</Button>
@@ -127,23 +133,23 @@ export default function Customers() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
          <Card className="border-none shadow-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-[2rem]">
             <CardContent className="p-8 space-y-2">
-               <Award className="h-10 w-10 text-blue-200 mb-4" />
-               <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Clients Actifs</p>
+               <Users className="h-10 w-10 text-blue-200 mb-4" />
+               <p className="text-sm font-bold opacity-80 uppercase tracking-widest">Clients Répertoriés</p>
                <h2 className="text-4xl font-black">{customers.length}</h2>
             </CardContent>
          </Card>
          <Card className="border-none shadow-xl bg-white rounded-[2rem]">
             <CardContent className="p-8 space-y-2">
-               <CreditCard className="h-10 w-10 text-emerald-500 mb-4" />
-               <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Crédits</p>
-               <h2 className="text-4xl font-black text-slate-900">0 <span className="text-lg">CFA</span></h2>
+               <CreditCard className="h-10 w-10 text-rose-500 mb-4" />
+               <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Encours Crédits</p>
+               <h2 className="text-4xl font-black text-rose-600 font-mono">{totalOutstanding.toLocaleString()} <span className="text-lg">CFA</span></h2>
             </CardContent>
          </Card>
          <Card className="border-none shadow-xl bg-white rounded-[2rem]">
             <CardContent className="p-8 space-y-2">
                <Award className="h-10 w-10 text-amber-500 mb-4" />
-               <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Points de Fidélité</p>
-               <h2 className="text-4xl font-black text-slate-900">
+               <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Cumul Points Fidélité</p>
+               <h2 className="text-4xl font-black text-slate-900 font-mono">
                   {customers.reduce((acc, c) => acc + (c.loyalty_points || 0), 0)}
                </h2>
             </CardContent>
@@ -169,7 +175,8 @@ export default function Customers() {
                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400 p-6">Client</TableHead>
                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contact</TableHead>
                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Fidélité</TableHead>
-                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Solde Crédit</TableHead>
+                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Autorisé Max</TableHead>
+                     <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-400">Arriérés Crédits</TableHead>
                      <TableHead className="text-[10px] font-black uppercase tracking-widest text-slate-500 text-right p-6">Actions</TableHead>
                   </TableRow>
                </TableHeader>
@@ -183,7 +190,7 @@ export default function Customers() {
                               </div>
                               <div>
                                  <p className="text-sm font-black text-slate-900 uppercase">{customer.name}</p>
-                                 <p className="text-[10px] text-slate-400 font-medium">ID: {customer.id}</p>
+                                 <p className="text-[10px] text-slate-400 font-medium font-mono">ID: {customer.id}</p>
                               </div>
                            </div>
                         </TableCell>
@@ -197,6 +204,9 @@ export default function Customers() {
                            <Badge className="bg-amber-100 text-amber-600 border-none text-[9px] uppercase font-black px-2 py-0.5">
                               {customer.loyalty_points || 0} pts
                            </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-slate-500 font-bold">
+                          {Number(customer.credit_limit || 0).toLocaleString()} CFA
                         </TableCell>
                         <TableCell>
                            <div className={`font-mono text-sm font-black ${Number(customer.debt_balance) > 0 ? 'text-rose-600' : 'text-slate-400'}`}>

@@ -16,8 +16,7 @@ try {
             PRIMARY KEY (tenant_id, notification_id)
         )
     ");
-} catch (Throwable $e) {
-}
+} catch (Throwable $e) {}
 
 function saveNotificationReadState(PDO $pdo, string $tenantId, string $notificationId, bool $isRead): void {
     $stmt = $pdo->prepare("
@@ -32,170 +31,125 @@ if ($method === 'POST') {
     $data = getRequestData() ?: [];
     $action = $_GET['action'] ?? '';
 
-    if (!$clinicId) {
-        sendResponse(["status" => "error", "message" => "Clinic ID manquant"], 400);
-    }
-
     if ($action === 'mark_read') {
         $notificationIds = [];
-
-        if (!empty($data['notificationId'])) {
-            $notificationIds[] = $data['notificationId'];
+        if (!empty($data['notificationId'])) $notificationIds[] = $data['notificationId'];
+        if (!empty($data['notificationIds']) && is_array($data['notificationIds'])) $notificationIds = array_merge($notificationIds, $data['notificationIds']);
+        
+        foreach (array_unique($notificationIds) as $id) {
+            saveNotificationReadState($pdo, $clinicId, $id, true);
         }
-
-        if (!empty($data['notificationIds']) && is_array($data['notificationIds'])) {
-            $notificationIds = array_merge($notificationIds, $data['notificationIds']);
-        }
-
-        $notificationIds = array_values(array_unique(array_filter($notificationIds)));
-
-        foreach ($notificationIds as $notificationId) {
-            saveNotificationReadState($pdo, $clinicId, $notificationId, true);
-        }
-
-        try {
-            $stmt = $pdo->prepare("UPDATE kiam_tenants SET last_notifications_read_at = NOW() WHERE id = ?");
-            $stmt->execute([$clinicId]);
-        } catch (Throwable $e) {
-        }
-
         sendResponse(["status" => "success"]);
     }
-
-    if ($action === 'mark_unread') {
-        if (empty($data['notificationId'])) {
-            sendResponse(["status" => "error", "message" => "Notification introuvable"], 400);
-        }
-
-        saveNotificationReadState($pdo, $clinicId, $data['notificationId'], false);
-        sendResponse(["status" => "success"]);
-    }
-
-    if (!isset($data['title']) || !isset($data['message'])) {
-        sendResponse(["status" => "error", "message" => "Donnees incompletes"], 400);
-    }
-
-    $target = $data['target_audience'] ?? 'all';
-
-    $stmt = $pdo->prepare("INSERT INTO kiam_system_announcements (title, content, target_sector) VALUES (?, ?, ?)");
-    if ($stmt->execute([$data['title'], $data['message'], $target])) {
-        sendResponse(["status" => "success", "message" => "Notification diffusee avec succes"]);
-    }
-
-    sendResponse(["status" => "error", "message" => "Erreur DB"], 500);
 }
 
 if ($method === 'GET') {
-    if (!$clinicId) {
-        sendResponse(["status" => "error", "message" => "Clinic ID manquant"], 400);
-    }
+    if (!$clinicId) sendResponse(["status" => "error", "message" => "Clinic ID manquant"], 400);
 
     $notifications = [];
 
-    $tenantStmt = $pdo->prepare("SELECT id, sector, plan_id FROM kiam_tenants WHERE id = ?");
-    $tenantStmt->execute([$clinicId]);
-    $tenant = $tenantStmt->fetch();
+    // 0. Get Tenant Info (Sector)
+    $stmt = $pdo->prepare("SELECT sector FROM kiam_tenants WHERE id = ?");
+    $stmt->execute([$clinicId]);
+    $tenantSector = $stmt->fetchColumn() ?: 'all';
 
-    if ($tenant) {
-        $tenantTarget = 'tenant:' . $tenant['id'];
-
-        $announcementStmt = $pdo->prepare("
-            SELECT *
-            FROM kiam_system_announcements
-            WHERE is_active = 1
-              AND (expires_at IS NULL OR expires_at > NOW())
-              AND (
-                    target_sector = 'all'
-                    OR target_sector = ?
-                    OR target_sector = ?
-                    OR target_sector = ?
-                    OR (target_sector = 'plan_pro' AND ? = 'plan_enterprise')
-                  )
-            ORDER BY created_at DESC
-            LIMIT 10
-        ");
-        $announcementStmt->execute([
-            $tenant['sector'],
-            $tenant['plan_id'],
-            $tenantTarget,
-            $tenant['plan_id']
-        ]);
-
-        foreach ($announcementStmt->fetchAll() as $sys) {
-            $notifications[] = [
-                "id" => "ann-" . $sys['id'],
-                "title" => $sys['title'],
-                "message" => $sys['content'],
-                "type" => "system",
-                "priority" => "medium",
-                "time" => date('d/m/Y H:i', strtotime($sys['created_at'])),
-                "createdAt" => $sys['created_at'],
-                "path" => "/dashboard"
-            ];
-        }
+    // 1. System Announcements (Filtered by sector or specific tenant ID)
+    $stmt = $pdo->prepare("
+        SELECT * FROM kiam_system_announcements 
+        WHERE is_active = 1 
+        AND (expires_at IS NULL OR expires_at > NOW()) 
+        AND (target_sector = 'all' OR target_sector = ? OR target_sector = ?)
+        ORDER BY created_at DESC LIMIT 5
+    ");
+    $stmt->execute([$tenantSector, "tenant:" . $clinicId]);
+    foreach ($stmt->fetchAll() as $sys) {
+        $notifications[] = [
+            "id" => "ann-" . $sys['id'],
+            "title" => $sys['title'],
+            "message" => $sys['content'],
+            "type" => "system",
+            "priority" => "medium",
+            "time" => date('d/m/Y H:i', strtotime($sys['created_at'])),
+            "path" => "/dashboard"
+        ];
     }
 
+    // 2. Stock Alerts (Medications)
     try {
-        $stmt = $pdo->prepare("SELECT * FROM medications WHERE clinic_id = ? AND stock < 10");
+        $stmt = $pdo->prepare("SELECT * FROM medications WHERE clinic_id = ? AND stock < threshold");
         $stmt->execute([$clinicId]);
         foreach ($stmt->fetchAll() as $med) {
             $notifications[] = [
                 "id" => "stock-" . $med['id'],
-                "title" => "Stock Faible",
-                "message" => "Le stock de " . $med['name'] . " est critique (" . $med['stock'] . ")",
+                "title" => "Stock Critique",
+                "message" => "Le produit " . $med['name'] . " est presque épuisé (" . $med['stock'] . ")",
                 "type" => "inventory",
                 "priority" => "high",
                 "time" => "Maintenant",
-                "createdAt" => null,
-                "path" => "/pharmacy"
+                "path" => "/erp/inventory"
             ];
         }
-    } catch (Throwable $e) {
-    }
+    } catch (Throwable $e) {}
 
+    // 3. Upcoming Appointments (Today)
     try {
         $stmt = $pdo->prepare("
-            SELECT lt.*, p.name as patient_name
-            FROM lab_tests lt
-            JOIN patients p ON lt.patient_id = p.id
-            WHERE lt.clinic_id = ? AND lt.status = 'pending'
+            SELECT a.*, p.name as patient_name 
+            FROM appointments a 
+            JOIN patients p ON a.patient_id = p.id 
+            WHERE a.clinic_id = ? AND a.appointment_date = CURDATE() AND a.status = 'pending'
         ");
         $stmt->execute([$clinicId]);
-        foreach ($stmt->fetchAll() as $lab) {
+        foreach ($stmt->fetchAll() as $app) {
             $notifications[] = [
-                "id" => "lab-" . $lab['id'],
-                "title" => "Analyse en attente",
-                "message" => "Nouvelle analyse pour " . $lab['patient_name'],
-                "type" => "lab",
+                "id" => "app-" . $app['id'],
+                "title" => "Rendez-vous aujourd'hui",
+                "message" => "RDV avec " . $app['patient_name'] . " à " . substr($app['appointment_time'], 0, 5),
+                "type" => "appointment",
                 "priority" => "medium",
-                "time" => "Aujourd'hui",
-                "createdAt" => null,
-                "path" => "/laboratory"
+                "time" => substr($app['appointment_time'], 0, 5),
+                "path" => "/appointments"
             ];
         }
-    } catch (Throwable $e) {
-    }
+    } catch (Throwable $e) {}
 
+    // 4. Overdue Invoices (Pending for more than 7 days)
+    try {
+        $stmt = $pdo->prepare("
+            SELECT i.*, p.name as patient_name 
+            FROM invoices i 
+            JOIN patients p ON i.patient_id = p.id 
+            WHERE i.clinic_id = ? AND i.status = 'pending' AND i.invoice_date < DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+        ");
+        $stmt->execute([$clinicId]);
+        foreach ($stmt->fetchAll() as $inv) {
+            $notifications[] = [
+                "id" => "inv-" . $inv['id'],
+                "title" => "Facture Impayée",
+                "message" => "Facture " . $inv['id'] . " pour " . $inv['patient_name'] . " est en retard",
+                "type" => "billing",
+                "priority" => "high",
+                "time" => "Retard",
+                "path" => "/billing"
+            ];
+        }
+    } catch (Throwable $e) {}
+
+    // Fetch read status
     $readMap = [];
     $notificationIds = array_column($notifications, 'id');
     if (!empty($notificationIds)) {
         $placeholders = implode(',', array_fill(0, count($notificationIds), '?'));
-        $params = array_merge([$clinicId], $notificationIds);
-        $stmt = $pdo->prepare("
-            SELECT notification_id, is_read
-            FROM kiam_notification_reads
-            WHERE tenant_id = ? AND notification_id IN ($placeholders)
-        ");
-        $stmt->execute($params);
+        $stmt = $pdo->prepare("SELECT notification_id, is_read FROM kiam_notification_reads WHERE tenant_id = ? AND notification_id IN ($placeholders)");
+        $stmt->execute(array_merge([$clinicId], $notificationIds));
         foreach ($stmt->fetchAll() as $row) {
             $readMap[$row['notification_id']] = (bool) $row['is_read'];
         }
     }
 
-    foreach ($notifications as &$notification) {
-        $notification['isRead'] = $readMap[$notification['id']] ?? false;
+    foreach ($notifications as &$n) {
+        $n['isRead'] = $readMap[$n['id']] ?? false;
     }
-    unset($notification);
 
     sendResponse($notifications);
 }

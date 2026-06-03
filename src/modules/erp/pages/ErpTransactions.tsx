@@ -39,7 +39,7 @@ export default function ErpTransactions() {
     if (!user?.clinicId) return;
     setIsLoading(true);
     try {
-      const data = await api.erp.listSales(user.clinicId);
+      const data = await api.erp.transactions(user.clinicId);
       setTransactions(data);
     } catch (error) {
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger l'historique." });
