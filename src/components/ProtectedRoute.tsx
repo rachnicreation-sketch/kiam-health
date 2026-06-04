@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Module } from "@/lib/permissions";
+import { Module, isSectorAllowed } from "@/lib/permissions";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -19,46 +19,52 @@ export const ProtectedRoute = ({ children, module }: ProtectedRouteProps) => {
     );
   }
 
-  // Not logged in
+  // Not logged in → Login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check module permission if specified
-  if (module && !can(module)) {
-    // If we're already at the intended destination, don't redirect back to it (loop)
-    // For saas_admin, if they can't access 'saas', something is wrong with their role/permissions
-    if (user.role === 'saas_admin' && module === 'saas') {
-       return <div className="p-8 text-destructive font-bold">Erreur de permissions : Accès SaaS refusé pour votre compte.</div>;
+  // Determine redirect target for this user's sector
+  const sector = user.sector || 'health';
+  const sectorHome: Record<string, string> = {
+    health:     '/dashboard',
+    hotel:      '/hotel/dashboard',
+    school:     '/school/dashboard',
+    erp:        '/erp',
+    shop:       '/erp',
+    pharmacy:   '/pharmacy/dashboard',
+    enterprise: '/enterprise/dashboard',
+  };
+  const homeTarget = user.role === 'saas_admin'
+    ? '/saas/dashboard'
+    : (sectorHome[sector] || '/apps');
+
+  if (module) {
+    // ── Cloisonnement sectoriel (prioritaire) ──────────────────────────────
+    // Si le module est exclusif à un autre secteur, on redirige immédiatement
+    // même si le rôle le permettrait techniquement.
+    if (!isSectorAllowed(sector, module)) {
+      return <Navigate to={homeTarget} replace />;
     }
-    
-    // Redirect to sector-specific dashboard if trying to access restricted module
-    const sector = user.sector || 'health';
-    const sectorHome: Record<string, string> = {
-      health:     '/dashboard',
-      hotel:      '/hotel/dashboard',
-      school:     '/school/dashboard',
-      erp:        '/erp',
-      shop:       '/erp',
-      pharmacy:   '/pharmacy/dashboard',
-      enterprise: '/enterprise/dashboard',
-    };
-    const target = user.role === 'saas_admin' ? '/saas/dashboard' : (sectorHome[sector] || '/apps');
-    return <Navigate to={target} replace />;
+
+    // ── Vérification permission de rôle ────────────────────────────────────
+    if (!can(module)) {
+      // Erreur spécifique pour le SaaS admin (ne devrait pas arriver)
+      if (user.role === 'saas_admin' && module === 'saas') {
+        return (
+          <div className="p-8 text-destructive font-bold">
+            Erreur de permissions : Accès SaaS refusé pour votre compte.
+          </div>
+        );
+      }
+      return <Navigate to={homeTarget} replace />;
+    }
   }
 
-  // Also prevent non-health sectors from accessing the health dashboard module directly
+  // Protection supplémentaire : la route /dashboard est UNIQUEMENT pour Health
+  // Les autres secteurs ont leurs propres dashboards
   if (module === 'dashboard' && user.sector && user.sector !== 'health' && user.role !== 'saas_admin') {
-    const sectorHome: Record<string, string> = {
-      hotel:      '/hotel/dashboard',
-      school:     '/school/dashboard',
-      erp:        '/erp',
-      shop:       '/erp',
-      pharmacy:   '/pharmacy/dashboard',
-      enterprise: '/enterprise/dashboard',
-    };
-    const target = sectorHome[user.sector] || '/apps';
-    return <Navigate to={target} replace />;
+    return <Navigate to={homeTarget} replace />;
   }
 
   return <>{children}</>;

@@ -9,6 +9,7 @@ import { Sun, Moon, MessageSquare, LogOut, Grid, ChevronDown, Menu, Zap, Refresh
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Module } from "@/lib/permissions";
+import { getTheme } from "@/lib/tenant-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,9 +120,9 @@ const erpMenus: NavigationGroup[] = [
   {
     label: "👥 Ressources Humaines",
     items: [
-      { title: "Gestion du Personnel", url: "/hr", module: "hr" },
-      { title: "Bulletins de Paie", url: "/hr", module: "hr" },
-      { title: "CNSS & Déclarations", url: "/hr", module: "hr" },
+      { title: "Gestion du Personnel", url: "/erp/hr", module: "erp_hr" },
+      { title: "Bulletins de Paie", url: "/erp/hr", module: "erp_hr" },
+      { title: "CNSS & Déclarations", url: "/erp/hr", module: "erp_hr" },
     ]
   }
 ];
@@ -237,6 +238,7 @@ const getSchoolMenus = (role: string): NavigationGroup[] => {
           { title: "Classes & Salles", url: "/school/classes" },
           { title: "Planning & Emploi du temps", url: "/school/schedule" },
           { title: "Personnel Enseignant", url: "/school/teachers" },
+          { title: "Ressources Humaines", url: "/school/hr" },
         ]
       }
     ];
@@ -304,6 +306,9 @@ export function AppLayout() {
     (localStorage.getItem('kiam_theme') as 'light' | 'dark') || 'light'
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Thème visuel du tenant courant
+  const sectorTheme = getTheme(user?.sector);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -404,8 +409,14 @@ export function AppLayout() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-900 notranslate selection:bg-primary/20">
       {BannerPortal}
       
-      {/* Redesigned Unified Kiam Header */}
-      <header className={`h-14 flex items-center justify-between border-b-2 border-sky-400 bg-[#1e3a5f] text-slate-200 px-4 shrink-0 z-40 sticky top-0 ${isPresentationMode ? 'mt-9' : 'mt-0'} shadow-md`}>
+      {/* Redesigned Unified Kiam Header — Thème dynamique par secteur */}
+      <header
+        className={`h-14 flex items-center justify-between border-b-2 text-slate-200 px-4 shrink-0 z-40 sticky top-0 ${isPresentationMode ? 'mt-9' : 'mt-0'} shadow-md`}
+        style={{
+          background: sectorTheme.headerBg,
+          borderBottomColor: sectorTheme.headerBorder,
+        }}
+      >
         <div className="flex items-center gap-3 w-full max-w-5xl">
           {/* App Switcher Home Button with Kiam Logo */}
           <Link
@@ -423,7 +434,13 @@ export function AppLayout() {
 
           {/* Active App Title */}
           <span className="text-sm font-black tracking-tight text-white flex items-center gap-1.5 shrink-0">
-            KIAM <span className="bg-sky-400 text-[#1e3a5f] text-[10px] font-black px-1.5 py-0.5 rounded uppercase">{appMeta.title}</span>
+            KIAM{" "}
+            <span
+              className="text-[10px] font-black px-1.5 py-0.5 rounded uppercase"
+              style={{ background: sectorTheme.badgeBg, color: sectorTheme.badgeText }}
+            >
+              {sectorTheme.emoji} {appMeta.title}
+            </span>
           </span>
 
           <div className="h-5 w-[1px] bg-white/15 mx-1 hidden lg:block" />

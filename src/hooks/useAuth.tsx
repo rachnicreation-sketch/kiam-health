@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const can = (module: Module, action: Action = 'read'): boolean => {
     if (!user) return false;
-    return canPerform(user.role, module, action);
+    return canPerform(user.role, module, action, user.sector);
   };
 
 

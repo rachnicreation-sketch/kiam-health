@@ -56,6 +56,7 @@ const RegisterClosing = React.lazy(() => import("./modules/erp/pages/RegisterClo
 const ErpAccounting   = React.lazy(() => import("./modules/erp/pages/ErpAccounting"));
 const PhysicalInventories = React.lazy(() => import("./modules/erp/pages/PhysicalInventories"));
 const CommercialDocs  = React.lazy(() => import("./modules/erp/pages/CommercialDocs"));
+const ErpHumanResources = React.lazy(() => import("./modules/erp/pages/ErpHumanResources"));
 // ─── ERP Procurement Module ────────────────────────────────────────────────
 const ProcurementDashboard = React.lazy(() => import("./modules/erp/pages/ProcurementDashboard"));
 const PurchaseRequests     = React.lazy(() => import("./modules/erp/pages/PurchaseRequests"));
@@ -103,6 +104,7 @@ const SchoolReports = React.lazy(() => import("./modules/school/pages/Reports"))
 const SchoolSettings = React.lazy(() => import("./modules/school/pages/Settings"));
 const SchoolBilling  = React.lazy(() => import("./modules/school/pages/Billing"));
 const SchoolAccounting = React.lazy(() => import("./modules/school/pages/Accounting"));
+const SchoolHumanResources = React.lazy(() => import("./modules/school/pages/SchoolHumanResources"));
 
 // ─── Fallback spinner for Suspense ────────────────────────────────────────────
 const PageLoader = () => (
@@ -194,6 +196,8 @@ const App = () => (
                 <Route path="/school/settings"       element={<ProtectedRoute module="school"><SchoolSettings /></ProtectedRoute>} />
                 <Route path="/school/billing"        element={<ProtectedRoute module="school"><SchoolBilling /></ProtectedRoute>} />
                 <Route path="/school/accounting"     element={<ProtectedRoute module="school"><SchoolAccounting /></ProtectedRoute>} />
+                {/* School RH — exclusif secteur École */}
+                <Route path="/school/hr"             element={<ProtectedRoute module="school_hr"><SchoolHumanResources /></ProtectedRoute>} />
                 <Route path="/school/*"              element={<ProtectedRoute module="school"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* ERP Module */}
@@ -211,6 +215,8 @@ const App = () => (
                 <Route path="/erp/accounting"    element={<ProtectedRoute module="erp"><ErpAccounting /></ProtectedRoute>} />
                 <Route path="/erp/physical-inventories" element={<ProtectedRoute module="erp"><PhysicalInventories /></ProtectedRoute>} />
                 <Route path="/erp/commercial-docs" element={<ProtectedRoute module="erp"><CommercialDocs /></ProtectedRoute>} />
+                {/* ERP RH — exclusif secteur ERP/Commerce */}
+                <Route path="/erp/hr"            element={<ProtectedRoute module="erp_hr"><ErpHumanResources /></ProtectedRoute>} />
                 {/* ERP Procurement */}
                 <Route path="/erp/procurement"        element={<ProtectedRoute module="erp"><ProcurementDashboard /></ProtectedRoute>} />
                 <Route path="/erp/purchase-requests"  element={<ProtectedRoute module="erp"><PurchaseRequests /></ProtectedRoute>} />

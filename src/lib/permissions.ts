@@ -1,25 +1,33 @@
 import { UserRole } from "./mock-data";
 
 export type Module = 
+  // ── Modules communs (partagés) ──────────────────────────────────────────────
+  | 'billing' 
+  | 'accounting' 
+  | 'reports' 
+  | 'hr'         // RH santé (health)
+  | 'erp_hr'     // RH ERP/Commerce
+  | 'school_hr'  // RH École
+  | 'settings'
+  | 'saas'
+  // ── Modules Health exclusifs ────────────────────────────────────────────────
   | 'dashboard'
   | 'patients' 
   | 'consultations' 
   | 'appointments' 
   | 'hospitalization' 
   | 'laboratory' 
-  | 'pharmacy' 
-  | 'billing' 
-  | 'accounting' 
-  | 'reports' 
-  | 'hr' 
+  | 'pharmacy'   // pharmacie interne santé
   | 'planning'
   | 'catalogs'
   | 'facilities'
-  | 'settings'
-  | 'saas'
-  | 'hotel'
-  | 'school'
+  // ── Modules ERP/Commerce exclusifs ─────────────────────────────────────────
   | 'erp'
+  // ── Modules School exclusifs ────────────────────────────────────────────────
+  | 'school'
+  // ── Modules Hotel exclusifs ─────────────────────────────────────────────────
+  | 'hotel'
+  // ── Modules Enterprise exclusifs ────────────────────────────────────────────
   | 'enterprise';
 
 export type Action = 'read' | 'write' | 'delete' | 'admin';
@@ -30,120 +38,163 @@ export interface Permission {
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
-  'saas_admin': [
-    'saas'
-  ],
+  // ── SaaS ────────────────────────────────────────────────────────────────────
+  'saas_admin': ['saas'],
+
+  // ── Health ──────────────────────────────────────────────────────────────────
   'clinic_admin': [
-    'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
-    'laboratory', 'pharmacy', 'billing', 'accounting', 'reports', 'hr', 
-    'planning', 'catalogs', 'facilities', 'settings', 'hotel', 'school', 'erp', 'enterprise'
+    'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization',
+    'laboratory', 'pharmacy', 'billing', 'accounting', 'reports', 'hr',
+    'planning', 'catalogs', 'facilities', 'settings',
   ],
   'doctor': [
-    'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization', 
-    'laboratory', 'pharmacy', 'planning', 'catalogs', 'billing'
+    'dashboard', 'patients', 'consultations', 'appointments', 'hospitalization',
+    'laboratory', 'pharmacy', 'planning', 'catalogs', 'billing',
   ],
   'nurse': [
-    'dashboard', 'patients', 'consultations', 'hospitalization', 'pharmacy', 'planning', 'laboratory'
+    'dashboard', 'patients', 'consultations', 'hospitalization', 'pharmacy',
+    'planning', 'laboratory',
   ],
-  'lab_tech': [
-    'dashboard', 'laboratory', 'patients', 'catalogs'
-  ],
-  'pharmacist': [
-    'dashboard', 'pharmacy', 'billing', 'patients'
-  ],
-  'receptionist': [
-    'dashboard', 'patients', 'appointments', 'billing'
-  ],
+  'lab_tech': ['dashboard', 'laboratory', 'patients', 'catalogs'],
+  'pharmacist': ['dashboard', 'pharmacy', 'billing', 'patients'],
+  'receptionist': ['dashboard', 'patients', 'appointments', 'billing'],
   'medical_secretary': [
-    'dashboard', 'patients', 'appointments', 'reports', 'consultations', 'billing'
+    'dashboard', 'patients', 'appointments', 'reports', 'consultations', 'billing',
   ],
-  'hr': [
-    'dashboard', 'hr'
+  'hr': ['dashboard', 'hr'],
+  'inventory_manager': ['dashboard', 'pharmacy', 'facilities'],
+  'nurse_aide': ['dashboard', 'patients', 'hospitalization'],
+  'agent': ['dashboard'],
+
+  // ── ERP/Commerce ─────────────────────────────────────────────────────────────
+  'erp_admin': [
+    'erp', 'billing', 'accounting', 'reports', 'erp_hr', 'settings',
   ],
-  'inventory_manager': [
-    'dashboard', 'pharmacy', 'facilities'
+  'erp_manager': [
+    'erp', 'billing', 'reports',
   ],
-  'nurse_aide': [
-    'dashboard', 'patients', 'hospitalization'
-  ],
-  'agent': [
-    'dashboard'
-  ],
-  'school_direction': [
-    'dashboard', 'school', 'reports', 'settings'
-  ],
-  'school_admin': [
-    'dashboard', 'school', 'hr', 'planning', 'settings'
-  ],
-  'school_finance': [
-    'dashboard', 'school', 'billing', 'accounting'
-  ],
-  'school_scolarite': [
-    'dashboard', 'school', 'reports'
-  ],
-  'school_teacher': [
-    'dashboard', 'school'
-  ]
+  'caissier': ['erp'],
+  'stockiste': ['erp'],
+  'commercial': ['erp', 'billing'],
+
+  // ── School ───────────────────────────────────────────────────────────────────
+  'school_direction': ['school', 'reports', 'settings'],
+  'school_admin': ['school', 'school_hr', 'planning', 'settings'],
+  'school_finance': ['school', 'billing', 'accounting'],
+  'school_scolarite': ['school', 'reports'],
+  'school_teacher': ['school'],
 };
 
 /**
- * Checks if a role has access to a specific module
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur Health.
+ * Aucun autre secteur ne peut y accéder, même avec la permission de rôle.
+ */
+export const HEALTH_EXCLUSIVE_MODULES: Module[] = [
+  'dashboard', 'patients', 'consultations', 'appointments',
+  'hospitalization', 'laboratory', 'pharmacy', 'planning', 'catalogs', 'facilities', 'hr',
+];
+
+/**
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur ERP.
+ */
+export const ERP_EXCLUSIVE_MODULES: Module[] = ['erp', 'erp_hr'];
+
+/**
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur School.
+ */
+export const SCHOOL_EXCLUSIVE_MODULES: Module[] = ['school', 'school_hr'];
+
+/**
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur Hotel.
+ */
+export const HOTEL_EXCLUSIVE_MODULES: Module[] = ['hotel'];
+
+/**
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur Enterprise.
+ */
+export const ENTERPRISE_EXCLUSIVE_MODULES: Module[] = ['enterprise'];
+
+/**
+ * Vérifie si un rôle a accès à un module donné.
  */
 export function hasModuleAccess(role: UserRole, module: Module): boolean {
   const permissions = ROLE_PERMISSIONS[role];
   if (!permissions) return false;
-
   return permissions.includes(module);
 }
 
 /**
- * Granular check for clinical and administrative actions
- * Following strict separation of concerns for School Module
+ * Vérifie si un secteur est autorisé à accéder à un module donné.
+ * Empêche la fuite de données entre tenants.
  */
-export function canPerform(role: UserRole, module: Module, action: Action = 'read'): boolean {
-  // 1. Initial access check
+export function isSectorAllowed(sector: string | undefined | null, module: Module): boolean {
+  const s = sector ?? 'health';
+
+  // Health exclusif → uniquement secteur health
+  if (HEALTH_EXCLUSIVE_MODULES.includes(module)) return s === 'health';
+
+  // ERP exclusif → secteurs erp et shop
+  if (ERP_EXCLUSIVE_MODULES.includes(module)) return s === 'erp' || s === 'shop';
+
+  // School exclusif → secteur school
+  if (SCHOOL_EXCLUSIVE_MODULES.includes(module)) return s === 'school';
+
+  // Hotel exclusif → secteur hotel
+  if (HOTEL_EXCLUSIVE_MODULES.includes(module)) return s === 'hotel';
+
+  // Enterprise exclusif → secteur enterprise
+  if (ENTERPRISE_EXCLUSIVE_MODULES.includes(module)) return s === 'enterprise';
+
+  // Modules communs (billing, accounting, reports, settings, saas) → tous secteurs
+  return true;
+}
+
+/**
+ * Vérification combinée rôle + secteur.
+ * C'est la fonction principale à utiliser dans ProtectedRoute et can().
+ */
+export function canPerform(role: UserRole, module: Module, action: Action = 'read', sector?: string | null): boolean {
+  // 1. Vérification cloisonnement secteur (prioritaire sur le rôle)
+  if (!isSectorAllowed(sector, module)) return false;
+
+  // 2. Vérification accès par rôle
   if (!hasModuleAccess(role, module)) return false;
-  
-  // 2. Global Admin bypass
-  if (role === 'clinic_admin' || role === 'saas_admin') return true;
 
-  // 3. DIRECTION (Supervision Only)
-  if (role === 'school_direction') {
-    return action === 'read'; // Direction NEVER writes, only supervises
-  }
+  // 3. Admin SaaS → accès total aux modules saas
+  if (role === 'saas_admin') return module === 'saas';
 
-  // 4. FINANCE (Strictly money)
+  // 4. Admins sectoriels → accès total à leurs modules
+  if (role === 'clinic_admin' || role === 'erp_admin') return true;
+
+  // 5. DIRECTION école (supervision uniquement)
+  if (role === 'school_direction') return action === 'read';
+
+  // 6. FINANCE école (strictement financier)
   if (role === 'school_finance') {
     if (module === 'billing' || module === 'accounting') return true;
-    if (module === 'school') return action === 'read'; // Can see students list but nothing academic
+    if (module === 'school') return action === 'read';
     return false;
   }
 
-  // 5. ADMINISTRATION (Organization)
+  // 7. ADMINISTRATION école
   if (role === 'school_admin') {
-    if (module === 'hr' || module === 'planning' || module === 'settings') return true;
-    if (module === 'school') {
-       // Administration manages organization (students/classes) but NOT academics (grades/bulletins)
-       // This will be filtered further in components
-       return true; 
-    }
+    if (module === 'school_hr' || module === 'planning' || module === 'settings') return true;
+    if (module === 'school') return true;
     return false;
   }
 
-  // 6. SCOLARITÉ (Academic Heart)
+  // 8. SCOLARITÉ
   if (role === 'school_scolarite') {
     if (module === 'school' || module === 'reports') return true;
-    if (module === 'billing' || module === 'accounting') return false; // Strict separation from Finance
     return action === 'read';
   }
 
-  // 7. TEACHER (Grading only)
+  // 9. ENSEIGNANT
   if (role === 'school_teacher') {
-    if (module === 'school') return true; // Will be limited to grades/attendance in UI
-    return false;
+    return module === 'school';
   }
 
-  // Default fallback for other modules
+  // 10. Fallback → lecture autorisée pour les rôles ayant accès au module
   if (action === 'read') return true;
 
   switch (module) {
@@ -156,7 +207,7 @@ export function canPerform(role: UserRole, module: Module, action: Action = 'rea
     case 'pharmacy':
       return ['pharmacist', 'inventory_manager'].includes(role);
     case 'billing':
-      return ['receptionist', 'pharmacist'].includes(role);
+      return ['receptionist', 'pharmacist', 'commercial'].includes(role);
     case 'appointments':
       return ['receptionist', 'medical_secretary', 'doctor', 'nurse'].includes(role);
     default:

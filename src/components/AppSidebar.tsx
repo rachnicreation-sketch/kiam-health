@@ -40,7 +40,9 @@ import {
   Award,
   CreditCard,
   Wallet,
-  TrendingDown
+  TrendingDown,
+  Lock,
+  UserPlus,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink } from "@/components/NavLink";
@@ -124,6 +126,7 @@ const schoolAdminItems: SidebarItem[] = [
   { title: "Classes & Salles", url: "/school/classes", icon: Building2, module: 'school' },
   { title: "Planning & Emploi du temps", url: "/school/schedule", icon: Calendar, module: 'school' },
   { title: "Personnel Enseignant", url: "/school/teachers", icon: UserCog, module: 'school' },
+  { title: "Ressources Humaines", url: "/school/hr", icon: UserPlus, module: 'school_hr' },
 ];
 
 const schoolFinanceItems: SidebarItem[] = [
@@ -160,10 +163,12 @@ const erpMainItems: SidebarItem[] = [
   { title: "Dépenses & Charges", url: "/erp/expenses", icon: TrendingDown, module: 'erp' },
   { title: "Analyse & Rapports", url: "/erp/reports", icon: BarChart3, module: 'erp' },
   { title: "Clôture de Caisse", url: "/erp/closing", icon: Lock, module: 'erp' },
-  { title: "Paramètres", url: "/erp/settings", icon: Settings, module: 'erp' },
-  { title: "Facturation", url: "/erp/billing", icon: Receipt, module: 'erp' },
   { title: "Retours / SAV", url: "/erp/returns", icon: RotateCcw, module: 'erp' },
   { title: "Paramètres ERP", url: "/erp/settings", icon: Settings, module: 'erp' },
+];
+
+const erpHRItems: SidebarItem[] = [
+  { title: "Ressources Humaines", url: "/erp/hr", icon: UserCog, module: 'erp_hr' },
 ];
 
 // ========================
@@ -381,14 +386,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
             {/* ERP / SHOP SECTOR */}
             {(currentSector === 'shop' || currentSector === 'erp') && isSectorEnabled('erp') && (
-              <SidebarGroup>
-                <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
-                  Gestion / Commerce
-                </SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>{renderItems(erpMainItems)}</SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
+              <>
+                <SidebarGroup>
+                  <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] uppercase tracking-wider font-bold">
+                    Gestion / Commerce
+                  </SidebarGroupLabel>
+                  <SidebarGroupContent>
+                    <SidebarMenu>{renderItems(erpMainItems)}</SidebarMenu>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+                {/* RH ERP — uniquement pour les rôles qui ont la permission erp_hr */}
+                {can('erp_hr') && (
+                  <SidebarGroup>
+                    <SidebarGroupLabel className="text-emerald-400/70 text-[10px] uppercase tracking-wider font-bold">
+                      Personnel
+                    </SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu>{renderItems(erpHRItems)}</SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                )}
+              </>
             )}
             
             {/* PHARMACY SECTOR */}

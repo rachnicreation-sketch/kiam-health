@@ -1,5 +1,7 @@
 export type UserRole = 
-  | 'saas_admin' 
+  // ── SaaS ─────────────────────────────
+  | 'saas_admin'
+  // ── Health ───────────────────────────
   | 'clinic_admin' 
   | 'doctor' 
   | 'nurse' 
@@ -11,6 +13,13 @@ export type UserRole =
   | 'inventory_manager' 
   | 'nurse_aide' 
   | 'agent'
+  // ── ERP/Commerce ─────────────────────
+  | 'erp_admin'
+  | 'erp_manager'
+  | 'caissier'
+  | 'stockiste'
+  | 'commercial'
+  // ── School ───────────────────────────
   | 'school_direction'
   | 'school_admin'
   | 'school_finance'
@@ -50,7 +59,7 @@ export interface User {
   name: string;
   specialty?: string;
   phone?: string;
-  sector?: 'health' | 'hotel' | 'school' | 'erp' | 'shop';
+  sector?: 'health' | 'hotel' | 'school' | 'erp' | 'shop' | 'pharmacy' | 'enterprise';
 }
 
 export interface Patient {
