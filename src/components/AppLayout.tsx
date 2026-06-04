@@ -354,7 +354,8 @@ export function AppLayout() {
     }
     if (path.startsWith('/subscription')) return 'subscription';
     if (path.startsWith('/logs')) return 'logs';
-    return 'health';
+    if (user?.role === 'saas_admin') return 'saas';
+    return user?.sector || 'health';
   })();
 
   // If on apps selection page, render without header/wrapper
@@ -368,16 +369,24 @@ export function AppLayout() {
 
   // Get menus for current module
   const currentMenus: NavigationGroup[] = (() => {
-    if (activeModule === 'school') {
+    if (activeModule === 'school' || (['subscription', 'logs'].includes(activeModule) && user?.sector === 'school')) {
       return getSchoolMenus(user?.role || '');
     }
-    if (activeModule === 'erp') return erpMenus;
-    if (activeModule === 'hotel') return hotelMenus;
-    if (activeModule === 'pharmacy') return pharmacyMenus;
-    if (activeModule === 'enterprise') return enterpriseMenus;
-    if (activeModule === 'saas') return saasMenus;
+    if (activeModule === 'erp' || (['subscription', 'logs'].includes(activeModule) && (user?.sector === 'erp' || user?.sector === 'shop'))) return erpMenus;
+    if (activeModule === 'hotel' || (['subscription', 'logs'].includes(activeModule) && user?.sector === 'hotel')) return hotelMenus;
+    if (activeModule === 'pharmacy' || (['subscription', 'logs'].includes(activeModule) && user?.sector === 'pharmacy')) return pharmacyMenus;
+    if (activeModule === 'enterprise' || (['subscription', 'logs'].includes(activeModule) && user?.sector === 'enterprise')) return enterpriseMenus;
+    if (activeModule === 'saas' || (['subscription', 'logs'].includes(activeModule) && user?.role === 'saas_admin')) return saasMenus;
     if (activeModule === 'health') return healthMenus;
-    return [];
+    
+    // Dynamic sector fallback
+    const sec = user?.sector || 'health';
+    if (sec === 'school') return getSchoolMenus(user?.role || '');
+    if (sec === 'erp' || sec === 'shop') return erpMenus;
+    if (sec === 'hotel') return hotelMenus;
+    if (sec === 'pharmacy') return pharmacyMenus;
+    if (sec === 'enterprise') return enterpriseMenus;
+    return healthMenus;
   })();
 
   // Filter menus based on user capabilities

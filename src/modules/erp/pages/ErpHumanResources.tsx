@@ -105,9 +105,21 @@ export default function ErpHumanResources() {
         api.hr.payrolls(clinicId),
         api.users.list(clinicId),
       ]);
-      setEmployees(empsData);
-      setPayrolls(payData);
-      setUsers(usrsData);
+      
+      // Filter employees to only show ERP-related departments or positions
+      const erpEmps = empsData.filter((emp: any) => 
+        DEPARTMENTS_ERP.includes(emp.department) || 
+        POSITIONS_ERP.includes(emp.position)
+      );
+      setEmployees(erpEmps);
+      
+      // Filter payrolls to only show those belonging to ERP employees
+      const erpEmpIds = new Set(erpEmps.map(e => e.id));
+      setPayrolls(payData.filter((pay: any) => erpEmpIds.has(pay.employeeId)));
+      
+      // Filter users to only show ERP roles
+      const erpRoles = ["erp_admin", "erp_manager", "caissier", "stockiste", "commercial"];
+      setUsers(usrsData.filter((u: any) => erpRoles.includes(u.role)));
     } catch (err: any) {
       toast({ variant: "destructive", title: "Erreur", description: err.message });
     } finally { setIsLoading(false); }

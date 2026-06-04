@@ -1,4 +1,11 @@
-# 🎯 Module ERP Complet pour KIAM Caisse - Guide d'Implémentation
+# 1. Exécuter la migration SQL
+mysql -u root -p kiam_caisse < migrations/migration_phase3_erp_complete.sql
+
+# 2. Initialiser le système
+http://votre-domaine/kiam_caisse/erp_initialization.php
+
+# 3. Tester les APIs
+curl http://votre-domaine/api/accounting.php?action=get_accounting_chart# 🎯 Module ERP Complet pour KIAM Caisse - Guide d'Implémentation
 
 ## 📌 Résumé Exécutif
 

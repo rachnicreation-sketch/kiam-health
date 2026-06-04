@@ -122,9 +122,27 @@ export default function HumanResources() {
         api.hr.payrolls(clinicId),
         api.users.list(clinicId),
       ]);
-      setEmployees(empsData);
-      setPayrolls(payData);
-      setUsers(usrsData);
+      
+      const DEPARTMENTS_ERP = ["Direction", "Ventes & Caisse", "Stock & Logistique", "Approvisionnement", "Comptabilité", "Livraison", "Marketing", "Administration"];
+      const POSITIONS_ERP = ["Directeur Commercial", "Responsable Boutique", "Caissier(ère)", "Gestionnaire de Stock", "Commercial(e)", "Livreur", "Comptable", "Assistant(e) Admin"];
+      const DEPARTMENTS_SCHOOL = ["Direction", "Corps Enseignant", "Administration Scolaire", "Service de Scolarité", "Service Financier", "Personnel de Service", "Surveillance"];
+      const POSITIONS_SCHOOL = ["Directeur / Proviseur", "Censeur / Directeur Adjoint", "Professeur Principal", "Professeur", "Instituteur(trice)", "Maître(sse) de Maternelle", "Secrétaire de Direction", "Comptable", "Agent de Scolarité", "Surveillant(e)", "Agent d'Entretien"];
+
+      // Filter out ERP and School employees to only show clinical staff
+      const clinicalEmps = empsData.filter((emp: any) => {
+        const isErp = DEPARTMENTS_ERP.includes(emp.department) || POSITIONS_ERP.includes(emp.position);
+        const isSchool = DEPARTMENTS_SCHOOL.includes(emp.department) || POSITIONS_SCHOOL.includes(emp.position);
+        return !isErp && !isSchool;
+      });
+      setEmployees(clinicalEmps);
+      
+      // Filter payrolls to only show clinical staff
+      const clinicalEmpIds = new Set(clinicalEmps.map(e => e.id));
+      setPayrolls(payData.filter((pay: any) => clinicalEmpIds.has(pay.employeeId)));
+      
+      // Filter users to only show clinical roles
+      const clinicalRoles = ["hr", "doctor", "nurse", "receptionist", "pharmacist", "lab_tech", "clinic_admin"];
+      setUsers(usrsData.filter((u: any) => clinicalRoles.includes(u.role)));
     } catch (err: any) {
       toast({ variant: "destructive", title: "Erreur", description: err.message });
     } finally { setIsLoading(false); }

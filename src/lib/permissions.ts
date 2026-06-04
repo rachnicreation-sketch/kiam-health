@@ -126,24 +126,29 @@ export function hasModuleAccess(role: UserRole, module: Module): boolean {
 /**
  * Vérifie si un secteur est autorisé à accéder à un module donné.
  * Empêche la fuite de données entre tenants.
+ *
+ * IMPORTANT : si le secteur est inconnu (null/undefined), on laisse passer
+ * et c'est la vérification de rôle qui décide — cela évite de bloquer
+ * des utilisateurs créés avant l'ajout du champ sector.
  */
 export function isSectorAllowed(sector: string | undefined | null, module: Module): boolean {
-  const s = sector ?? 'health';
+  // Secteur inconnu → on ne bloque pas (fallback sur les permissions de rôle)
+  if (!sector) return true;
 
   // Health exclusif → uniquement secteur health
-  if (HEALTH_EXCLUSIVE_MODULES.includes(module)) return s === 'health';
+  if (HEALTH_EXCLUSIVE_MODULES.includes(module)) return sector === 'health';
 
   // ERP exclusif → secteurs erp et shop
-  if (ERP_EXCLUSIVE_MODULES.includes(module)) return s === 'erp' || s === 'shop';
+  if (ERP_EXCLUSIVE_MODULES.includes(module)) return sector === 'erp' || sector === 'shop';
 
   // School exclusif → secteur school
-  if (SCHOOL_EXCLUSIVE_MODULES.includes(module)) return s === 'school';
+  if (SCHOOL_EXCLUSIVE_MODULES.includes(module)) return sector === 'school';
 
   // Hotel exclusif → secteur hotel
-  if (HOTEL_EXCLUSIVE_MODULES.includes(module)) return s === 'hotel';
+  if (HOTEL_EXCLUSIVE_MODULES.includes(module)) return sector === 'hotel';
 
   // Enterprise exclusif → secteur enterprise
-  if (ENTERPRISE_EXCLUSIVE_MODULES.includes(module)) return s === 'enterprise';
+  if (ENTERPRISE_EXCLUSIVE_MODULES.includes(module)) return sector === 'enterprise';
 
   // Modules communs (billing, accounting, reports, settings, saas) → tous secteurs
   return true;
@@ -157,14 +162,16 @@ export function canPerform(role: UserRole, module: Module, action: Action = 'rea
   // 1. Vérification cloisonnement secteur (prioritaire sur le rôle)
   if (!isSectorAllowed(sector, module)) return false;
 
-  // 2. Vérification accès par rôle
-  if (!hasModuleAccess(role, module)) return false;
-
-  // 3. Admin SaaS → accès total aux modules saas
+  // 2. Admin SaaS → accès total aux modules saas (et uniquement saas)
   if (role === 'saas_admin') return module === 'saas';
 
-  // 4. Admins sectoriels → accès total à leurs modules
-  if (role === 'clinic_admin' || role === 'erp_admin') return true;
+  // 3. Admins sectoriels / Locataires → accès total à tous les modules de leur secteur (sauf saas)
+  if (role === 'clinic_admin' || role === 'erp_admin') {
+    return module !== 'saas';
+  }
+
+  // 4. Vérification accès par rôle
+  if (!hasModuleAccess(role, module)) return false;
 
   // 5. DIRECTION école (supervision uniquement)
   if (role === 'school_direction') return action === 'read';

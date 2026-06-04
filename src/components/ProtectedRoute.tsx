@@ -44,6 +44,10 @@ export const ProtectedRoute = ({ children, module }: ProtectedRouteProps) => {
     // Si le module est exclusif à un autre secteur, on redirige immédiatement
     // même si le rôle le permettrait techniquement.
     if (!isSectorAllowed(sector, module)) {
+      if (module === 'hr') {
+        if (sector === 'erp' || sector === 'shop') return <Navigate to="/erp/hr" replace />;
+        if (sector === 'school') return <Navigate to="/school/hr" replace />;
+      }
       return <Navigate to={homeTarget} replace />;
     }
 

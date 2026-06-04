@@ -2,14 +2,14 @@
 require_once __DIR__ . '/../api/config.php';
 
 try {
-    echo "--- TENANTS ---\n";
-    $stmt = $pdo->query("SELECT id, name, sector, plan_id, subscription_status FROM kiam_tenants");
+    echo "--- GLOBAL USERS ---\n";
+    $stmt = $pdo->query("SELECT id, email, tenant_id, global_role, is_active FROM kiam_global_users");
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         print_r($row);
     }
 
-    echo "\n--- PLANS ---\n";
-    $stmt = $pdo->query("SELECT id, name, modules_included FROM kiam_plans");
+    echo "\n--- LOCAL USERS ---\n";
+    $stmt = $pdo->query("SELECT id, name, email, role, clinic_id FROM users");
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         print_r($row);
     }

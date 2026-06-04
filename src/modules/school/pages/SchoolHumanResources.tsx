@@ -103,9 +103,21 @@ export default function SchoolHumanResources() {
         api.hr.payrolls(clinicId),
         api.users.list(clinicId),
       ]);
-      setEmployees(empsData);
-      setPayrolls(payData);
-      setUsers(usrsData);
+      
+      // Filter employees to only show School-related departments or positions
+      const schoolEmps = empsData.filter((emp: any) => 
+        DEPARTMENTS_SCHOOL.includes(emp.department) || 
+        POSITIONS_SCHOOL.includes(emp.position)
+      );
+      setEmployees(schoolEmps);
+      
+      // Filter payrolls to only show those belonging to School employees
+      const schoolEmpIds = new Set(schoolEmps.map(e => e.id));
+      setPayrolls(payData.filter((pay: any) => schoolEmpIds.has(pay.employeeId)));
+      
+      // Filter users to only show School roles
+      const schoolRoles = ["school_direction", "school_admin", "school_finance", "school_scolarite", "school_teacher"];
+      setUsers(usrsData.filter((u: any) => schoolRoles.includes(u.role)));
     } catch (err: any) {
       toast({ variant: "destructive", title: "Erreur", description: err.message });
     } finally { setIsLoading(false); }
