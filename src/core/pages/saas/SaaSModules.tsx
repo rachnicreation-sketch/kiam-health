@@ -134,7 +134,18 @@ export default function SaaSModules() {
                         localStorage.setItem('kiam_auth_clinic', JSON.stringify(res.clinic));
                         localStorage.setItem('kiam_presentation_mode', 'true');
                         
-                        window.location.href = '/kiam/dist/#/';
+                        // Navigate directly to the sector-specific dashboard
+                        const sectorHome: Record<string, string> = {
+                          health:     '/dashboard',
+                          hotel:      '/hotel/dashboard',
+                          school:     '/school/dashboard',
+                          erp:        '/erp',
+                          shop:       '/erp',
+                          pharmacy:   '/pharmacy/dashboard',
+                          enterprise: '/enterprise/dashboard',
+                        };
+                        const target = sectorHome[res.user.sector] || '/apps';
+                        window.location.href = '/kiam/dist/#' + target;
                         window.location.reload();
                       } catch(e: any) {
                         console.error(e);

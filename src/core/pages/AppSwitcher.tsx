@@ -19,7 +19,8 @@ import {
   User,
   Building2,
   Grid,
-  LayoutDashboard
+  LayoutDashboard,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -95,6 +96,15 @@ export default function AppSwitcher() {
       module: "enterprise",
       bgClass: "bg-gradient-to-br from-cyan-500 to-blue-500 hover:shadow-cyan-500/20",
       description: "Gestion de projets, tâches et CRM clients"
+    },
+    {
+      id: "hr",
+      title: "Ressources Humaines",
+      icon: Users,
+      url: "/hr",
+      module: "hr",
+      bgClass: "bg-gradient-to-br from-pink-500 to-rose-600 hover:shadow-pink-500/20",
+      description: "Personnel, fiches de paie, CNSS et coût employeur"
     },
     {
       id: "saas",

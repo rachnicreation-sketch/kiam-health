@@ -115,6 +115,14 @@ const erpMenus: NavigationGroup[] = [
       { title: "Rapports & Bilans", url: "/erp/reports", module: "erp" },
       { title: "Journal des Transactions", url: "/erp/transactions", module: "erp" },
     ]
+  },
+  {
+    label: "👥 Ressources Humaines",
+    items: [
+      { title: "Gestion du Personnel", url: "/hr", module: "hr" },
+      { title: "Bulletins de Paie", url: "/hr", module: "hr" },
+      { title: "CNSS & Déclarations", url: "/hr", module: "hr" },
+    ]
   }
 ];
 
@@ -283,6 +291,7 @@ const appsInfo: Record<string, { title: string; color: string }> = {
   pharmacy: { title: "Pharmacie & Officine", color: "text-rose-500" },
   enterprise: { title: "Projets & CRM", color: "text-cyan-500" },
   saas: { title: "Cockpit Master", color: "text-slate-400" },
+  hr: { title: "Ressources Humaines", color: "text-pink-500" },
   subscription: { title: "Mon Abonnement", color: "text-indigo-500" },
   logs: { title: "Journal d'Audit", color: "text-emerald-500" }
 };

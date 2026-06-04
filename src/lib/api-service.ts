@@ -116,10 +116,13 @@ export const api = {
   hr: {
     employees: (clinicId: string) => apiRequest(`employees.php?action=list&clinicId=${clinicId}`),
     createEmployee: (data: any) => apiRequest("employees.php", { method: "POST", body: JSON.stringify(data) }),
+    updateEmployee: (id: string, data: any) => apiRequest(`employees.php?id=${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    getEmployee: (id: string) => apiRequest(`employees.php?action=get&id=${id}`),
     listDocuments: (empId: string) => apiRequest(`employees.php?action=list_documents&employee_id=${empId}`),
     addDocument: (data: any) => apiRequest("employees.php?action=add_document", { method: "POST", body: JSON.stringify(data) }),
     payrolls: (clinicId: string) => apiRequest(`payrolls.php?action=list&clinicId=${clinicId}`),
     createPayroll: (data: any) => apiRequest("payrolls.php", { method: "POST", body: JSON.stringify(data) }),
+    simulatePayroll: (params: Record<string, string>) => apiRequest(`payrolls.php?action=simulate&${new URLSearchParams(params)}`),
   },
   health: {
     stats: (clinicId: string) => apiRequest(`stats.php?clinicId=${clinicId}`),

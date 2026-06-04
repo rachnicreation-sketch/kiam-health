@@ -32,7 +32,7 @@ if ($method === 'POST') {
         $stmt->execute([
             $tenantId,
             $data['name'],
-            $data['sector'] ?? 'health', 'hotel', 'ecole', 'erp',
+            $data['sector'] ?? 'health',
             $data['plan_id'] ?? 'plan_basic'
         ]);
 

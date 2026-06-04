@@ -289,7 +289,7 @@ if ($method === 'GET') {
         $tenantId = $_GET['tenant_id'];
         if (strpos($tenantId, 'demo_') === 0) {
             // Demo mode: expose all modules
-            $modules = ['health', 'pharmacy', 'hotel', 'school', 'erp', 'shop', 'enterprise'];
+            $modules = ['health', 'pharmacy', 'hotel', 'school', 'erp', 'shop', 'enterprise', 'hr'];
             $result = array_map(fn($m) => ['name' => $m, 'module_name' => $m], $modules);
             sendResponse($result);
         }
