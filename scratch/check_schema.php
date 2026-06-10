@@ -1,9 +1,0 @@
-<?php
-require_once 'api/config.php';
-$tables = ['users', 'clinics', 'kiam_tenants', 'kiam_global_users'];
-foreach ($tables as $table) {
-    echo "--- Table: $table ---\n";
-    $stmt = $pdo->query("DESCRIBE $table");
-    print_r($stmt->fetchAll(PDO::FETCH_ASSOC));
-}
-?>
