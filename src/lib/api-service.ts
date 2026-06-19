@@ -89,6 +89,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data)
     }),
+    profile: (id: string) => apiRequest(`users.php?action=profile&id=${id}`),
   },
   patients: {
     list: (clinicId: string) => apiRequest(`patients.php?action=list&clinicId=${clinicId}`),
@@ -97,6 +98,25 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data)
     }),
+  },
+  acts: {
+    list: (clinicId: string) => apiRequest(`medical_acts.php?action=list&clinicId=${clinicId}`),
+    create: (data: any) => apiRequest("medical_acts.php", { method: "POST", body: JSON.stringify(data) }),
+    update: (data: any) => apiRequest("medical_acts.php", { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) => apiRequest(`medical_acts.php?id=${id}`, { method: "DELETE" }),
+  },
+  catalogs: {
+    listActs: (clinicId: string) => apiRequest(`catalogs.php?action=list_acts&clinicId=${clinicId}`),
+    saveAct: (data: any) => apiRequest("catalogs.php?action=save_act", { method: "POST", body: JSON.stringify(data) }),
+    listLab: (clinicId: string) => apiRequest(`catalogs.php?action=list_lab&clinicId=${clinicId}`),
+    saveLab: (data: any) => apiRequest("catalogs.php?action=save_lab", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id: string, type: 'act' | 'lab') => apiRequest(`catalogs.php?id=${id}&type=${type}`, { method: "DELETE" }),
+  },
+  branches: {
+    list: (clinicId: string) => apiRequest(`branches.php?action=list&clinicId=${clinicId}`),
+    create: (data: any) => apiRequest("branches.php", { method: "POST", body: JSON.stringify(data) }),
+    update: (data: any) => apiRequest("branches.php", { method: "PUT", body: JSON.stringify(data) }),
+    delete: (id: string) => apiRequest(`branches.php?id=${id}`, { method: "DELETE" }),
   },
   consultations: {
     list: (clinicId: string, patientId?: string) => 

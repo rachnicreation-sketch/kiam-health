@@ -35,12 +35,25 @@ if ($action === 'login') {
         }
         ensureClinicForTenant($pdo, $globalUser['tenant_id']);
 
+        // Map sector → role sectoriel (isolation tenant)
+        $sector = $globalUser['sector'] ?? 'health';
+        $sectorRole = match($sector) {
+            'erp', 'shop'   => 'erp_admin',
+            'school'        => 'school_admin',
+            'hotel'         => 'clinic_admin',  // Pas encore de rôle hotel_admin
+            'health'        => 'clinic_admin',
+            'pharmacy'      => 'clinic_admin',
+            'enterprise'    => 'clinic_admin',
+            default         => 'clinic_admin',
+        };
+        $frontendRole = $globalUser['global_role'] === 'saas_admin' ? 'saas_admin' : $sectorRole;
+
         // Issue JWT token
         $token = JWT::encode([
             'id' => $globalUser['id'],
             'email' => $globalUser['email'],
             'tenant_id' => $globalUser['tenant_id'],
-            'role' => $globalUser['global_role']
+            'role' => $frontendRole
         ]);
 
         sendResponse([
@@ -49,7 +62,7 @@ if ($action === 'login') {
             "user" => [
                 "id" => $globalUser['id'],
                 "email" => $globalUser['email'],
-                "role" => $globalUser['global_role'] === 'saas_admin' ? 'saas_admin' : 'clinic_admin',
+                "role" => $frontendRole,
                 "global_role" => $globalUser['global_role'],
                 "clinicId" => $globalUser['tenant_id'],
                 "sector" => $globalUser['sector'] ?: 'health',

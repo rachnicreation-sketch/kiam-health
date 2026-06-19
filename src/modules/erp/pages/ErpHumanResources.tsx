@@ -60,7 +60,6 @@ const ERP_ROLES = [
   { value: "caissier", label: "Caissier(ère)" },
   { value: "stockiste", label: "Gestionnaire de Stock" },
   { value: "commercial", label: "Commercial(e)" },
-  { value: "clinic_admin", label: "Administrateur" },
 ];
 
 const fmt = (n: number) => Math.round(n || 0).toLocaleString("fr-CM");

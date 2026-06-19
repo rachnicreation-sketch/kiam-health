@@ -60,6 +60,28 @@ if ($method === 'GET') {
     $stmt->execute([$clinicId, $today]);
     $stats['dailyGuards'] = $stmt->fetchAll();
 
+    // Weekly Data for charts
+    $weeklyData = [];
+    for ($i = 6; $i >= 0; $i--) {
+        $date = date('Y-m-d', strtotime("-$i days"));
+        $name = date('D', strtotime($date));
+        
+        $stmtC = $pdo->prepare("SELECT COUNT(*) FROM consultations WHERE clinic_id = ? AND consultation_date = ?");
+        $stmtC->execute([$clinicId, $date]);
+        $consultations = $stmtC->fetchColumn();
+
+        $stmtA = $pdo->prepare("SELECT COUNT(*) FROM admissions WHERE clinic_id = ? AND admission_date <= ? AND (discharge_date IS NULL OR discharge_date >= ?)");
+        $stmtA->execute([$clinicId, $date, $date]);
+        $admissions = $stmtA->fetchColumn();
+
+        $weeklyData[] = [
+            'name' => $name,
+            'consultations' => (int)$consultations,
+            'admissions' => (int)$admissions
+        ];
+    }
+    $stats['weeklyData'] = $weeklyData;
+
     sendResponse($stats);
 }
 ?>

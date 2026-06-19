@@ -41,8 +41,47 @@ export default function AppSwitcher() {
   const [activeModules, setActiveModules] = useState<string[] | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Define all available apps in the Kiam ecosystem
-  const allApps: AppItem[] = [
+  // ─── HR App résolu dynamiquement selon le secteur ──────────────────────────
+  const getHrApp = (): AppItem | null => {
+    const sector = user?.sector || 'health';
+    if (sector === 'erp' || sector === 'shop') {
+      return {
+        id: "hr",
+        title: "Ressources Humaines",
+        icon: Users,
+        url: "/erp/hr",
+        module: "erp_hr",
+        bgClass: "bg-gradient-to-br from-emerald-500 to-teal-600 hover:shadow-emerald-500/20",
+        description: "Caissiers, livreurs, gestionnaires — paie OHADA"
+      };
+    }
+    if (sector === 'school') {
+      return {
+        id: "hr",
+        title: "Ressources Humaines",
+        icon: Users,
+        url: "/school/hr",
+        module: "school_hr",
+        bgClass: "bg-gradient-to-br from-sky-500 to-blue-600 hover:shadow-sky-500/20",
+        description: "Personnel enseignant et administratif"
+      };
+    }
+    if (sector === 'health') {
+      return {
+        id: "hr",
+        title: "Ressources Humaines",
+        icon: Users,
+        url: "/hr",
+        module: "hr",
+        bgClass: "bg-gradient-to-br from-pink-500 to-rose-600 hover:shadow-pink-500/20",
+        description: "Personnel, fiches de paie, CNSS et coût employeur"
+      };
+    }
+    return null; // Hôtel, Pharmacie, Entreprise: pas de module RH dédié
+  };
+
+  // ─── Liste statique des applications ───────────────────────────────────────
+  const staticApps: AppItem[] = [
     {
       id: "health",
       title: "Santé & Clinique",
@@ -98,15 +137,6 @@ export default function AppSwitcher() {
       description: "Gestion de projets, tâches et CRM clients"
     },
     {
-      id: "hr",
-      title: "Ressources Humaines",
-      icon: Users,
-      url: "/hr",
-      module: "hr",
-      bgClass: "bg-gradient-to-br from-pink-500 to-rose-600 hover:shadow-pink-500/20",
-      description: "Personnel, fiches de paie, CNSS et coût employeur"
-    },
-    {
       id: "saas",
       title: "Cockpit Master",
       icon: ServerCog,
@@ -144,7 +174,12 @@ export default function AppSwitcher() {
     }
   ];
 
-  // Load active modules for the current tenant
+  // Fusionner la liste statique avec la carte RH dynamique
+  const allApps: AppItem[] = [...staticApps];
+  const hrApp = getHrApp();
+  if (hrApp) allApps.splice(6, 0, hrApp); // Insérer avant "saas"
+
+  // ─── Chargement des modules actifs du tenant ────────────────────────────────
   useEffect(() => {
     const tenantId = clinic?.id || user?.clinicId;
     if (!tenantId) {
@@ -163,24 +198,21 @@ export default function AppSwitcher() {
         }
       })
       .catch(() => {
-        // Fallback to empty if fails
         setActiveModules([]);
       });
   }, [clinic?.id, user?.clinicId]);
 
-  // Handle keyboard shortcut to autofocus search on load or keypress
+  // ─── Raccourci clavier : focus recherche ───────────────────────────────────
   useEffect(() => {
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Focus search if user starts typing letters, unless they are already in an input
       const target = e.target as HTMLElement;
       if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
         return;
       }
-      
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         searchInputRef.current?.focus();
       }
@@ -192,36 +224,42 @@ export default function AppSwitcher() {
 
   const activeModuleSet = new Set(activeModules ?? []);
 
-  // Filter apps based on tenant active modules & user permissions
+  // ─── Filtrage : permissions + modules actifs du tenant ─────────────────────
   const visibleApps = allApps.filter((app) => {
-    // 1. Check user permission
+    // 1. Permission rôle+secteur
     if (!can(app.module)) return false;
 
-    // 2. Check if active for tenant
+    // 2. Module activé pour le tenant
     if (activeModules !== null) {
-      // SaaS admin can see saas tools always
       if (user?.role === 'saas_admin') {
         return app.id === 'saas' || app.id === 'audit';
       }
-      
-      // Don't hide settings or subscription or audit for general layout
+
+      // Settings et abonnement toujours visibles
       if (app.id === 'settings' || app.id === 'subscription') return true;
 
-      // Special check for erp vs shop
-      const isEnabled = activeModuleSet.has(app.id) || (app.id === 'erp' && activeModuleSet.has('shop'));
+      // Vérifier si actif (ERP ↔ shop alias)
+      const isEnabled =
+        activeModuleSet.has(app.id) ||
+        (app.id === 'erp' && activeModuleSet.has('shop')) ||
+        (app.id === 'hr' && (
+          activeModuleSet.has('hr') ||
+          activeModuleSet.has('erp') ||
+          activeModuleSet.has('shop') ||
+          activeModuleSet.has('school')
+        ));
       if (!isEnabled) return false;
     }
 
     return true;
   });
 
-  // Filter apps based on search query
+  // ─── Filtrage par recherche ────────────────────────────────────────────────
   const filteredApps = visibleApps.filter((app) =>
     app.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     app.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle Enter key to launch the first filtered app
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && filteredApps.length > 0) {
       navigate(filteredApps[0].url);

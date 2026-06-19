@@ -5,7 +5,7 @@ require_once 'functions.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 $auth = requireAuth();
-$clinicId = $auth['tenant_id'];
+$clinicId = ensureClinicForTenant($pdo, $auth['tenant_id'] ?? null);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Helper: map DB row → frontend JSON (camelCase)
@@ -94,9 +94,26 @@ if ($method === 'GET') {
 
     if ($action === 'add_document') {
         $id = "DOC-" . time() . rand(10, 99);
+        $fileUrl = $data['file_url'] ?? '';
+        if (isset($data['file_base64']) && !empty($data['file_base64'])) {
+            $base64Data = $data['file_base64'];
+            $pos = strpos($base64Data, ';base64,');
+            if ($pos !== false) {
+                $base64Data = substr($base64Data, $pos + 8);
+            }
+            $fileData = base64_decode($base64Data);
+            $uploadDir = '../uploads/docs/hr/' . $data['employee_id'] . '/';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            $fileName = preg_replace('/[^A-Za-z0-9_\-\.]/', '_', basename($data['name']));
+            $filePath = $uploadDir . time() . '_' . $fileName;
+            file_put_contents($filePath, $fileData);
+            $fileUrl = str_replace('../', '', $filePath);
+        }
         $stmt = $pdo->prepare("INSERT INTO user_docs (id, tenant_id, user_id, type, name, file_url) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$id, $clinicId, $data['employee_id'], $data['type'], $data['name'], $data['file_url']]);
-        sendResponse(["status" => "success", "id" => $id]);
+        $stmt->execute([$id, $clinicId, $data['employee_id'], $data['type'], $data['name'], $fileUrl]);
+        sendResponse(["status" => "success", "id" => $id, "file_url" => $fileUrl]);
 
     } else {
         // Add employee

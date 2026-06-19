@@ -158,8 +158,9 @@ const pharmacyMenus: NavigationGroup[] = [
   {
     label: "Stocks & Fermeture",
     items: [
+      { title: "Ordonnances", url: "/pharmacy/prescriptions", module: "pharmacy" },
       { title: "Stock Médicaments", url: "/pharmacy/inventory", module: "pharmacy" },
-      { title: "Clients Fidélité", url: "/pharmacy/customers", module: "pharmacy" },
+      { title: "Inventaires Phys", url: "/pharmacy/physical-inventories", module: "pharmacy" },
       { title: "Fermeture / Caisse", url: "/pharmacy/daily-report", module: "pharmacy" },
     ]
   }

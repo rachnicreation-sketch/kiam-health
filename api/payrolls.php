@@ -5,7 +5,7 @@ require_once 'functions.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 $auth = requireAuth();
-$clinicId = $auth['tenant_id'];
+$clinicId = ensureClinicForTenant($pdo, $auth['tenant_id'] ?? null);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // CAMEROON PAYROLL ENGINE — Taux officiels 2024

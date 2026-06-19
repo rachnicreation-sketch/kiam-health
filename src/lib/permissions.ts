@@ -135,8 +135,13 @@ export function isSectorAllowed(sector: string | undefined | null, module: Modul
   // Secteur inconnu → on ne bloque pas (fallback sur les permissions de rôle)
   if (!sector) return true;
 
-  // Health exclusif → uniquement secteur health
-  if (HEALTH_EXCLUSIVE_MODULES.includes(module)) return sector === 'health';
+  // Health exclusif → uniquement secteur health (ou pharmacy pour le module pharmacy)
+  if (HEALTH_EXCLUSIVE_MODULES.includes(module)) {
+    if (module === 'pharmacy') {
+      return sector === 'health' || sector === 'pharmacy';
+    }
+    return sector === 'health';
+  }
 
   // ERP exclusif → secteurs erp et shop
   if (ERP_EXCLUSIVE_MODULES.includes(module)) return sector === 'erp' || sector === 'shop';
@@ -165,8 +170,10 @@ export function canPerform(role: UserRole, module: Module, action: Action = 'rea
   // 2. Admin SaaS → accès total aux modules saas (et uniquement saas)
   if (role === 'saas_admin') return module === 'saas';
 
-  // 3. Admins sectoriels / Locataires → accès total à tous les modules de leur secteur (sauf saas)
-  if (role === 'clinic_admin' || role === 'erp_admin') {
+  // 3. Admins sectoriels → accès total aux modules de leur secteur (sauf saas)
+  //    Le cloisonnement sectoriel (step 1) a déjà bloqué les accès inter-secteurs.
+  //    On accorde un bypass aux rôles "admin" locaux pour leur propre secteur.
+  if (role === 'clinic_admin' || role === 'erp_admin' || role === 'school_admin') {
     return module !== 'saas';
   }
 

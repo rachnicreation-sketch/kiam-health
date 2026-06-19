@@ -67,6 +67,22 @@ const SupplierPayments     = React.lazy(() => import("./modules/erp/pages/Suppli
 
 // ─── Other Modules ────────────────────────────────────────────────────────────
 import PharmacyDashboard from "./modules/pharmacy/pages/PharmacyDashboard";
+const PharmacyPOS = React.lazy(() => import("./modules/pharmacy/pages/POS"));
+const PharmacyInventory = React.lazy(() => import("./modules/pharmacy/pages/Inventory"));
+const PharmacyPhysicalInventories = React.lazy(() => import("./modules/pharmacy/pages/PhysicalInventories"));
+const PharmacyCustomers = React.lazy(() => import("./modules/pharmacy/pages/Customers"));
+const PharmacyCredits = React.lazy(() => import("./modules/pharmacy/pages/Credits"));
+const PharmacyPrescriptions = React.lazy(() => import("./modules/pharmacy/pages/Prescriptions"));
+const PharmacyProcurement = React.lazy(() => import("./modules/pharmacy/pages/Procurement"));
+const PharmacyCaisse = React.lazy(() => import("./modules/pharmacy/pages/Caisse"));
+const PharmacyAccounting = React.lazy(() => import("./modules/pharmacy/pages/Accounting"));
+const PharmacyDocuments = React.lazy(() => import("./modules/pharmacy/pages/Documents"));
+const PharmacySettings = React.lazy(() => import("./modules/pharmacy/pages/Settings"));
+const PharmacyReports = React.lazy(() => import("./modules/pharmacy/pages/Reports"));
+const PharmacyReturns = React.lazy(() => import("./modules/pharmacy/pages/Returns"));
+const PharmacyPromotions = React.lazy(() => import("./modules/pharmacy/pages/Promotions"));
+const PharmacyTransfers = React.lazy(() => import("./modules/pharmacy/pages/Transfers"));
+
 import EnterpriseDashboard from "./modules/enterprise/pages/EnterpriseDashboard";
 import EnterpriseProjects from "./modules/enterprise/pages/Projects";
 import EnterpriseTasks from "./modules/enterprise/pages/Tasks";
@@ -228,6 +244,21 @@ const App = () => (
 
                 {/* Pharmacy */}
                 <Route path="/pharmacy/dashboard" element={<ProtectedRoute module="pharmacy"><PharmacyDashboard /></ProtectedRoute>} />
+                <Route path="/pharmacy/sales" element={<ProtectedRoute module="pharmacy"><PharmacyPOS /></ProtectedRoute>} />
+                <Route path="/pharmacy/inventory" element={<ProtectedRoute module="pharmacy"><PharmacyInventory /></ProtectedRoute>} />
+                <Route path="/pharmacy/physical-inventories" element={<ProtectedRoute module="pharmacy"><PharmacyPhysicalInventories /></ProtectedRoute>} />
+                <Route path="/pharmacy/customers" element={<ProtectedRoute module="pharmacy"><PharmacyCustomers /></ProtectedRoute>} />
+                <Route path="/pharmacy/credits" element={<ProtectedRoute module="pharmacy"><PharmacyCredits /></ProtectedRoute>} />
+                <Route path="/pharmacy/prescriptions" element={<ProtectedRoute module="pharmacy"><PharmacyPrescriptions /></ProtectedRoute>} />
+                <Route path="/pharmacy/procurement" element={<ProtectedRoute module="pharmacy"><PharmacyProcurement /></ProtectedRoute>} />
+                <Route path="/pharmacy/caisse" element={<ProtectedRoute module="pharmacy"><PharmacyCaisse /></ProtectedRoute>} />
+                <Route path="/pharmacy/accounting" element={<ProtectedRoute module="pharmacy"><PharmacyAccounting /></ProtectedRoute>} />
+                <Route path="/pharmacy/documents" element={<ProtectedRoute module="pharmacy"><PharmacyDocuments /></ProtectedRoute>} />
+                <Route path="/pharmacy/settings" element={<ProtectedRoute module="pharmacy"><PharmacySettings /></ProtectedRoute>} />
+                <Route path="/pharmacy/reports" element={<ProtectedRoute module="pharmacy"><PharmacyReports /></ProtectedRoute>} />
+                <Route path="/pharmacy/returns" element={<ProtectedRoute module="pharmacy"><PharmacyReturns /></ProtectedRoute>} />
+                <Route path="/pharmacy/promotions" element={<ProtectedRoute module="pharmacy"><PharmacyPromotions /></ProtectedRoute>} />
+                <Route path="/pharmacy/transfers" element={<ProtectedRoute module="pharmacy"><PharmacyTransfers /></ProtectedRoute>} />
                 <Route path="/pharmacy/*"         element={<ProtectedRoute module="pharmacy"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* Enterprise */}

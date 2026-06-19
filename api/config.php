@@ -86,6 +86,13 @@ try {
         @include_once __DIR__ . '/init_erp_pro_v2.php';
     }
 
+    // Auto-init pharmacy tables
+    try {
+        $pdo->query("SELECT 1 FROM medication_batches LIMIT 1");
+    } catch (Exception $e) {
+        @include_once __DIR__ . '/init_pharmacy.php';
+    }
+
 } catch (PDOException $e) {
     echo json_encode(["status" => "error", "message" => "Connection failed: " . $e->getMessage()]);
     exit;

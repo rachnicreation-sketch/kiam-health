@@ -220,7 +220,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={weeklyData}>
+              <AreaChart data={stats?.weeklyData?.length ? stats.weeklyData : weeklyData}>
                 <defs>
                   <linearGradient id="colorCons" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>

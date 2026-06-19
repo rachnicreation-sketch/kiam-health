@@ -91,6 +91,7 @@ export default function HumanResources() {
 
   const [payrollDialogOpen, setPayrollDialogOpen] = useState(false);
   const [payslipOpen, setPayslipOpen] = useState(false);
+  const [payslipView, setPayslipView] = useState<'employee' | 'employer'>('employee');
   const [dossierOpen, setDossierOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedPayroll, setSelectedPayroll] = useState<PayrollRecord | null>(null);
@@ -123,21 +124,10 @@ export default function HumanResources() {
         api.users.list(clinicId),
       ]);
       
-      const DEPARTMENTS_ERP = ["Direction", "Ventes & Caisse", "Stock & Logistique", "Approvisionnement", "Comptabilité", "Livraison", "Marketing", "Administration"];
-      const POSITIONS_ERP = ["Directeur Commercial", "Responsable Boutique", "Caissier(ère)", "Gestionnaire de Stock", "Commercial(e)", "Livreur", "Comptable", "Assistant(e) Admin"];
-      const DEPARTMENTS_SCHOOL = ["Direction", "Corps Enseignant", "Administration Scolaire", "Service de Scolarité", "Service Financier", "Personnel de Service", "Surveillance"];
-      const POSITIONS_SCHOOL = ["Directeur / Proviseur", "Censeur / Directeur Adjoint", "Professeur Principal", "Professeur", "Instituteur(trice)", "Maître(sse) de Maternelle", "Secrétaire de Direction", "Comptable", "Agent de Scolarité", "Surveillant(e)", "Agent d'Entretien"];
-
-      // Filter out ERP and School employees to only show clinical staff
-      const clinicalEmps = empsData.filter((emp: any) => {
-        const isErp = DEPARTMENTS_ERP.includes(emp.department) || POSITIONS_ERP.includes(emp.position);
-        const isSchool = DEPARTMENTS_SCHOOL.includes(emp.department) || POSITIONS_SCHOOL.includes(emp.position);
-        return !isErp && !isSchool;
-      });
-      setEmployees(clinicalEmps);
+      setEmployees(empsData);
       
-      // Filter payrolls to only show clinical staff
-      const clinicalEmpIds = new Set(clinicalEmps.map(e => e.id));
+      // Filter payrolls
+      const clinicalEmpIds = new Set(empsData.map((e: any) => e.id));
       setPayrolls(payData.filter((pay: any) => clinicalEmpIds.has(pay.employeeId)));
       
       // Filter users to only show clinical roles
@@ -201,16 +191,25 @@ export default function HumanResources() {
       if (!file || !selectedEmployee) return;
       setIsUploading(true);
       try {
-        await api.hr.addDocument({
-          employee_id: selectedEmployee.id,
-          type,
-          name: `${label} (${file.name})`,
-          file_url: `docs/hr/${selectedEmployee.id}/${type}_${file.name}`,
-        });
-        toast({ title: "Document ajouté" });
-        loadDocuments(selectedEmployee.id);
-      } catch { toast({ variant: "destructive", title: "Erreur upload" }); }
-      finally { setIsUploading(false); }
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Data = reader.result?.toString() || '';
+          await api.hr.addDocument({
+            employee_id: selectedEmployee.id,
+            type,
+            name: `${label} (${file.name})`,
+            file_name: file.name,
+            file_data: base64Data
+          });
+          toast({ title: "Document ajouté" });
+          loadDocuments(selectedEmployee.id);
+          setIsUploading(false);
+        };
+        reader.readAsDataURL(file);
+      } catch { 
+        toast({ variant: "destructive", title: "Erreur upload" }); 
+        setIsUploading(false);
+      }
     };
     input.click();
   };
@@ -933,24 +932,29 @@ export default function HumanResources() {
               </Table>
 
               {/* Employer charges */}
-              <div className="bg-pink-50 border border-pink-200 rounded-lg p-3">
-                <p className="text-xs font-black text-pink-800 uppercase tracking-wider mb-2">Charges Patronales (info employeur)</p>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div><span className="text-slate-500">CNSS Patronale :</span><br /><span className="font-bold font-mono">{fmt(selectedPayroll.cnssEmployer)} CFA</span></div>
-                  <div><span className="text-slate-500">Crédit Retraite (4.2%) :</span><br /><span className="font-bold font-mono">{fmt(selectedPayroll.crEmployer)} CFA</span></div>
-                  <div><span className="text-pink-700 font-black">COÛT TOTAL (TOL/CTE) :</span><br /><span className="font-black text-pink-700 font-mono">{fmt(selectedPayroll.totalLaborCost)} CFA</span></div>
+              {payslipView === 'employer' && (
+                <div className="bg-pink-50 border border-pink-200 rounded-lg p-3 mt-4">
+                  <p className="text-xs font-black text-pink-800 uppercase tracking-wider mb-2">Charges Patronales (info employeur)</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-slate-500">CNSS Patronale :</span><br /><span className="font-bold font-mono">{fmt(selectedPayroll.cnssEmployer)} CFA</span></div>
+                    <div><span className="text-slate-500">Crédit Retraite (4.2%) :</span><br /><span className="font-bold font-mono">{fmt(selectedPayroll.crEmployer)} CFA</span></div>
+                    <div><span className="text-pink-700 font-black">COÛT TOTAL (TOL/CTE) :</span><br /><span className="font-black text-pink-700 font-mono">{fmt(selectedPayroll.totalLaborCost)} CFA</span></div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <p className="text-center text-xs text-slate-400 border-t pt-3">
                 Généré par Kiam SaaS — Document électronique valable pour la comptabilité interne (OHADA)
               </p>
             </div>
           )}
-          <div className="flex justify-end gap-2 mt-2 print:hidden">
+          <div className="flex justify-end gap-2 mt-4 print:hidden">
             <Button variant="outline" onClick={() => setPayslipOpen(false)}>Fermer</Button>
-            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => window.print()}>
-              <PrinterIcon className="h-4 w-4" /> Imprimer / PDF
+            <Button variant="outline" className="gap-2 text-pink-700 border-pink-200 hover:bg-pink-50" onClick={() => { setPayslipView('employer'); setTimeout(() => window.print(), 100); }}>
+              <PrinterIcon className="h-4 w-4" /> Imprimer Charges (Employeur)
+            </Button>
+            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => { setPayslipView('employee'); setTimeout(() => window.print(), 100); }}>
+              <PrinterIcon className="h-4 w-4" /> Imprimer Bulletin (Salarié)
             </Button>
           </div>
         </DialogContent>
@@ -1021,7 +1025,7 @@ export default function HumanResources() {
                         <p className="text-xs font-bold text-slate-800 truncate">{doc.name}</p>
                         <p className="text-[10px] text-slate-400">{new Date(doc.created_at || Date.now()).toLocaleDateString("fr-FR")}</p>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto rounded-lg text-slate-300 hover:text-indigo-500">
+                      <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto rounded-lg text-slate-300 hover:text-indigo-500" onClick={() => window.open(`/kiam/uploads/${doc.file_url}`, '_blank')}>
                         <Download className="h-3.5 w-3.5" />
                       </Button>
                     </div>

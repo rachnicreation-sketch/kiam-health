@@ -36,6 +36,25 @@ export default function Settings() {
   const [userProfile, setUserProfile] = useState<UserType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // ── Fonctions utilitaires système ───────────────────────────────────────────
+  const forceSeedData = () => {
+    // Réinitialise les caches locaux (ne supprime pas les données serveur)
+    const keysToKeep = ['kiam_auth_user', 'kiam_auth_clinic', 'kiam_jwt_token', 'kiam_theme'];
+    const allKeys = Object.keys(localStorage);
+    allKeys.forEach(key => {
+      if (!keysToKeep.includes(key)) {
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
+  const resetSystemData = () => {
+    // Supprime toutes les données locales
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.reload();
+  };
+
   useEffect(() => {
     if (user?.id) {
       loadData();

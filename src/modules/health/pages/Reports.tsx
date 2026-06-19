@@ -142,21 +142,21 @@ export default function Reports() {
     return {
       name: month,
       consultations: consultations.filter(c => {
-        const cDate = new Date(c.date);
+        const cDate = new Date((c as any).consultation_date || c.date);
         return cDate.getMonth() === monthNum && cDate.getFullYear() === year;
       }).length || Math.floor(Math.random() * 20) + 5, // Random for demo if empty
       revenue: transactions.filter(t => {
-        const tDate = new Date(t.date);
+        const tDate = new Date((t as any).transaction_date || t.date);
         return t.type === 'income' && tDate.getMonth() === monthNum && tDate.getFullYear() === year;
       }).reduce((acc, t) => acc + t.amount, 0) || Math.floor(Math.random() * 500000) + 100000,
     };
   });
 
   const bloodGroupData = [
-    { name: 'O+', value: patients.filter(p => p.bloodGroup === 'O+').length || 10 },
-    { name: 'A+', value: patients.filter(p => p.bloodGroup === 'A+').length || 5 },
-    { name: 'B+', value: patients.filter(p => p.bloodGroup === 'B+').length || 3 },
-    { name: 'Autres', value: patients.filter(p => !['O+', 'A+', 'B+'].includes(p.bloodGroup || '')).length || 2 },
+    { name: 'O+', value: patients.filter(p => (p.bloodGroup || (p as any).blood_group) === 'O+').length || 10 },
+    { name: 'A+', value: patients.filter(p => (p.bloodGroup || (p as any).blood_group) === 'A+').length || 5 },
+    { name: 'B+', value: patients.filter(p => (p.bloodGroup || (p as any).blood_group) === 'B+').length || 3 },
+    { name: 'Autres', value: patients.filter(p => !['O+', 'A+', 'B+'].includes(p.bloodGroup || (p as any).blood_group || '')).length || 2 },
   ];
 
   return (

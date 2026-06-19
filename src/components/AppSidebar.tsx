@@ -43,6 +43,9 @@ import {
   TrendingDown,
   Lock,
   UserPlus,
+  ArrowRightLeft,
+  Tag,
+  TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink } from "@/components/NavLink";
@@ -178,9 +181,20 @@ const pharmacyMainItems: SidebarItem[] = [
   { title: "Tableau de bord", url: "/pharmacy/dashboard", icon: LayoutDashboard, module: 'pharmacy' },
   { title: "Ventes Comptoir", url: "/pharmacy/sales", icon: ShoppingCart, module: 'pharmacy' },
   { title: "Ordonnances", url: "/pharmacy/prescriptions", icon: ClipboardList, module: 'pharmacy' },
-  { title: "Stock Médicaments", url: "/pharmacy/inventory", icon: Pill, module: 'pharmacy' },
-  { title: "Clients Fidélité", url: "/pharmacy/customers", icon: Users, module: 'pharmacy' },
-  { title: "Fermeture / Caisse", url: "/pharmacy/daily-report", icon: Receipt, module: 'pharmacy' },
+  { title: "Stock & Lots", url: "/pharmacy/inventory", icon: Pill, module: 'pharmacy' },
+  { title: "Inventaires Physiques", url: "/pharmacy/physical-inventories", icon: ClipboardCheck, module: 'pharmacy' },
+  { title: "Clients & Conventions", url: "/pharmacy/customers", icon: Users, module: 'pharmacy' },
+  { title: "Ventes à Crédit", url: "/pharmacy/credits", icon: CreditCard, module: 'pharmacy' },
+  { title: "Approvisionnement", url: "/pharmacy/procurement", icon: Truck, module: 'pharmacy' },
+  { title: "Gestion de Caisse", url: "/pharmacy/caisse", icon: Receipt, module: 'pharmacy' },
+  { title: "Comptabilité", url: "/pharmacy/accounting", icon: BarChart3, module: 'pharmacy' },
+  { title: "Rapports & Stats", url: "/pharmacy/reports", icon: TrendingUp, module: 'pharmacy' },
+  { title: "Documents & Devis", url: "/pharmacy/documents", icon: FileText, module: 'pharmacy' },
+  { title: "Retours & Avoirs", url: "/pharmacy/returns", icon: RotateCcw, module: 'pharmacy' },
+  { title: "Promotions", url: "/pharmacy/promotions", icon: Tag, module: 'pharmacy' },
+  { title: "Transferts Stock", url: "/pharmacy/transfers", icon: ArrowRightLeft, module: 'pharmacy' },
+
+  { title: "Paramètres", url: "/pharmacy/settings", icon: Settings, module: 'pharmacy' },
 ];
 
 // ========================

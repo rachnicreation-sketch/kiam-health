@@ -79,4 +79,14 @@ function logActivity(PDO $pdo, $tenantId, $userId, $action, $details = null) {
     $stmt = $pdo->prepare("INSERT INTO activity_logs (id, tenant_id, user_id, action, details) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$id, $tenantId, $userId, $action, $details ? json_encode($details) : null]);
 }
+
+function systemAuditLog(PDO $pdo, $clinicId, $userId, $action, $tableName, $recordId, $oldValue = null, $newValue = null) {
+    $id = "AUD-" . time() . rand(100, 999);
+    $stmt = $pdo->prepare("INSERT INTO system_audit_logs (id, clinic_id, user_id, action, table_name, record_id, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([
+        $id, $clinicId, $userId, $action, $tableName, $recordId, 
+        $oldValue ? json_encode($oldValue) : null, 
+        $newValue ? json_encode($newValue) : null
+    ]);
+}
 ?>

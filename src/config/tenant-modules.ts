@@ -467,6 +467,78 @@ export const PHARMACY_MODULES: TenantModuleConfig = {
       icon: 'LayoutDashboard',
       path: '/pharmacy',
       component: () => import('@/modules/pharmacy/pages/PharmacyDashboard')
+    },
+    {
+      id: 'pharmacy-pos',
+      name: 'Point de Vente',
+      description: 'Caisse & Ventes comptoir',
+      icon: 'ShoppingCart',
+      path: '/pharmacy/sales',
+      component: () => import('@/modules/pharmacy/pages/POS')
+    },
+    {
+      id: 'pharmacy-inventory',
+      name: 'Stock & Lots',
+      description: 'Médicaments & Lots',
+      icon: 'Pill',
+      path: '/pharmacy/inventory',
+      component: () => import('@/modules/pharmacy/pages/Inventory')
+    },
+    {
+      id: 'pharmacy-customers',
+      name: 'Clients & Assurances',
+      description: 'Conventions & Mutuelles',
+      icon: 'Users',
+      path: '/pharmacy/customers',
+      component: () => import('@/modules/pharmacy/pages/Customers')
+    },
+    {
+      id: 'pharmacy-credits',
+      name: 'Ventes à Crédit',
+      description: 'Échéanciers & Relances',
+      icon: 'CreditCard',
+      path: '/pharmacy/credits',
+      component: () => import('@/modules/pharmacy/pages/Credits')
+    },
+    {
+      id: 'pharmacy-prescriptions',
+      name: 'Ordonnances',
+      description: 'Scan & Saisie d\'ordonnances',
+      icon: 'ClipboardList',
+      path: '/pharmacy/prescriptions',
+      component: () => import('@/modules/pharmacy/pages/Prescriptions')
+    },
+    {
+      id: 'pharmacy-procurement',
+      name: 'Approvisionnement',
+      description: 'Commandes fournisseurs',
+      icon: 'Truck',
+      path: '/pharmacy/procurement',
+      component: () => import('@/modules/pharmacy/pages/Procurement')
+    },
+    {
+      id: 'pharmacy-caisse',
+      name: 'Gestion de Caisse',
+      description: 'Ouverture, fermeture & dépenses',
+      icon: 'Receipt',
+      path: '/pharmacy/caisse',
+      component: () => import('@/modules/pharmacy/pages/Caisse')
+    },
+    {
+      id: 'pharmacy-accounting',
+      name: 'Comptabilité',
+      description: 'Grand Livre & Balance OHADA',
+      icon: 'Landmark',
+      path: '/pharmacy/accounting',
+      component: () => import('@/modules/pharmacy/pages/Accounting')
+    },
+    {
+      id: 'pharmacy-documents',
+      name: 'Gestion Documentaire',
+      description: 'Devis & Factures',
+      icon: 'FileText',
+      path: '/pharmacy/documents',
+      component: () => import('@/modules/pharmacy/pages/Documents')
     }
   ]
 };
