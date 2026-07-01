@@ -1,0 +1,52 @@
+{
+  "common": {
+    "search": "Rechercher...",
+    "notifications": "Notifications",
+    "dashboard": "Tableau de bord",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "success": "Opération réussie"
+  },
+  "modules": {
+    "health": "Santé",
+    "hotel": "Hôtel",
+    "school": "École",
+    "erp": "Boutique & ERP",
+    "pharmacy": "Pharmacie",
+    "enterprise": "Entreprise"
+  },
+  "search": {
+    "placeholder": "Rechercher des patients, factures, produits...",
+    "no_results": "Aucun résultat trouvé",
+    "patients": "Patients",
+    "invoices": "Factures",
+    "staff": "Personnel",
+    "products": "Produits",
+    "rooms": "Chambres",
+    "students": "Élèves"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Tout marquer comme lu",
+    "empty": "Aucune notification",
+    "stock_low": "Stock faible",
+    "appointment_soon": "Rendez-vous imminent",
+    "payment_overdue": "Paiement en retard"
+  },
+  "logs": {
+    "title": "Journal d'activité",
+    "user": "Utilisateur",
+    "action": "Action",
+    "details": "Détails",
+    "date": "Date",
+    "entity": "Entité"
+  }
+}

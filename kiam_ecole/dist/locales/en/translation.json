@@ -1,0 +1,52 @@
+{
+  "common": {
+    "search": "Search...",
+    "notifications": "Notifications",
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "logout": "Logout",
+    "profile": "Profile",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success"
+  },
+  "modules": {
+    "health": "Health",
+    "hotel": "Hotel",
+    "school": "School",
+    "erp": "Shop & ERP",
+    "pharmacy": "Pharmacy",
+    "enterprise": "Enterprise"
+  },
+  "search": {
+    "placeholder": "Search patients, invoices, products...",
+    "no_results": "No results found",
+    "patients": "Patients",
+    "invoices": "Invoices",
+    "staff": "Staff",
+    "products": "Products",
+    "rooms": "Rooms",
+    "students": "Students"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "empty": "No notifications",
+    "stock_low": "Low stock",
+    "appointment_soon": "Upcoming appointment",
+    "payment_overdue": "Payment overdue"
+  },
+  "logs": {
+    "title": "Activity Logs",
+    "user": "User",
+    "action": "Action",
+    "details": "Details",
+    "date": "Date",
+    "entity": "Entity"
+  }
+}

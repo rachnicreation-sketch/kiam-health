@@ -1,0 +1,92 @@
+<?php
+/**
+ * Fonctions utilitaires pour l'API
+ */
+
+function sendResponse($data, $status = 200) {
+    http_response_code($status);
+    echo json_encode($data);
+    exit;
+}
+
+function getRequestData() {
+    return json_decode(file_get_contents("php://input"), true);
+}
+
+function generateId($prefix = '') {
+    return $prefix . uniqid();
+}
+
+function requireAuth() {
+    global $pdo;
+    require_once 'jwt.php';
+    $token = JWT::getBearerToken();
+    if (!$token) {
+        sendResponse(["status" => "error", "message" => "Accès non autorisé: Token manquant"], 401);
+    }
+    $decoded = JWT::decode($token);
+    if (!$decoded) {
+        sendResponse(["status" => "error", "message" => "Accès non autorisé: Token invalide ou expiré"], 401);
+    }
+
+    // Vérification du statut du locataire (sauf pour l'admin SaaS)
+    if (isset($decoded['tenant_id']) && $decoded['tenant_id'] && (!isset($decoded['role']) || $decoded['role'] !== 'saas_admin')) {
+        $stmt = $pdo->prepare("SELECT subscription_status FROM kiam_tenants WHERE id = ?");
+        $stmt->execute([$decoded['tenant_id']]);
+        $status = $stmt->fetchColumn();
+
+        if ($status === 'suspended') {
+            sendResponse([
+                "status" => "error", 
+                "message" => "Votre compte est suspendu. Veuillez contacter l'administrateur KIAM.",
+                "code" => "TENANT_SUSPENDED"
+            ], 403);
+        }
+    }
+
+    return $decoded;
+}
+
+function ensureClinicForTenant(PDO $pdo, ?string $tenantId): string {
+    $tenantId = trim((string) $tenantId);
+    if ($tenantId === '') {
+        sendResponse(["status" => "error", "message" => "Contexte clinique introuvable"], 400);
+    }
+
+    $stmt = $pdo->prepare("SELECT id FROM clinics WHERE id = ?");
+    $stmt->execute([$tenantId]);
+    if ($stmt->fetchColumn()) {
+        return $tenantId;
+    }
+
+    $tenantStmt = $pdo->prepare("SELECT name FROM kiam_tenants WHERE id = ?");
+    $tenantStmt->execute([$tenantId]);
+    $tenant = $tenantStmt->fetch();
+    $clinicName = $tenant['name'] ?? ('Espace ' . $tenantId);
+
+    $insertStmt = $pdo->prepare("
+        INSERT INTO clinics (id, name, status)
+        VALUES (?, ?, 'active')
+        ON DUPLICATE KEY UPDATE name = COALESCE(NULLIF(name, ''), VALUES(name))
+    ");
+    $insertStmt->execute([$tenantId, $clinicName]);
+
+    return $tenantId;
+}
+
+function logActivity(PDO $pdo, $tenantId, $userId, $action, $details = null) {
+    $id = "LOG-" . time() . rand(10, 99);
+    $stmt = $pdo->prepare("INSERT INTO activity_logs (id, tenant_id, user_id, action, details) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$id, $tenantId, $userId, $action, $details ? json_encode($details) : null]);
+}
+
+function systemAuditLog(PDO $pdo, $clinicId, $userId, $action, $tableName, $recordId, $oldValue = null, $newValue = null) {
+    $id = "AUD-" . time() . rand(100, 999);
+    $stmt = $pdo->prepare("INSERT INTO system_audit_logs (id, clinic_id, user_id, action, table_name, record_id, old_value, new_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([
+        $id, $clinicId, $userId, $action, $tableName, $recordId, 
+        $oldValue ? json_encode($oldValue) : null, 
+        $newValue ? json_encode($newValue) : null
+    ]);
+}
+?>

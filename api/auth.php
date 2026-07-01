@@ -81,7 +81,7 @@ if ($action === 'login') {
     $stmt = $pdo->prepare("
         SELECT u.*, t.sector, t.subscription_status 
         FROM users u 
-        LEFT JOIN kiam_tenants t ON u.clinic_id = t.id 
+        LEFT JOIN kiam_tenants t ON u.tenant_id = t.id 
         WHERE u.email = ?
     ");
     $stmt->execute([$email]);
