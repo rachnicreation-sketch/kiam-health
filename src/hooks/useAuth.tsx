@@ -6,7 +6,7 @@ import { api } from '@/lib/api-service';
 interface AuthContextType {
   user: User | null;
   clinic: Clinic | null;
-  login: (email: string, passwordHash: string) => Promise<{ success: boolean; message?: string }>;
+  login: (username: string, passwordHash: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   impersonate: (tenantId: string) => Promise<{ success: boolean; message?: string }>;
   stopImpersonation: () => void;
@@ -53,9 +53,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, passwordHash: string) => {
+  const login = async (username: string, passwordHash: string) => {
     try {
-      const response = await api.auth.login({ email, password: passwordHash });
+      const response = await api.auth.login({ username, password: passwordHash });
       
       if (response.status === 'success') {
         const foundUser = response.user;

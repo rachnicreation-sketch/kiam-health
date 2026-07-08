@@ -6,18 +6,22 @@ $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 
+$adminEmail = 'admin@kiam.local';
+$adminPassword = 'KiamAdmin@2026!';
+
 try {
-    $u = User::where('email', 'admin@kiam.local')->first();
+    $u = User::where('username', 'admin')->first();
     if (!$u) {
         User::create([
             'name'     => 'Super Admin',
-            'email'    => 'admin@kiam.local',
-            'password' => Hash::make('Admin@1234'),
+            'username' => 'admin',
+            'email'    => $adminEmail,
+            'password' => Hash::make($adminPassword),
         ]);
-        echo "Created: admin@kiam.local / Admin@1234\n";
+        echo "Created: admin / $adminPassword\n";
     } else {
-        $u->update(['password' => Hash::make('Admin@1234')]);
-        echo "Updated: admin@kiam.local / Admin@1234\n";
+        $u->update(['password' => Hash::make($adminPassword)]);
+        echo "Updated: admin / $adminPassword\n";
     }
 } catch (Exception $e) {
     echo 'ERR: ' . $e->getMessage() . "\n";

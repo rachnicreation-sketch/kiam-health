@@ -135,6 +135,49 @@ if ($method === 'GET') {
         }
     } catch (Throwable $e) {}
 
+    // 5. Transverse/Sector-Specific alerts
+    if ($tenantSector === 'school') {
+        $notifications[] = [
+            "id" => "school-canteen-alert",
+            "title" => "Restauration",
+            "message" => "Veuillez mettre à jour le menu du réfectoire pour la semaine.",
+            "type" => "school",
+            "priority" => "low",
+            "time" => "Aujourd'hui",
+            "path" => "/school/canteen"
+        ];
+    } elseif ($tenantSector === 'hotel') {
+        $notifications[] = [
+            "id" => "hotel-hk-alert",
+            "title" => "Housekeeping",
+            "message" => "Chambre 102 signalée sale. Assignation requise.",
+            "type" => "hotel",
+            "priority" => "medium",
+            "time" => "Aujourd'hui",
+            "path" => "/hotel/housekeeping"
+        ];
+    } elseif ($tenantSector === 'enterprise') {
+        $notifications[] = [
+            "id" => "enterprise-task-alert",
+            "title" => "Tâches en retard",
+            "message" => "Vous avez des tâches de projet non complétées.",
+            "type" => "enterprise",
+            "priority" => "medium",
+            "time" => "Important",
+            "path" => "/enterprise/tasks"
+        ];
+    } elseif ($tenantSector === 'pharmacy') {
+        $notifications[] = [
+            "id" => "pharmacy-expiry-alert",
+            "title" => "Lots critiques",
+            "message" => "Des médicaments du Lot LT-2291 arrivent à expiration.",
+            "type" => "pharmacy",
+            "priority" => "high",
+            "time" => "Urgent",
+            "path" => "/pharmacy/expiry-alerts"
+        ];
+    }
+
     // Fetch read status
     $readMap = [];
     $notificationIds = array_column($notifications, 'id');

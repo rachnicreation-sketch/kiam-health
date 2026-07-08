@@ -51,6 +51,29 @@ if ($method === 'GET') {
         $stmt->execute(["Upgrade Plan: " . $data['plan_id'], $auth['email']]);
         
         sendResponse(["status" => "success", "message" => "Votre forfait a été mis à jour."]);
+    } elseif ($action === 'pay_stripe' || $action === 'pay_mobile_money') {
+        if (empty($data['amount']) || empty($data['plan_id'])) {
+            sendResponse(["status" => "error", "message" => "Données de paiement incomplètes."], 400);
+        }
+
+        // Simulate payment transaction registration
+        $subId = "SUB-" . time() . rand(10, 99);
+        $stmt = $pdo->prepare("
+            INSERT INTO kiam_subscriptions (id, tenant_id, plan_id, amount, payment_status, payment_method, payment_date)
+            VALUES (?, ?, ?, ?, 'paid', ?, NOW())
+        ");
+        $method = ($action === 'pay_stripe') ? 'Stripe' : 'MobileMoney';
+        $stmt->execute([$subId, $clinicId, $data['plan_id'], $data['amount'], $method]);
+
+        // Update tenant status to active
+        $stmt = $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'active', plan_id = ? WHERE id = ?");
+        $stmt->execute([$data['plan_id'], $clinicId]);
+
+        // Log audit log
+        $stmt = $pdo->prepare("INSERT INTO kiam_audit_logs (event, user_email, status) VALUES (?, ?, 'success')");
+        $stmt->execute(["Paiement SaaS : " . $method . " pour " . $data['plan_id'], $auth['email']]);
+
+        sendResponse(["status" => "success", "message" => "Paiement réussi !", "subscription_id" => $subId]);
     }
 }
 ?>

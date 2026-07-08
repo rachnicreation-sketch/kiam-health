@@ -355,5 +355,42 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ id })
     }),
-  }
+  },
+  // ── Bug #1 Fix ─────────────────────────────────────────────────────────────
+  hotel: {
+    rooms:   (clinicId: string) => apiRequest(`hotel.php?action=list_rooms&clinicId=${clinicId}`),
+    addRoom: (data: any) => apiRequest("hotel.php?action=add_room", { method: "POST", body: JSON.stringify(data) }),
+    bookings:(clinicId: string) => apiRequest(`hotel.php?action=list_bookings&clinicId=${clinicId}`),
+    checkin: (data: any) => apiRequest("hotel.php?action=checkin", { method: "POST", body: JSON.stringify(data) }),
+    checkout:(data: any) => apiRequest("hotel.php?action=checkout", { method: "POST", body: JSON.stringify(data) }),
+    stats:   (clinicId: string) => apiRequest(`hotel.php?action=stats&clinicId=${clinicId}`),
+  },
+  // ── Bug #2 Fix ─────────────────────────────────────────────────────────────
+  guards: {
+    list:   (clinicId: string) => apiRequest(`guards.php?action=list&clinicId=${clinicId}`),
+    create: (data: any) => apiRequest("guards.php", { method: "POST", body: JSON.stringify(data) }),
+    delete: (id: string) => apiRequest(`guards.php?id=${id}`, { method: "DELETE" }),
+  },
+  // ── Bug #3 Fix ─────────────────────────────────────────────────────────────
+  // PHP actions: list_users (GET), chat (GET ?user1=&user2=), POST (send message)
+  messages: {
+    listUsers:   (clinicId: string) => apiRequest(`messages.php?action=list_users&clinicId=${clinicId}`),
+    chatHistory: (clinicId: string, userId: string, peerId: string) =>
+      apiRequest(`messages.php?action=chat&clinicId=${clinicId}&user1=${userId}&user2=${peerId}`),
+    sendMessage: (clinicId: string, data: any) =>
+      apiRequest("messages.php", { method: "POST", body: JSON.stringify({ clinicId, ...data }) }),
+  },
+  // ── Bug #4 Fix ─────────────────────────────────────────────────────────────
+  transactions: {
+    list:   (clinicId: string) => apiRequest(`transactions.php?action=list&clinicId=${clinicId}`),
+    create: (data: any) => apiRequest("transactions.php", { method: "POST", body: JSON.stringify(data) }),
+  },
+  // ── Bug #5 Fix ─────────────────────────────────────────────────────────────
+  // Top-level alias so PatientPortal.tsx (api.lab.*) works without touching the component
+  lab: {
+    services:   (clinicId: string) => apiRequest(`lab_services.php?action=list&clinicId=${clinicId}`),
+    tests:      (clinicId: string) => apiRequest(`lab_tests.php?action=list&clinicId=${clinicId}`),
+    createTest: (data: any) => apiRequest("lab_tests.php", { method: "POST", body: JSON.stringify(data) }),
+    updateTest: (data: any) => apiRequest("lab_tests.php", { method: "PUT", body: JSON.stringify(data) }),
+  },
 };

@@ -23,8 +23,9 @@ export default function SaaSTenants() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '', sector: 'health', plan_id: '',
-    admin_name: '', admin_email: '', admin_password: ''
+    admin_name: '', admin_username: '', admin_email: '', admin_password: ''
   });
+  const [createdCredentials, setCreatedCredentials] = useState<{username: string; password: string; tenantId: string} | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -57,10 +58,15 @@ export default function SaaSTenants() {
       if (!formData.plan_id && plans.length > 0) {
         formData.plan_id = plans[0].id;
       }
-      await api.tenants.create(formData);
-      toast({ title: "Déploiement réussi", description: "Le locataire a été créé et son environnement est provisionné." });
+      const result = await api.tenants.create(formData);
+      setCreatedCredentials({
+        username: result?.username || formData.admin_username || formData.admin_name,
+        password: formData.admin_password || 'Kiam@xxxx! (auto-généré, vérifiez l\'email)',
+        tenantId: result?.tenant_id || ''
+      });
+      toast({ title: "Déploiement réussi ✅", description: "Les identifiants ont été envoyés par email à " + formData.admin_email + " et à contact.rxservices@gmail.com." });
       setIsNewTenantOpen(false);
-      setFormData({ name: '', sector: 'health', plan_id: plans[0]?.id || '', admin_name: '', admin_email: '', admin_password: '' });
+      setFormData({ name: '', sector: 'health', plan_id: plans[0]?.id || '', admin_name: '', admin_username: '', admin_email: '', admin_password: '' });
       loadData();
     } catch (err: any) {
       toast({ variant: "destructive", title: "Erreur de création", description: err.message });
@@ -447,15 +453,26 @@ export default function SaaSTenants() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Email principal *</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nom d'utilisateur *</label>
                   <Input
-                    required type="email"
-                    placeholder="admin@clinique.com"
-                    value={formData.admin_email}
-                    onChange={e => setFormData({ ...formData, admin_email: e.target.value })}
-                    className="text-xs h-10 border-slate-200 focus:border-sky-500"
+                    required
+                    placeholder="jean.dupont"
+                    value={formData.admin_username}
+                    onChange={e => setFormData({ ...formData, admin_username: e.target.value.toLowerCase().replace(/\s+/g, '.') })}
+                    className="text-xs h-10 border-slate-200 focus:border-sky-500 font-mono"
                   />
+                  <p className="text-[10px] text-slate-400 mt-1">Utilisé pour se connecter (sans espace)</p>
                 </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Email principal *</label>
+                <Input
+                  required type="email"
+                  placeholder="admin@clinique.com"
+                  value={formData.admin_email}
+                  onChange={e => setFormData({ ...formData, admin_email: e.target.value })}
+                  className="text-xs h-10 border-slate-200 focus:border-sky-500"
+                />
               </div>
             </div>
             <div>
@@ -467,8 +484,9 @@ export default function SaaSTenants() {
                 placeholder="Kiam@2026!"
                 value={formData.admin_password}
                 onChange={e => setFormData({ ...formData, admin_password: e.target.value })}
-                className="text-xs h-10 border-slate-200 focus:border-sky-500"
+                className="text-xs h-10 border-slate-200 focus:border-sky-500 font-mono"
               />
+              <p className="text-[10px] text-slate-400 mt-1">Les identifiants seront envoyés à l'email ci-dessus et à contact.rxservices@gmail.com</p>
             </div>
             <Button
               disabled={isSubmitting}
@@ -482,6 +500,42 @@ export default function SaaSTenants() {
               )}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── CREDENTIALS DIALOG (shown after successful creation) ── */}
+      <Dialog open={!!createdCredentials} onOpenChange={() => setCreatedCredentials(null)}>
+        <DialogContent className="sm:max-w-md border border-emerald-100 rounded-xl">
+          <DialogHeader className="border-b border-slate-100 pb-4">
+            <DialogTitle className="text-lg font-black text-emerald-700 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-emerald-500" /> Espace provisionné avec succès !
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-4">
+            <p className="text-xs text-slate-500">Les identifiants ci-dessous ont été envoyés par email au tenant et à <strong>contact.rxservices@gmail.com</strong>.</p>
+            <div className="bg-slate-900 text-emerald-400 rounded-xl p-5 font-mono text-xs space-y-2">
+              <div className="text-slate-400 text-[10px] uppercase tracking-widest mb-3">Identifiants de connexion</div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Nom d'utilisateur:</span>
+                <span className="font-bold text-white">{createdCredentials?.username}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Mot de passe:</span>
+                <span className="font-bold text-white">{createdCredentials?.password}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">ID Tenant:</span>
+                <span className="text-slate-400">{createdCredentials?.tenantId}</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-rose-500 font-bold">⚠️ Notez ces identifiants maintenant. Le mot de passe ne sera plus visible après la fermeture.</p>
+            <Button
+              onClick={() => setCreatedCredentials(null)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black"
+            >
+              Compris, fermer
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

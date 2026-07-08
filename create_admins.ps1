@@ -16,4 +16,4 @@ foreach ($tenant in $tenants) {
 }
 
 Write-Host ""
-Write-Host "Admin users created! Credentials: admin@kiam.local / Admin@1234"
+Write-Host "Admin users created! Credentials: admin@kiam.local / KiamAdmin@2026!"

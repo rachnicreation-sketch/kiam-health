@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.9",
         "maatwebsite/excel": "^3.1",
+        "phpmailer/phpmailer": "*",
         "picqer/php-barcode-generator": "^3.2",
         "spatie/laravel-permission": "^6.24"
     },

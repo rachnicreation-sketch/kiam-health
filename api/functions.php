@@ -89,4 +89,12 @@ function systemAuditLog(PDO $pdo, $clinicId, $userId, $action, $tableName, $reco
         $newValue ? json_encode($newValue) : null
     ]);
 }
+
+function writeAuditLog(PDO $pdo, string $event, string $userEmail = 'system@kiam.sn', string $status = 'success') {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    try {
+        $stmt = $pdo->prepare("INSERT INTO kiam_audit_logs (event, user_email, ip_address, status) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$event, $userEmail, $ip, $status]);
+    } catch(Exception $e) { /* silent */ }
+}
 ?>

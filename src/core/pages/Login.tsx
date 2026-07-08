@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Lock, Mail, AlertCircle } from "lucide-react";
+import { Lock, User, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
@@ -31,7 +31,7 @@ export default function Login() {
       }
     }
   }, [user, navigate]);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +40,7 @@ export default function Login() {
     setLoading(true);
     setError(null);
     try {
-      const result = await login(email, password);
+      const result = await login(username, password);
       // useAuth sets the user in state, we can use the result or wait for next render, 
       // but useAuth is designed to return success/message.
       // Let's assume we can get the role from the stored user or better, from the response.
@@ -98,14 +98,14 @@ export default function Login() {
             
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-200">Email</Label>
+                <Label htmlFor="username" className="text-sm font-medium text-slate-700 dark:text-slate-200">Nom d'utilisateur</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input 
-                    id="email" 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username" 
+                    type="text" 
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     placeholder="" 
                     className="pl-10" 
                     required 

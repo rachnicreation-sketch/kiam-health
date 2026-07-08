@@ -8,6 +8,15 @@ define('DB_NAME', 'kiam_saas');
 define('DB_USER', 'root');
 define('DB_PASS', ''); // Par défaut vide sur WampServer
 
+// Configuration SMTP (Généralement Gmail ou autre service)
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USER', 'contact.rxservices@gmail.com'); // Remplacer par l'adresse d'envoi
+define('SMTP_PASS', 'fnln jzrl wrqk ytdi'); // Remplacer par le mot de passe d'application SMTP
+define('SMTP_SECURE', 'tls'); // 'tls' ou 'ssl'
+define('SMTP_FROM_EMAIL', 'noreply@kiam.local');
+define('SMTP_FROM_NAME', 'Kiam SaaS');
+
 // Activation du rapport d'erreurs pour le développement
 error_reporting(E_ALL);
 ini_set('display_errors', 0);

@@ -87,6 +87,24 @@ import EnterpriseDashboard from "./modules/enterprise/pages/EnterpriseDashboard"
 import EnterpriseProjects from "./modules/enterprise/pages/Projects";
 import EnterpriseTasks from "./modules/enterprise/pages/Tasks";
 
+// ─── Hotel Extra Pages ────────────────────────────────────────────────────────
+import HotelReports from "./modules/hotel/pages/HotelReports";
+import HotelSettings from "./modules/hotel/pages/HotelSettings";
+import HotelBilling from "./modules/hotel/pages/HotelBilling";
+
+// ─── GES Module (Gestion des Stocks) ─────────────────────────────────────────
+const GesDashboard = React.lazy(() => import("./modules/ges/pages/GesDashboard"));
+const GesStock     = React.lazy(() => import("./modules/ges/pages/GesStock"));
+const GesMovements = React.lazy(() => import("./modules/ges/pages/GesMovements"));
+const GesReports   = React.lazy(() => import("./modules/ges/pages/GesReports"));
+const GesSettings  = React.lazy(() => import("./modules/ges/pages/GesSettings"));
+
+// ─── Caisse Module (Point de Vente) ──────────────────────────────────────────
+const CaisseDashboard = React.lazy(() => import("./modules/caisse/pages/CaisseDashboard"));
+const CaissePos       = React.lazy(() => import("./modules/caisse/pages/CaissePos"));
+const CaisseReports   = React.lazy(() => import("./modules/caisse/pages/CaisseReports"));
+const CaisseSettings  = React.lazy(() => import("./modules/caisse/pages/CaisseSettings"));
+
 // ─── SaaS Admin Module ────────────────────────────────────────────────────────
 import SaaSAdminDashboard from "./core/pages/SaaSAdminDashboard";
 import SaaSTenants from "./core/pages/saas/SaaSTenants";
@@ -190,11 +208,14 @@ const App = () => (
                 <Route path="/saas/settings"     element={<ProtectedRoute module="saas"><SaaSSettings /></ProtectedRoute>} />
 
                 {/* Hotel */}
-                <Route path="/hotel"             element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
-                <Route path="/hotel/dashboard"   element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
-                <Route path="/hotel/rooms"       element={<ProtectedRoute module="hotel"><Rooms /></ProtectedRoute>} />
-                <Route path="/hotel/bookings"    element={<ProtectedRoute module="hotel"><Bookings /></ProtectedRoute>} />
-                <Route path="/hotel/*"           element={<ProtectedRoute module="hotel"><ModulePlaceholder /></ProtectedRoute>} />
+                <Route path="/hotel"              element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
+                <Route path="/hotel/dashboard"    element={<ProtectedRoute module="hotel"><HotelDashboard /></ProtectedRoute>} />
+                <Route path="/hotel/rooms"        element={<ProtectedRoute module="hotel"><Rooms /></ProtectedRoute>} />
+                <Route path="/hotel/bookings"     element={<ProtectedRoute module="hotel"><Bookings /></ProtectedRoute>} />
+                <Route path="/hotel/billing"      element={<ProtectedRoute module="hotel"><HotelBilling /></ProtectedRoute>} />
+                <Route path="/hotel/reports"      element={<ProtectedRoute module="hotel"><HotelReports /></ProtectedRoute>} />
+                <Route path="/hotel/settings"     element={<ProtectedRoute module="hotel"><HotelSettings /></ProtectedRoute>} />
+                <Route path="/hotel/*"            element={<ProtectedRoute module="hotel"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* School (lazy) */}
                 <Route path="/school"                element={<ProtectedRoute module="school"><SchoolDashboard /></ProtectedRoute>} />
@@ -266,6 +287,23 @@ const App = () => (
                 <Route path="/enterprise/projects"  element={<ProtectedRoute module="enterprise"><EnterpriseProjects /></ProtectedRoute>} />
                 <Route path="/enterprise/tasks"     element={<ProtectedRoute module="enterprise"><EnterpriseTasks /></ProtectedRoute>} />
                 <Route path="/enterprise/*"         element={<ProtectedRoute module="enterprise"><ModulePlaceholder /></ProtectedRoute>} />
+
+                {/* GES — Gestion des Stocks */}
+                <Route path="/ges"               element={<ProtectedRoute module="ges"><GesDashboard /></ProtectedRoute>} />
+                <Route path="/ges/dashboard"     element={<ProtectedRoute module="ges"><GesDashboard /></ProtectedRoute>} />
+                <Route path="/ges/stock"         element={<ProtectedRoute module="ges"><GesStock /></ProtectedRoute>} />
+                <Route path="/ges/movements"     element={<ProtectedRoute module="ges"><GesMovements /></ProtectedRoute>} />
+                <Route path="/ges/reports"       element={<ProtectedRoute module="ges"><GesReports /></ProtectedRoute>} />
+                <Route path="/ges/settings"      element={<ProtectedRoute module="ges"><GesSettings /></ProtectedRoute>} />
+                <Route path="/ges/*"             element={<ProtectedRoute module="ges"><ModulePlaceholder /></ProtectedRoute>} />
+
+                {/* Caisse — Point de Vente */}
+                <Route path="/caisse"             element={<ProtectedRoute module="caisse"><CaisseDashboard /></ProtectedRoute>} />
+                <Route path="/caisse/dashboard"   element={<ProtectedRoute module="caisse"><CaisseDashboard /></ProtectedRoute>} />
+                <Route path="/caisse/pos"         element={<ProtectedRoute module="caisse"><CaissePos /></ProtectedRoute>} />
+                <Route path="/caisse/reports"     element={<ProtectedRoute module="caisse"><CaisseReports /></ProtectedRoute>} />
+                <Route path="/caisse/settings"    element={<ProtectedRoute module="caisse"><CaisseSettings /></ProtectedRoute>} />
+                <Route path="/caisse/*"           element={<ProtectedRoute module="caisse"><ModulePlaceholder /></ProtectedRoute>} />
 
               </Route>{/* End ProtectedRoute/AppLayout */}
 

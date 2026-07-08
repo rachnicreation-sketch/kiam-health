@@ -28,7 +28,11 @@ export type Module =
   // ── Modules Hotel exclusifs ─────────────────────────────────────────────────
   | 'hotel'
   // ── Modules Enterprise exclusifs ────────────────────────────────────────────
-  | 'enterprise';
+  | 'enterprise'
+  // ── Modules GES exclusifs ───────────────────────────────────────────────────────────
+  | 'ges'
+  // ── Modules Caisse exclusifs ──────────────────────────────────────────────────────────
+  | 'caisse';
 
 export type Action = 'read' | 'write' | 'delete' | 'admin';
 
@@ -77,6 +81,19 @@ export const ROLE_PERMISSIONS: Record<UserRole, Module[]> = {
   'stockiste': ['erp'],
   'commercial': ['erp', 'billing'],
 
+  // ── Hotel ─────────────────────────────────────────────────────────────────────
+  'hotel_admin': ['hotel', 'billing', 'accounting', 'reports', 'hr', 'settings'],
+  'hotel_reception': ['hotel', 'billing'],
+  'hotel_manager': ['hotel', 'reports'],
+
+  // ── GES ─────────────────────────────────────────────────────────────────────
+  'ges_admin': ['ges', 'reports', 'settings'],
+  'ges_stockiste': ['ges'],
+
+  // ── Caisse ───────────────────────────────────────────────────────────────────
+  'caisse_admin': ['caisse', 'billing', 'accounting', 'reports', 'settings'],
+  'caissier_pos': ['caisse'],
+
   // ── School ───────────────────────────────────────────────────────────────────
   'school_direction': ['school', 'reports', 'settings'],
   'school_admin': ['school', 'school_hr', 'planning', 'settings'],
@@ -113,6 +130,16 @@ export const HOTEL_EXCLUSIVE_MODULES: Module[] = ['hotel'];
  * Modules qui appartiennent EXCLUSIVEMENT au secteur Enterprise.
  */
 export const ENTERPRISE_EXCLUSIVE_MODULES: Module[] = ['enterprise'];
+
+/**
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur GES.
+ */
+export const GES_EXCLUSIVE_MODULES: Module[] = ['ges'];
+
+/**
+ * Modules qui appartiennent EXCLUSIVEMENT au secteur Caisse.
+ */
+export const CAISSE_EXCLUSIVE_MODULES: Module[] = ['caisse'];
 
 /**
  * Vérifie si un rôle a accès à un module donné.
@@ -155,6 +182,12 @@ export function isSectorAllowed(sector: string | undefined | null, module: Modul
   // Enterprise exclusif → secteur enterprise
   if (ENTERPRISE_EXCLUSIVE_MODULES.includes(module)) return sector === 'enterprise';
 
+  // GES exclusif → secteurs ges et erp (stock commun)
+  if (GES_EXCLUSIVE_MODULES.includes(module)) return sector === 'ges' || sector === 'erp';
+
+  // Caisse exclusif → secteur caisse, pharmacy ou erp
+  if (CAISSE_EXCLUSIVE_MODULES.includes(module)) return sector === 'caisse' || sector === 'pharmacy' || sector === 'erp';
+
   // Modules communs (billing, accounting, reports, settings, saas) → tous secteurs
   return true;
 }
@@ -173,7 +206,8 @@ export function canPerform(role: UserRole, module: Module, action: Action = 'rea
   // 3. Admins sectoriels → accès total aux modules de leur secteur (sauf saas)
   //    Le cloisonnement sectoriel (step 1) a déjà bloqué les accès inter-secteurs.
   //    On accorde un bypass aux rôles "admin" locaux pour leur propre secteur.
-  if (role === 'clinic_admin' || role === 'erp_admin' || role === 'school_admin') {
+  if (role === 'clinic_admin' || role === 'erp_admin' || role === 'school_admin' ||
+      role === 'hotel_admin' || role === 'ges_admin' || role === 'caisse_admin') {
     return module !== 'saas';
   }
 

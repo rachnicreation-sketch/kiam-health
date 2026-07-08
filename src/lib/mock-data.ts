@@ -24,7 +24,17 @@ export type UserRole =
   | 'school_admin'
   | 'school_finance'
   | 'school_scolarite'
-  | 'school_teacher';
+  | 'school_teacher'
+  // ── Hotel ────────────────────────────
+  | 'hotel_admin'
+  | 'hotel_reception'
+  | 'hotel_manager'
+  // ── GES ──────────────────────────────
+  | 'ges_admin'
+  | 'ges_stockiste'
+  // ── Caisse ───────────────────────────
+  | 'caisse_admin'
+  | 'caissier_pos';
 
 export interface Clinic {
   id: string;

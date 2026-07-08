@@ -2,8 +2,8 @@
 require_once 'config.php';
 
 echo "=== RESET ADMIN PASSWORD ===\n";
-$email = 'admin@kiam.com';
-$password = 'password';
+$email = 'saas.admin@kiam.local';
+$password = 'KiamSaas@2026!';
 $hash = password_hash($password, PASSWORD_DEFAULT);
 
 $stmt = $pdo->prepare("UPDATE kiam_global_users SET password_hash = ? WHERE email = ?");

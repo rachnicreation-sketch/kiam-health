@@ -14,7 +14,7 @@ export default function SaaSBilling() {
   const [plans, setPlans] = useState<any[]>([]);
   
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [planForm, setPlanForm] = useState({ id: '', name: '', price: '0', max_users: '1', modules_included: '' });
+  const [planForm, setPlanForm] = useState({ id: '', name: '', description: '', price: '0', price_annual: '0', max_users: '1', modules_included: '' });
   const [invoices, setInvoices] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
 
@@ -52,7 +52,9 @@ export default function SaaSBilling() {
       await api.saas.savePlan({
         id: planForm.id,
         name: planForm.name,
+        description: planForm.description,
         price: parseFloat(planForm.price),
+        price_annual: parseFloat(planForm.price_annual),
         max_users: parseInt(planForm.max_users),
         modules_included: planForm.modules_included
       });
@@ -65,7 +67,7 @@ export default function SaaSBilling() {
   };
 
   const openNewPlan = () => {
-    setPlanForm({ id: '', name: '', price: '0', max_users: '1', modules_included: '' });
+    setPlanForm({ id: '', name: '', description: '', price: '0', price_annual: '0', max_users: '1', modules_included: '' });
     setIsPlanModalOpen(true);
   };
 
@@ -73,7 +75,9 @@ export default function SaaSBilling() {
     setPlanForm({
       id: plan.id,
       name: plan.name,
+      description: plan.description || '',
       price: String(plan.price),
+      price_annual: String(plan.price_annual || 0),
       max_users: String(plan.max_users),
       modules_included: plan.modules_included || ''
     });
@@ -139,21 +143,36 @@ export default function SaaSBilling() {
           {loading ? (
              <div className="text-slate-500 italic">Chargement des forfaits...</div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {plans.map((plan: any, i: number) => {
-                 const isPopular = plan.price > 30000 && plan.price < 100000;
+                 const isPopular = plan.id === 'plan_premium';
+                 const isTrial = plan.id === 'plan_decouverte';
                  return (
-                 <Card key={i} className={`bg-white border-2 ${isPopular ? 'border-blue-500 shadow-blue-500/10' : 'border-slate-200'} p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-md`}>
+                 <Card key={i} className={`bg-white border-2 ${isPopular ? 'border-blue-500 shadow-blue-500/10' : isTrial ? 'border-emerald-400 shadow-emerald-100' : 'border-slate-200'} p-8 rounded-[2rem] relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-md`}>
                     {isPopular && <div className="absolute top-4 right-4 bg-blue-600 text-[10px] font-bold px-2 py-1 rounded text-white uppercase tracking-widest">Populaire</div>}
+                    {isTrial && <div className="absolute top-4 right-4 bg-emerald-500 text-[10px] font-bold px-2 py-1 rounded text-white uppercase tracking-widest">Essai gratuit</div>}
                     <h3 className="text-xl font-extrabold text-slate-900 mb-2 uppercase">{plan.name}</h3>
-                    <div className="text-3xl font-black text-slate-800 mb-6">{Number(plan.price).toLocaleString()} <span className="text-sm font-normal text-slate-500">CFA / mois</span></div>
+                    <p className="text-sm text-slate-500 mb-4 h-10">{plan.description}</p>
+                    <div className="flex flex-col mb-6">
+                       {isTrial ? (
+                         <>
+                           <div className="text-3xl font-black text-emerald-600">Gratuit <span className="text-sm font-normal text-slate-500">pendant 45 jours</span></div>
+                           <div className="text-xs text-rose-500 font-bold mt-1">Accès suspendu automatiquement après 45 jours</div>
+                         </>
+                       ) : (
+                         <>
+                           <div className="text-3xl font-black text-slate-800">{Number(plan.price).toLocaleString()} <span className="text-sm font-normal text-slate-500">CFA / mois</span></div>
+                           {plan.price_annual > 0 && <div className="text-sm font-bold text-emerald-600 mt-1">{Number(plan.price_annual).toLocaleString()} CFA / an <span className="text-slate-400 line-through text-xs font-normal ml-1">au lieu de {Number(plan.price * 12).toLocaleString()} CFA</span></div>}
+                         </>
+                       )}
+                    </div>
                     
                     <div className="space-y-4 mb-8">
                        <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
                           <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
                              <CheckCircle className="w-3 h-3 text-emerald-500" />
                           </div>
-                          Idéal pour {plan.max_users} utilisateurs max.
+                          {isTrial ? 'Utilisateurs illimités' : `Idéal pour ${plan.max_users} utilisateurs max.`}
                        </div>
                        <div className="flex items-center gap-3 text-sm text-slate-600 font-medium">
                           <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
@@ -229,13 +248,21 @@ export default function SaaSBilling() {
                   <label className="text-xs font-bold text-slate-500 uppercase">Nom du Plan</label>
                   <Input required placeholder="Ex: Professionnel" value={planForm.name} onChange={e => setPlanForm({...planForm, name: e.target.value})} />
                </div>
-               <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase">Description</label>
+                  <Input placeholder="Description courte du forfait..." value={planForm.description} onChange={e => setPlanForm({...planForm, description: e.target.value})} />
+               </div>
+               <div className="grid grid-cols-3 gap-4">
                   <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Tarif (Mensuel)</label>
-                     <Input required type="number" placeholder="75000" value={planForm.price} onChange={e => setPlanForm({...planForm, price: e.target.value})} />
+                     <label className="text-xs font-bold text-slate-500 uppercase">Mensuel</label>
+                     <Input required type="number" placeholder="10000" value={planForm.price} onChange={e => setPlanForm({...planForm, price: e.target.value})} />
                   </div>
                   <div>
-                     <label className="text-xs font-bold text-slate-500 uppercase">Max Utilisateurs</label>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Annuel</label>
+                     <Input required type="number" placeholder="100000" value={planForm.price_annual} onChange={e => setPlanForm({...planForm, price_annual: e.target.value})} />
+                  </div>
+                  <div>
+                     <label className="text-xs font-bold text-slate-500 uppercase">Max Users</label>
                      <Input required type="number" placeholder="20" value={planForm.max_users} onChange={e => setPlanForm({...planForm, max_users: e.target.value})} />
                   </div>
                </div>

@@ -158,6 +158,94 @@ export const HEALTH_MODULES: TenantModuleConfig = {
       icon: 'FileText',
       path: '/health/reports',
       component: () => import('@/modules/health/pages/Reports')
+    },
+    {
+      id: 'guard-planning',
+      name: 'Planning de Garde',
+      description: 'Planification des gardes médicales',
+      icon: 'Shield',
+      path: '/health/guard-planning',
+      component: () => import('@/modules/health/pages/GuardPlanning')
+    },
+    {
+      id: 'messaging',
+      name: 'Messagerie Interne',
+      description: 'Communication entre équipes médicales',
+      icon: 'MessageSquare',
+      path: '/health/messaging',
+      component: () => import('@/modules/health/pages/Messaging')
+    },
+    {
+      id: 'catalogs',
+      name: 'Catalogues',
+      description: 'Actes médicaux et examens de labo',
+      icon: 'BookOpen',
+      path: '/health/catalogs',
+      component: () => import('@/modules/health/pages/Catalogs')
+    },
+    {
+      id: 'facilities',
+      name: 'Équipements',
+      description: 'Gestion des installations et équipements',
+      icon: 'Building2',
+      path: '/health/facilities',
+      component: () => import('@/modules/health/pages/Facilities')
+    },
+    {
+      id: 'patient-portal',
+      name: 'Portail Patient',
+      description: 'Espace self-service pour les patients',
+      icon: 'HeartPulse',
+      path: '/health/patient-portal',
+      component: () => import('@/modules/health/pages/PatientPortal')
+    },
+    {
+      id: 'health-settings',
+      name: 'Paramètres',
+      description: 'Configuration de la clinique',
+      icon: 'Settings',
+      path: '/health/settings',
+      component: () => import('@/modules/health/pages/Settings')
+    },
+    {
+      id: 'health-insurance',
+      name: 'Assurances',
+      description: 'Conventions de tiers-payant',
+      icon: 'Shield',
+      path: '/health/insurance',
+      component: () => import('@/modules/health/pages/InsuranceManager')
+    },
+    {
+      id: 'health-telemedicine',
+      name: 'Télémédecine',
+      description: 'Téléconsultations vidéo intégrées',
+      icon: 'Video',
+      path: '/health/telemedicine',
+      component: () => import('@/modules/health/pages/Telemedicine')
+    },
+    {
+      id: 'health-imaging',
+      name: 'Imagerie Médicale',
+      description: 'Radiographies et comptes-rendus',
+      icon: 'FileImage',
+      path: '/health/imaging',
+      component: () => import('@/modules/health/pages/MedicalImaging')
+    },
+    {
+      id: 'health-campaigns',
+      name: 'Campagnes & Rappels',
+      description: 'Rappels automatiques par SMS/WhatsApp',
+      icon: 'Bell',
+      path: '/health/campaigns',
+      component: () => import('@/modules/health/pages/CampaignManager')
+    },
+    {
+      id: 'health-epidemio',
+      name: 'Épidémiologie',
+      description: 'Suivi statistique des pathologies',
+      icon: 'Activity',
+      path: '/health/epidemio',
+      component: () => import('@/modules/health/pages/EpidemioStats')
     }
   ]
 };
@@ -238,6 +326,14 @@ export const ERP_MODULES: TenantModuleConfig = {
       component: () => import('@/modules/erp/pages/ProcurementDashboard'),
       subModules: [
         {
+          id: 'purchase-requests',
+          name: 'Demandes d\'Achat',
+          description: 'Demandes et approbations',
+          icon: 'ClipboardList',
+          path: '/erp/procurement/purchase-requests',
+          component: () => import('@/modules/erp/pages/PurchaseRequests')
+        },
+        {
           id: 'purchase-orders',
           name: 'Commandes d\'Achat',
           description: 'Suivi des PO',
@@ -252,6 +348,22 @@ export const ERP_MODULES: TenantModuleConfig = {
           icon: 'CheckSquare',
           path: '/erp/procurement/goods-receipts',
           component: () => import('@/modules/erp/pages/GoodsReceipts')
+        },
+        {
+          id: 'supplier-invoices',
+          name: 'Factures Fournisseurs',
+          description: 'Contrôle et validation des factures',
+          icon: 'Receipt',
+          path: '/erp/procurement/supplier-invoices',
+          component: () => import('@/modules/erp/pages/SupplierInvoices')
+        },
+        {
+          id: 'supplier-payments',
+          name: 'Paiements Fournisseurs',
+          description: 'Règlements et échéanciers',
+          icon: 'Wallet',
+          path: '/erp/procurement/supplier-payments',
+          component: () => import('@/modules/erp/pages/SupplierPayments')
         }
       ]
     },
@@ -281,12 +393,84 @@ export const ERP_MODULES: TenantModuleConfig = {
       component: () => import('@/modules/erp/pages/ErpAccounting')
     },
     {
+      id: 'erp-transactions',
+      name: 'Transactions',
+      description: 'Historique des ventes et encaissements',
+      icon: 'ArrowRightLeft',
+      path: '/erp/transactions',
+      component: () => import('@/modules/erp/pages/ErpTransactions')
+    },
+    {
+      id: 'physical-inventories',
+      name: 'Inventaires Physiques',
+      description: 'Audits et comptages de stock',
+      icon: 'ClipboardCheck',
+      path: '/erp/physical-inventories',
+      component: () => import('@/modules/erp/pages/PhysicalInventories')
+    },
+    {
+      id: 'commercial-docs',
+      name: 'Documents Commerciaux',
+      description: 'Devis et bons de livraison',
+      icon: 'FolderOpen',
+      path: '/erp/commercial-docs',
+      component: () => import('@/modules/erp/pages/CommercialDocs')
+    },
+    {
+      id: 'register-closing',
+      name: 'Clôture de Caisse',
+      description: 'Bilan journalier et fermeture',
+      icon: 'Lock',
+      path: '/erp/register-closing',
+      component: () => import('@/modules/erp/pages/RegisterClosing')
+    },
+    {
       id: 'reports',
       name: 'Rapports',
       description: 'Rapports commerciaux et financiers',
       icon: 'FileText',
       path: '/erp/reports',
       component: () => import('@/modules/erp/pages/Reports')
+    },
+    {
+      id: 'erp-crm',
+      name: 'CRM Commercial',
+      description: 'Pipeline prospects et opportunités',
+      icon: 'Target',
+      path: '/erp/crm',
+      component: () => import('@/modules/erp/pages/CRMPipeline')
+    },
+    {
+      id: 'erp-ecommerce',
+      name: 'E-Commerce',
+      description: 'Catalogue en ligne et commandes web',
+      icon: 'Globe',
+      path: '/erp/ecommerce',
+      component: () => import('@/modules/erp/pages/EcommerceStore')
+    },
+    {
+      id: 'erp-warehouses',
+      name: 'Multi-Dépôts',
+      description: 'Gestion logistique inter-entrepôts',
+      icon: 'Package',
+      path: '/erp/warehouses',
+      component: () => import('@/modules/erp/pages/MultiWarehouse')
+    },
+    {
+      id: 'erp-loyalty',
+      name: 'Fidélité',
+      description: 'Points de fidélité et remises',
+      icon: 'Gift',
+      path: '/erp/loyalty',
+      component: () => import('@/modules/erp/pages/LoyaltyProgram')
+    },
+    {
+      id: 'erp-einvoicing',
+      name: 'Facture Électronique',
+      description: 'Facturation électronique certifiée DGI',
+      icon: 'ShieldAlert',
+      path: '/erp/einvoicing',
+      component: () => import('@/modules/erp/pages/EInvoicing')
     }
   ]
 };
@@ -387,6 +571,102 @@ export const SCHOOL_MODULES: TenantModuleConfig = {
       path: '/school/hr',
       component: () => import('@/modules/school/pages/SchoolHumanResources'),
       requiredPermissions: ['hr.manage']
+    },
+    {
+      id: 'teachers',
+      name: 'Enseignants',
+      description: 'Gestion du corps professoral',
+      icon: 'GraduationCap',
+      path: '/school/teachers',
+      component: () => import('@/modules/school/pages/Teachers')
+    },
+    {
+      id: 'bulletins',
+      name: 'Bulletins',
+      description: 'Génération et impression des bulletins',
+      icon: 'FileSpreadsheet',
+      path: '/school/bulletins',
+      component: () => import('@/modules/school/pages/Bulletins')
+    },
+    {
+      id: 'school-accounting',
+      name: 'Comptabilité',
+      description: 'Suivi financier de l\'établissement',
+      icon: 'Landmark',
+      path: '/school/accounting',
+      component: () => import('@/modules/school/pages/Accounting')
+    },
+    {
+      id: 'school-billing',
+      name: 'Facturation',
+      description: 'Factures et reçus de scolarité',
+      icon: 'CreditCard',
+      path: '/school/billing',
+      component: () => import('@/modules/school/pages/Billing')
+    },
+    {
+      id: 'school-reports',
+      name: 'Rapports',
+      description: 'Statistiques et rapports pédagogiques',
+      icon: 'BarChart2',
+      path: '/school/reports',
+      component: () => import('@/modules/school/pages/Reports')
+    },
+    {
+      id: 'school-settings',
+      name: 'Paramètres',
+      description: 'Configuration de l\'établissement',
+      icon: 'Settings',
+      path: '/school/settings',
+      component: () => import('@/modules/school/pages/Settings')
+    },
+    {
+      id: 'school-canteen',
+      name: 'Cantine & Restauration',
+      description: 'Abonnements et suivi des repas',
+      icon: 'Coffee',
+      path: '/school/canteen',
+      component: () => import('@/modules/school/pages/Canteen')
+    },
+    {
+      id: 'school-transport',
+      name: 'Transport Scolaire',
+      description: 'Gestion des bus et des circuits',
+      icon: 'Bus',
+      path: '/school/transport',
+      component: () => import('@/modules/school/pages/SchoolTransport')
+    },
+    {
+      id: 'school-library',
+      name: 'Bibliothèque',
+      description: 'Gestion des ouvrages et emprunts',
+      icon: 'BookOpen',
+      path: '/school/library',
+      component: () => import('@/modules/school/pages/Library')
+    },
+    {
+      id: 'school-parent-portal',
+      name: 'Portail Parents',
+      description: 'Accès parents et suivi élève',
+      icon: 'Users',
+      path: '/school/parent-portal',
+      component: () => import('@/modules/school/pages/ParentPortal')
+    },
+    {
+      id: 'school-exams',
+      name: 'Examens en Ligne',
+      description: 'QCM et devoirs numériques',
+      icon: 'Monitor',
+      path: '/school/exams',
+      component: () => import('@/modules/school/pages/OnlineExams')
+    },
+    {
+      id: 'school-student-life',
+      name: 'Vie Scolaire',
+      description: 'Registre disciplinaire et mérites',
+      icon: 'Sparkles',
+      path: '/school/student-life',
+      component: () => import('@/modules/school/pages/StudentLife')
     }
   ]
 };
@@ -435,6 +715,30 @@ export const HOTEL_MODULES: TenantModuleConfig = {
       icon: 'Calendar',
       path: '/hotel/bookings',
       component: () => import('@/modules/hotel/pages/Bookings')
+    },
+    {
+      id: 'hotel-billing',
+      name: 'Facturation',
+      description: 'Factures et encaissements hôteliers',
+      icon: 'CreditCard',
+      path: '/hotel/billing',
+      component: () => import('@/modules/hotel/pages/HotelBilling')
+    },
+    {
+      id: 'hotel-reports',
+      name: 'Rapports',
+      description: 'Taux d\'occupation et revenus',
+      icon: 'BarChart2',
+      path: '/hotel/reports',
+      component: () => import('@/modules/hotel/pages/HotelReports')
+    },
+    {
+      id: 'hotel-settings',
+      name: 'Paramètres',
+      description: 'Configuration de l\'hôtel',
+      icon: 'Settings',
+      path: '/hotel/settings',
+      component: () => import('@/modules/hotel/pages/HotelSettings')
     }
   ]
 };
@@ -539,6 +843,86 @@ export const PHARMACY_MODULES: TenantModuleConfig = {
       icon: 'FileText',
       path: '/pharmacy/documents',
       component: () => import('@/modules/pharmacy/pages/Documents')
+    },
+    {
+      id: 'pharmacy-promotions',
+      name: 'Promotions',
+      description: 'Offres et réductions sur produits',
+      icon: 'Tag',
+      path: '/pharmacy/promotions',
+      component: () => import('@/modules/pharmacy/pages/Promotions')
+    },
+    {
+      id: 'pharmacy-returns',
+      name: 'Retours & Avoirs',
+      description: 'Gestion des retours produits',
+      icon: 'RotateCcw',
+      path: '/pharmacy/returns',
+      component: () => import('@/modules/pharmacy/pages/Returns')
+    },
+    {
+      id: 'pharmacy-transfers',
+      name: 'Transferts',
+      description: 'Mouvements inter-sites',
+      icon: 'ArrowRightLeft',
+      path: '/pharmacy/transfers',
+      component: () => import('@/modules/pharmacy/pages/Transfers')
+    },
+    {
+      id: 'pharmacy-physical-inv',
+      name: 'Inventaires Physiques',
+      description: 'Comptages et rapprochements de stock',
+      icon: 'ClipboardCheck',
+      path: '/pharmacy/physical-inventories',
+      component: () => import('@/modules/pharmacy/pages/PhysicalInventories')
+    },
+    {
+      id: 'pharmacy-reports',
+      name: 'Rapports',
+      description: 'Statistiques de ventes et stock',
+      icon: 'BarChart2',
+      path: '/pharmacy/reports',
+      component: () => import('@/modules/pharmacy/pages/Reports')
+    },
+    {
+      id: 'pharmacy-settings',
+      name: 'Paramètres',
+      description: 'Configuration de la pharmacie',
+      icon: 'Settings',
+      path: '/pharmacy/settings',
+      component: () => import('@/modules/pharmacy/pages/Settings')
+    },
+    {
+      id: 'pharmacy-expiry',
+      name: 'Alertes Péremption',
+      description: 'Surveillance des dates de péremption des lots',
+      icon: 'AlertTriangle',
+      path: '/pharmacy/expiry-alerts',
+      component: () => import('@/modules/pharmacy/pages/ExpiryAlerts')
+    },
+    {
+      id: 'pharmacy-eprescription',
+      name: 'Ordonnance Électronique',
+      description: 'Réception et dispensation dématérialisée',
+      icon: 'ShieldCheck',
+      path: '/pharmacy/e-prescription',
+      component: () => import('@/modules/pharmacy/pages/ElectronicPrescription')
+    },
+    {
+      id: 'pharmacy-narcotics',
+      name: 'Registre Stupéfiants',
+      description: 'Suivi réglementaire des produits classés',
+      icon: 'ShieldAlert',
+      path: '/pharmacy/narcotics',
+      component: () => import('@/modules/pharmacy/pages/NarcoticsRegister')
+    },
+    {
+      id: 'pharmacy-multi',
+      name: 'Multi-Officines',
+      description: 'Vue consolidée du réseau de pharmacies',
+      icon: 'Globe',
+      path: '/pharmacy/multi-pharmacy',
+      component: () => import('@/modules/pharmacy/pages/MultiPharmacy')
     }
   ]
 };
@@ -585,6 +969,54 @@ export const ENTERPRISE_MODULES: TenantModuleConfig = {
       icon: 'CheckSquare',
       path: '/enterprise/tasks',
       component: () => import('@/modules/enterprise/pages/Tasks')
+    },
+    {
+      id: 'enterprise-hr',
+      name: 'Ressources Humaines',
+      description: 'Gestion RH spécifique Entreprise',
+      icon: 'Users',
+      path: '/enterprise/hr',
+      component: () => import('@/modules/enterprise/pages/EnterpriseHR')
+    },
+    {
+      id: 'enterprise-accounting',
+      name: 'Comptabilité',
+      description: 'Suivi comptable & OHADA',
+      icon: 'Landmark',
+      path: '/enterprise/accounting',
+      component: () => import('@/modules/enterprise/pages/EnterpriseAccounting')
+    },
+    {
+      id: 'enterprise-invoicing',
+      name: 'Facturation & Devis',
+      description: 'Gestion des factures clients et devis',
+      icon: 'FileText',
+      path: '/enterprise/invoicing',
+      component: () => import('@/modules/enterprise/pages/EnterpriseInvoicing')
+    },
+    {
+      id: 'enterprise-timetracking',
+      name: 'Suivi du Temps',
+      description: 'Feuilles de temps et chronométrage',
+      icon: 'Clock',
+      path: '/enterprise/time-tracking',
+      component: () => import('@/modules/enterprise/pages/TimeTracking')
+    },
+    {
+      id: 'enterprise-documents',
+      name: 'Gestion Documentaire',
+      description: 'Contrats, livrables et fichiers',
+      icon: 'FolderOpen',
+      path: '/enterprise/documents',
+      component: () => import('@/modules/enterprise/pages/DocumentVault')
+    },
+    {
+      id: 'enterprise-reports',
+      name: 'Rapports & KPIs',
+      description: 'Rentabilité et marges projets',
+      icon: 'BarChart3',
+      path: '/enterprise/reports',
+      component: () => import('@/modules/enterprise/pages/EnterpriseReports')
     }
   ]
 };

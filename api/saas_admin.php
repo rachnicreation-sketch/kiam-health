@@ -213,7 +213,7 @@ if ($method === 'GET') {
     } elseif ($action === 'tenants') {
         $stmt = $pdo->query("
             SELECT t.*, p.name as plan_name, p.price as plan_price,
-                   gu.email as admin_email, gu.full_name as admin_name,
+                   gu.email as admin_email, gu.full_name as admin_name, gu.phone as admin_phone,
                    (SELECT COUNT(*) FROM kiam_global_users WHERE tenant_id = t.id) as user_count
             FROM kiam_tenants t 
             LEFT JOIN kiam_plans p ON t.plan_id = p.id 
@@ -367,6 +367,44 @@ if ($method === 'GET') {
             ]);
             logAudit($pdo, "Diffusion annonce: " . $data['title']);
             sendResponse(["status" => "success", "id" => $id]);
+
+        } elseif ($action === 'save_tenant') {
+            $id = $data['id'];
+            $stmt = $pdo->prepare("
+                UPDATE kiam_tenants 
+                SET name = ?, sector = ?, plan_id = ?, subscription_status = ?, mrr_value = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([
+                $data['name'],
+                $data['sector'],
+                $data['plan_id'],
+                $data['subscription_status'],
+                (float)($data['mrr_value'] ?? 0),
+                $id
+            ]);
+
+            // Try to set/update trial_ends_at if it's trial and present
+            if (isset($data['trial_ends_at'])) {
+                $stmt = $pdo->prepare("UPDATE kiam_tenants SET trial_ends_at = ? WHERE id = ?");
+                $stmt->execute([$data['trial_ends_at'] ?: null, $id]);
+            }
+
+            // Update admin user
+            $stmt = $pdo->prepare("
+                UPDATE kiam_global_users 
+                SET full_name = ?, email = ?, phone = ? 
+                WHERE tenant_id = ? AND global_role = 'tenant_admin'
+            ");
+            $stmt->execute([
+                $data['admin_name'] ?? '',
+                $data['admin_email'],
+                $data['admin_phone'] ?? '',
+                $id
+            ]);
+
+            logAudit($pdo, "Mise à jour locataire ID: " . $id);
+            sendResponse(["status" => "success"]);
 
         } elseif ($action === 'update_status') {
             $stmt = $pdo->prepare("UPDATE kiam_tenants SET subscription_status = ? WHERE id = ?");

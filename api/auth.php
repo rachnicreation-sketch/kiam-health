@@ -7,21 +7,21 @@ $data = getRequestData();
 $action = $_GET['action'] ?? '';
 
 if ($action === 'login') {
-    $email = $data['email'] ?? '';
+    $username = $data['username'] ?? '';
     $password = $data['password'] ?? '';
 
-    if (!$email || !$password) {
-        sendResponse(["status" => "error", "message" => "Email et mot de passe requis"], 400);
+    if (!$username || !$password) {
+        sendResponse(["status" => "error", "message" => "Nom d'utilisateur et mot de passe requis"], 400);
     }
 
     // 1. Check Global SaaS Users (Master Admins & Tenant Owners)
     $stmt = $pdo->prepare("
-        SELECT gu.*, t.name as tenant_name, t.sector, t.subscription_status 
+        SELECT gu.*, t.name as tenant_name, t.sector, t.subscription_status, t.trial_ends_at
         FROM kiam_global_users gu 
         LEFT JOIN kiam_tenants t ON gu.tenant_id = t.id 
-        WHERE gu.email = ?
+        WHERE gu.username = ?
     ");
-    $stmt->execute([$email]);
+    $stmt->execute([$username]);
     $globalUser = $stmt->fetch();
 
     if ($globalUser && ($password === $globalUser['password_hash'] || password_verify($password, $globalUser['password_hash']))) {
@@ -32,6 +32,18 @@ if ($action === 'login') {
                 "message" => "Compte suspendu. Contactez l'administrateur.",
                 "code" => "TENANT_SUSPENDED"
             ], 403);
+        }
+        // Block if trial expired (Forfait Découverte expired after 45 days)
+        if ($globalUser['subscription_status'] === 'trial' && !empty($globalUser['trial_ends_at']) && $globalUser['global_role'] !== 'saas_admin') {
+            if (strtotime($globalUser['trial_ends_at']) < time()) {
+                // Auto-suspend the tenant
+                $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'suspended' WHERE id = ?")->execute([$globalUser['tenant_id']]);
+                sendResponse([
+                    "status" => "error",
+                    "message" => "Votre période d'essai de 45 jours est expirée. Veuillez souscrire à un forfait payant pour continuer.",
+                    "code" => "TRIAL_EXPIRED"
+                ], 403);
+            }
         }
         ensureClinicForTenant($pdo, $globalUser['tenant_id']);
 
@@ -51,7 +63,7 @@ if ($action === 'login') {
         // Issue JWT token
         $token = JWT::encode([
             'id' => $globalUser['id'],
-            'email' => $globalUser['email'],
+            'username' => $globalUser['username'],
             'tenant_id' => $globalUser['tenant_id'],
             'role' => $frontendRole
         ]);
@@ -61,7 +73,7 @@ if ($action === 'login') {
             "token" => $token,
             "user" => [
                 "id" => $globalUser['id'],
-                "email" => $globalUser['email'],
+                "username" => $globalUser['username'],
                 "role" => $frontendRole,
                 "global_role" => $globalUser['global_role'],
                 "clinicId" => $globalUser['tenant_id'],
@@ -79,12 +91,12 @@ if ($action === 'login') {
 
     // 2. Fallback to Legacy/Local Users (Normal employees)
     $stmt = $pdo->prepare("
-        SELECT u.*, t.sector, t.subscription_status 
+        SELECT u.*, t.sector, t.subscription_status, t.trial_ends_at
         FROM users u 
         LEFT JOIN kiam_tenants t ON u.tenant_id = t.id 
-        WHERE u.email = ?
+        WHERE u.username = ?
     ");
-    $stmt->execute([$email]);
+    $stmt->execute([$username]);
     $user = $stmt->fetch();
 
     if ($user && ($password === $user['password_hash'] || password_verify($password, $user['password_hash']))) {
@@ -95,6 +107,17 @@ if ($action === 'login') {
                 "message" => "Compte suspendu.",
                 "code" => "TENANT_SUSPENDED"
             ], 403);
+        }
+        // Block if trial expired
+        if ($user['subscription_status'] === 'trial' && !empty($user['trial_ends_at'])) {
+            if (strtotime($user['trial_ends_at']) < time()) {
+                $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'suspended' WHERE id = ?")->execute([$user['clinic_id']]);
+                sendResponse([
+                    "status" => "error",
+                    "message" => "Votre période d'essai de 45 jours est expirée. Veuillez souscrire à un forfait payant pour continuer.",
+                    "code" => "TRIAL_EXPIRED"
+                ], 403);
+            }
         }
         unset($user['password_hash']);
 
@@ -112,7 +135,7 @@ if ($action === 'login') {
         // Issue JWT token (Legacy User context)
         $token = JWT::encode([
             'id' => $user['id'],
-            'email' => $user['email'],
+            'username' => $user['username'],
             'tenant_id' => $user['clinic_id'],
             'role' => $user['role']
         ]);
@@ -122,7 +145,7 @@ if ($action === 'login') {
             "token" => $token, 
             "user" => [
                 "id" => $user['id'],
-                "email" => $user['email'],
+                "username" => $user['username'],
                 "name" => $user['name'],
                 "role" => $user['role'],
                 "clinicId" => $user['clinic_id'],
