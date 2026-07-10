@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarifs — Kiam SaaS</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header id="site-header"></header>
+
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <h1 class="text-display">Tarifs Simples et Transparents</h1>
+        <p class="text-body mt-2">Choisissez l'offre qui correspond au volume d'activité de votre établissement, avec facturation locale en FCFA.</p>
+        
+        <div class="pricing-toggle mt-4">
+          <span class="pricing-toggle-label active">Mensuel</span>
+          <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+          <span class="pricing-toggle-label">Annuel (2 mois offerts)</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top: 0;">
+      <div class="container">
+        <div class="grid-3" style="align-items: stretch;">
+          <!-- Essentiel -->
+          <div class="pricing-card">
+            <div>
+              <h3 class="text-heading" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Essentiel</h3>
+              <p class="text-small" style="margin-bottom: 2rem;">Pour les petites structures indépendantes.</p>
+              <div style="margin-bottom: 2rem;">
+                <span style="font-family:'Fraunces',serif;font-weight:900;font-size:2.5rem;color:var(--ink);">25 000</span>
+                <span class="text-small">FCFA / mois</span>
+              </div>
+              <ul style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> 1 utilisateur inclus</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> 1 secteur d'activité au choix</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Accès modules de base</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Support email 48h</li>
+              </ul>
+            </div>
+            <a href="register.html" class="btn btn-outline btn-block">Commencer l'essai</a>
+          </div>
+
+          <!-- Croissance -->
+          <div class="pricing-card featured">
+            <div>
+              <h3 class="text-heading" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Croissance</h3>
+              <p class="text-small" style="margin-bottom: 2rem;">L'offre la plus populaire pour les PME.</p>
+              <div style="margin-bottom: 2rem;">
+                <span style="font-family:'Fraunces',serif;font-weight:900;font-size:2.5rem;color:var(--ink);">45 000</span>
+                <span class="text-small">FCFA / mois</span>
+              </div>
+              <ul style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> 5 utilisateurs inclus</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Export comptable (Syscohada)</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Notifications SMS & Email</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Support prioritaire 24h</li>
+              </ul>
+            </div>
+            <a href="register.html" class="btn btn-primary btn-block" style="background:var(--accent);">Commencer l'essai</a>
+          </div>
+
+          <!-- Groupe -->
+          <div class="pricing-card">
+            <div>
+              <h3 class="text-heading" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Groupe</h3>
+              <p class="text-small" style="margin-bottom: 2rem;">Pour les réseaux, chaînes et franchises.</p>
+              <div style="margin-bottom: 2rem;">
+                <span style="font-family:'Fraunces',serif;font-weight:900;font-size:2rem;color:var(--ink);">Sur mesure</span>
+              </div>
+              <ul style="display:flex;flex-direction:column;gap:1rem;margin-bottom:2rem;">
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Utilisateurs illimités</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Multisites & Multi-dépôts</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> API d'intégration personnalisée</li>
+                <li class="flex-center" style="justify-content:flex-start;gap:0.75rem;"><span style="color:var(--pharmacy);">✓</span> Account manager dédié</li>
+              </ul>
+            </div>
+            <a href="contact.html" class="btn btn-outline btn-block">Nous contacter</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="site-footer"></footer>
+  <script src="js/components.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Kiam</title>
+</head>
+<body>
+    <h1>✓ Test – Kiam Marketing Site</h1>
+    <p>Si vous voyez ce message, Apache sert correctement le HTML statique.</p>
+    
+    <h2>Vérifications :</h2>
+    <ul>
+        <li>index.html de React charge → Chevron vers <a href="/kiam/">/kiam/</a></li>
+        <li>Assets chargent → Vérifier la console (F12)</li>
+        <li>Routes fonctionnent → Cliquer sur le menu</li>
+    </ul>
+    
+    <h2>Debug :</h2>
+    <p>Current URL: <code id="url"></code></p>
+    <p>Document location: <code id="location"></code></p>
+    
+    <script>
+        document.getElementById('url').textContent = window.location.href;
+        document.getElementById('location').textContent = document.location.pathname;
+    </script>
+</body>
+</html>

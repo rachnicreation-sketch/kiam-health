@@ -1,0 +1,274 @@
+{
+  "_auth-CElF9vnN.js": {
+    "file": "assets/auth-CElF9vnN.js",
+    "name": "auth",
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "_axios--TZ5JXxf.js": {
+    "file": "assets/axios--TZ5JXxf.js",
+    "name": "axios",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "_chart-xexpjL43.js": {
+    "file": "assets/chart-xexpjL43.js",
+    "name": "chart"
+  },
+  "_debounce-B0l-HeGw.js": {
+    "file": "assets/debounce-B0l-HeGw.js",
+    "name": "debounce"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-D_ygOMR8.css",
+    "src": "resources/js/app.js"
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CNszqZBY.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/views/auth/LoginView.vue",
+      "resources/js/components/layouts/AppLayout.vue",
+      "resources/js/views/DashboardView.vue",
+      "resources/js/views/articles/ArticleListView.vue",
+      "resources/js/views/categories/CategoryListView.vue",
+      "resources/js/views/articles/ArticleDetailView.vue",
+      "resources/js/views/alerts/AlertListView.vue",
+      "resources/js/views/stock/StockMovementListView.vue",
+      "resources/js/views/stock/StockOverviewView.vue",
+      "resources/js/views/inventory/InventoryListView.vue",
+      "resources/js/views/inventory/InventoryDetailView.vue",
+      "resources/js/views/warehouses/WarehouseListView.vue",
+      "resources/js/views/warehouses/WarehouseHierarchyView.vue",
+      "resources/js/views/purchase-orders/PurchaseOrderListView.vue",
+      "resources/js/views/purchase-orders/PurchaseOrderFormView.vue",
+      "resources/js/views/purchase-orders/PurchaseOrderDetailView.vue",
+      "resources/js/views/purchase-orders/PurchaseOrderFormView.vue",
+      "resources/js/views/purchase-orders/PurchaseOrderReceiptView.vue",
+      "resources/js/views/suppliers/SupplierListView.vue",
+      "resources/js/views/reports/ReportingView.vue"
+    ],
+    "css": [
+      "assets/app-D_ygOMR8.css"
+    ]
+  },
+  "resources/js/components/layouts/AppLayout.vue": {
+    "file": "assets/AppLayout-CVf9EELO.js",
+    "name": "AppLayout",
+    "src": "resources/js/components/layouts/AppLayout.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_auth-CElF9vnN.js",
+      "_axios--TZ5JXxf.js"
+    ],
+    "css": [
+      "assets/AppLayout-VN_yP8AH.css"
+    ]
+  },
+  "resources/js/views/DashboardView.vue": {
+    "file": "assets/DashboardView-CoAP6iPu.js",
+    "name": "DashboardView",
+    "src": "resources/js/views/DashboardView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js",
+      "_chart-xexpjL43.js"
+    ]
+  },
+  "resources/js/views/alerts/AlertListView.vue": {
+    "file": "assets/AlertListView-CUXX2-nE.js",
+    "name": "AlertListView",
+    "src": "resources/js/views/alerts/AlertListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/articles/ArticleDetailView.vue": {
+    "file": "assets/ArticleDetailView-BHfu2xg4.js",
+    "name": "ArticleDetailView",
+    "src": "resources/js/views/articles/ArticleDetailView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ],
+    "css": [
+      "assets/ArticleDetailView-LCA3Xcdt.css"
+    ]
+  },
+  "resources/js/views/articles/ArticleListView.vue": {
+    "file": "assets/ArticleListView-Ba4SSd4_.js",
+    "name": "ArticleListView",
+    "src": "resources/js/views/articles/ArticleListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ],
+    "css": [
+      "assets/ArticleListView-cvAr-633.css"
+    ]
+  },
+  "resources/js/views/auth/LoginView.vue": {
+    "file": "assets/LoginView-B8jvXpZG.js",
+    "name": "LoginView",
+    "src": "resources/js/views/auth/LoginView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_auth-CElF9vnN.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/categories/CategoryListView.vue": {
+    "file": "assets/CategoryListView--uDUKl7i.js",
+    "name": "CategoryListView",
+    "src": "resources/js/views/categories/CategoryListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/inventory/InventoryDetailView.vue": {
+    "file": "assets/InventoryDetailView-D3hmHegm.js",
+    "name": "InventoryDetailView",
+    "src": "resources/js/views/inventory/InventoryDetailView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/inventory/InventoryListView.vue": {
+    "file": "assets/InventoryListView-txePm3D5.js",
+    "name": "InventoryListView",
+    "src": "resources/js/views/inventory/InventoryListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/purchase-orders/PurchaseOrderDetailView.vue": {
+    "file": "assets/PurchaseOrderDetailView-C3-rr9HD.js",
+    "name": "PurchaseOrderDetailView",
+    "src": "resources/js/views/purchase-orders/PurchaseOrderDetailView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/purchase-orders/PurchaseOrderFormView.vue": {
+    "file": "assets/PurchaseOrderFormView-CpBBqrfd.js",
+    "name": "PurchaseOrderFormView",
+    "src": "resources/js/views/purchase-orders/PurchaseOrderFormView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/purchase-orders/PurchaseOrderListView.vue": {
+    "file": "assets/PurchaseOrderListView-B-DaMyLt.js",
+    "name": "PurchaseOrderListView",
+    "src": "resources/js/views/purchase-orders/PurchaseOrderListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js",
+      "_debounce-B0l-HeGw.js"
+    ]
+  },
+  "resources/js/views/purchase-orders/PurchaseOrderReceiptView.vue": {
+    "file": "assets/PurchaseOrderReceiptView-BRs0dDMW.js",
+    "name": "PurchaseOrderReceiptView",
+    "src": "resources/js/views/purchase-orders/PurchaseOrderReceiptView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/reports/ReportingView.vue": {
+    "file": "assets/ReportingView-CVsV8xYD.js",
+    "name": "ReportingView",
+    "src": "resources/js/views/reports/ReportingView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/stock/StockMovementListView.vue": {
+    "file": "assets/StockMovementListView-DxdQOPFT.js",
+    "name": "StockMovementListView",
+    "src": "resources/js/views/stock/StockMovementListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ],
+    "css": [
+      "assets/StockMovementListView-B6h6vclk.css"
+    ]
+  },
+  "resources/js/views/stock/StockOverviewView.vue": {
+    "file": "assets/StockOverviewView-DwEGA4ob.js",
+    "name": "StockOverviewView",
+    "src": "resources/js/views/stock/StockOverviewView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_chart-xexpjL43.js",
+      "_axios--TZ5JXxf.js",
+      "_debounce-B0l-HeGw.js"
+    ]
+  },
+  "resources/js/views/suppliers/SupplierListView.vue": {
+    "file": "assets/SupplierListView-CPBTsGMd.js",
+    "name": "SupplierListView",
+    "src": "resources/js/views/suppliers/SupplierListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ]
+  },
+  "resources/js/views/warehouses/WarehouseHierarchyView.vue": {
+    "file": "assets/WarehouseHierarchyView-DWGJbDMb.js",
+    "name": "WarehouseHierarchyView",
+    "src": "resources/js/views/warehouses/WarehouseHierarchyView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ],
+    "css": [
+      "assets/WarehouseHierarchyView-DTTyRZOP.css"
+    ]
+  },
+  "resources/js/views/warehouses/WarehouseListView.vue": {
+    "file": "assets/WarehouseListView-BORa4ukd.js",
+    "name": "WarehouseListView",
+    "src": "resources/js/views/warehouses/WarehouseListView.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_axios--TZ5JXxf.js"
+    ],
+    "css": [
+      "assets/WarehouseListView-D6yUK5b2.css"
+    ]
+  }
+}

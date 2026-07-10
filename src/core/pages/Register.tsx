@@ -23,12 +23,15 @@ export default function Register() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
+  const queryParams = new URLSearchParams(window.location.search);
+  const initialSector = queryParams.get("sector") || "health";
+
   const [formData, setFormData] = useState({
     name: "",
     admin_name: "",
     admin_email: "",
     admin_password: "",
-    sector: "health",
+    sector: initialSector,
     plan_id: "plan_pro"
   });
 
@@ -37,7 +40,8 @@ export default function Register() {
     { id: "hotel", label: "Hôtellerie", icon: "🏨" },
     { id: "school", label: "Éducation (École / Lycée)", icon: "🏫" },
     { id: "erp", label: "Commerce / ERP Global", icon: "🏪" },
-    { id: "shop", label: "Petite Boutique / Pharmacie", icon: "💊" }
+    { id: "pharmacy", label: "Pharmacie / Officine", icon: "💊" },
+    { id: "enterprise", label: "Société de Services & PME", icon: "🏢" }
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
