@@ -257,9 +257,14 @@ function MarketingLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-[#D6D3C9]/80 bg-[#EEEDE7]/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-8 lg:px-10">
           <Link to="/" className="flex items-center gap-3 text-[#15181C]">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#D6D3C9] bg-white/80 text-lg font-semibold shadow-sm">
-              K
-            </div>
+            <img
+              src="/kiam/images/logo-kiam.png"
+              alt="KIAM Logo"
+              className="h-11 w-11 object-contain bg-white rounded-xl p-0.5 shadow-sm border border-[#D6D3C9]"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/images/logo-kiam.png";
+              }}
+            />
             <div>
               <p className="font-['Fraunces'] text-xl leading-none">Kiam</p>
               <p className="text-xs uppercase tracking-[0.25em] text-[#4B5157]">Suite SaaS</p>
@@ -824,15 +829,50 @@ export function DemoPage() {
 
 export function AboutPage() {
   return (
-    <PageShell title="À propos de Kiam" description="Kiam est une suite SaaS multi-tenant conçue pour aider les organisations à moderniser leurs opérations sans changer d’outil à chaque étape.">
-      <div className="mt-12 grid gap-6 lg:grid-cols-3">
+    <PageShell title="Ã€ propos de Kiam" description="Kiam est une suite SaaS multi-tenant conÃ§ue pour aider les organisations Ã  moderniser leurs opÃ©rations sans changer d'outil Ã  chaque Ã©tape.">
+
+      {/* CEO Quote Section */}
+      <div className="mt-12 rounded-[2rem] border border-[#D6D3C9] bg-white/80 p-8 shadow-sm">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#4B5157] mb-6" style={{fontFamily: 'IBM Plex Mono, monospace'}}>Le Mot du Fondateur</p>
+        <div className="flex flex-col-reverse gap-8 lg:flex-row lg:items-center lg:gap-12">
+          <div className="flex-1">
+            <blockquote className="relative">
+              <span className="absolute -top-4 -left-2 text-7xl leading-none text-[#0EA5E9]/20 select-none" style={{fontFamily: 'Fraunces, serif'}}>"</span>
+              <p className="relative text-lg leading-8 text-[#15181C] italic pl-4" style={{fontFamily: 'Fraunces, serif'}}>
+                Chaque grande rÃ©ussite commence par une vision.<br /><br />
+                La nÃ´tre est de contribuer Ã  bÃ¢tir des organisations plus performantes, plus sereines et tournÃ©es vers l'avenir grÃ¢ce Ã  des solutions qui simplifient le quotidien, renforcent la prise de dÃ©cision et accompagnent durablement leur croissance.<br /><br />
+                Chez Kiam, nous croyons que la technologie doit Ãªtre un vÃ©ritable partenaire de confiance : simple Ã  utiliser, fiable et pensÃ©e pour rÃ©pondre aux dÃ©fis rÃ©els de celles et ceux qui entreprennent.<br /><br />
+                Merci de faire partie de cette aventure. Ensemble, construisons l'avenir de la gestion.
+              </p>
+            </blockquote>
+            <div className="mt-8 flex items-center gap-4 pl-4">
+              <div className="h-px flex-1 bg-[#D6D3C9]" />
+              <div className="text-right">
+                <p className="text-base font-bold text-[#15181C]" style={{fontFamily: 'Fraunces, serif'}}>RM MATIABA</p>
+                <p className="text-sm text-[#4B5157]">Fondateur &amp; CEO</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-shrink-0 w-full lg:w-auto" style={{maxWidth: '240px', margin: '0 auto'}}>
+            <img
+              src="/kiam/images/ceo-matiaba.jpg"
+              alt="RM MATIABA, Fondateur et CEO de Kiam"
+              className="w-full h-auto object-cover shadow-md"
+              style={{borderRadius: '1.5rem', aspectRatio: '3/4', objectPosition: 'top'}}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Values Grid */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
         {[
-          { title: "Vision", text: "Rendre la technologie accessible, unifiée et impactante pour les entreprises modernes." },
-          { title: "Mission", text: "Créer un moteur logiciel unique capable de servir plusieurs secteurs et plusieurs modèles d’organisation." },
-          { title: "Valeurs", text: "Transparence, fiabilité, innovation et accompagnement humain." },
+          { title: "Vision", text: "Rendre la technologie accessible, unifiÃ©e et impactante pour les entreprises modernes." },
+          { title: "Mission", text: "CrÃ©er un moteur logiciel unique capable de servir plusieurs secteurs et plusieurs modÃ¨les d'organisation." },
+          { title: "Valeurs", text: "Transparence, fiabilitÃ©, innovation et accompagnement humain." },
         ].map((item) => (
           <div key={item.title} className="rounded-[2rem] border border-[#D6D3C9] bg-white/80 p-8 shadow-sm">
-            <h2 className="text-2xl font-['Fraunces'] text-[#15181C]">{item.title}</h2>
+            <h2 className="text-2xl text-[#15181C]" style={{fontFamily: 'Fraunces, serif'}}>{item.title}</h2>
             <p className="mt-4 text-sm leading-7 text-[#4B5157]">{item.text}</p>
           </div>
         ))}
@@ -840,7 +880,6 @@ export function AboutPage() {
     </PageShell>
   );
 }
-
 export function ContactPage() {
   return (
     <PageShell title="Contactez-nous" description="Discutons de vos besoins, de votre architecture et du meilleur déploiement pour votre organisation.">
