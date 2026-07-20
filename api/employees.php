@@ -115,10 +115,9 @@ if ($method === 'GET') {
         $stmt->execute([$id, $clinicId, $data['employee_id'], $data['type'], $data['name'], $fileUrl]);
         sendResponse(["status" => "success", "id" => $id, "file_url" => $fileUrl]);
 
-    } else {
         // Add employee
-        if (empty($data['name']) || empty($data['clinicId'])) {
-            sendResponse(["status" => "error", "message" => "Données manquantes (nom, clinicId)"], 400);
+        if (empty($data['name'])) {
+            sendResponse(["status" => "error", "message" => "Données manquantes (nom)"], 400);
         }
 
         $id = "EMP-" . time() . rand(100,999);
@@ -147,7 +146,7 @@ if ($method === 'GET') {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             $id,
-            $data['clinicId'],
+            $clinicId,
             strtoupper($data['name']),
             $data['firstName'] ?? '',
             $data['gender'] ?? 'M',

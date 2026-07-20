@@ -1,24 +1,32 @@
-﻿<IfModule mod_rewrite.c>
+<IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
     </IfModule>
 
-    DirectoryIndex index.html
+    DirectoryIndex dist/index.html index.html
 
     RewriteEngine On
     RewriteBase /kiam/
 
+    # Pass Authorization header through
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
+    # Let API requests pass through directly
+    RewriteRule ^api/ - [L]
+
+    # Serve real files if they exist (includes dist/assets/*)
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
+    # Serve real directories if they exist
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    RewriteRule ^ index.html [L]
+    # SPA fallback: everything else goes to dist/index.html
+    RewriteRule ^ dist/index.html [L]
+
 </IfModule>

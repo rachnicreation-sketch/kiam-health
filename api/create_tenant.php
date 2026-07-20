@@ -30,7 +30,7 @@ if ($method === 'POST') {
         $planId = $data['plan_id'] ?? 'plan_decouverte';
         $isTrialPlan = ($planId === 'plan_decouverte');
         $subscriptionStatus = $isTrialPlan ? 'trial' : 'active';
-        $trialEndsAt = $isTrialPlan ? date('Y-m-d H:i:s', strtotime('+45 days')) : null;
+        $trialEndsAt = $isTrialPlan ? date('Y-m-d H:i:s', strtotime('+35 days')) : null;
 
         $stmt = $pdo->prepare("
             INSERT INTO kiam_tenants (id, name, sector, plan_id, subscription_status, trial_ends_at)

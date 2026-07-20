@@ -14,6 +14,8 @@ if (!$tenant_id) {
     sendResponse(["status" => "error", "message" => "Tenant ID requis"], 400);
 }
 
+$auth = requireAuth();
+
 // Helper to record OHADA journal entry
 function postOhadaEntry($pdo, $tenant_id, $date, $journal, $ref, $label, $lines) {
     $entryId = 'ENT-' . strtoupper(substr(md5(uniqid()), 0, 8));

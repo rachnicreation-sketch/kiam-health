@@ -47,6 +47,9 @@ export interface Clinic {
   email?: string;
   website?: string;
   taxId?: string;
+  sector?: string;
+  subscription_status?: 'active' | 'trial' | 'expired' | 'suspended';
+  modules_included?: string[];
 }
 
 export interface Branch {

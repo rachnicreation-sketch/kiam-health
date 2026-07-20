@@ -145,6 +145,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const can = (module: Module, action: Action = 'read'): boolean => {
     if (!user) return false;
+    if (user.role === 'saas_admin') return true;
+
+    let checkModule = module.toLowerCase();
+    if (checkModule === 'planning') {
+      checkModule = 'guardplanning';
+    }
+
+    // Verify tenant subscription modules
+    if (clinic && clinic.modules_included) {
+      if (!clinic.modules_included.includes(checkModule)) {
+        return false;
+      }
+    }
+
     return canPerform(user.role, module, action, user.sector);
   };
 

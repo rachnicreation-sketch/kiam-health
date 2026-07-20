@@ -5,6 +5,7 @@ import {
   Plus, 
   Search, 
   User, 
+  UserPlus,
   Activity, 
   Pill, 
   ClipboardCheck,
@@ -61,6 +62,17 @@ export default function Consultations() {
   const [selectedLabTests, setSelectedLabTests] = useState<string[]>([]);
   const [selectedMeds, setSelectedMeds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // New Patient State (Inline Creation)
+  const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
+  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
+  const [newPatient, setNewPatient] = useState({
+    name: "",
+    firstName: "",
+    phone: "",
+    gender: "M",
+    dob: ""
+  });
 
   // New Consultation Form State
   const [form, setForm] = useState<Partial<Consultation>>({
@@ -228,6 +240,28 @@ export default function Consultations() {
     });
     setSelectedLabTests([]);
     setSelectedMeds([]);
+    setIsNewPatientOpen(false);
+  };
+
+  const handleCreatePatient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPatient.name) {
+      toast({ variant: "destructive", description: "Le nom est requis." });
+      return;
+    }
+    setIsCreatingPatient(true);
+    try {
+      const res = await api.patients.create(user!.clinicId, newPatient as any);
+      toast({ description: "Patient créé avec succès." });
+      await loadData();
+      setForm({ ...form, patientId: res.id || "" });
+      setIsNewPatientOpen(false);
+      setNewPatient({ name: "", firstName: "", phone: "", gender: "M", dob: "" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Erreur", description: error.message });
+    } finally {
+      setIsCreatingPatient(false);
+    }
   };
 
   return (
@@ -263,7 +297,57 @@ export default function Consultations() {
               <div className="md:col-span-1 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Patient *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>Patient *</Label>
+                      <Button 
+                        variant="link" 
+                        type="button" 
+                        className="h-auto p-0 text-xs font-semibold text-primary"
+                        onClick={() => setIsNewPatientOpen(true)}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" /> Nouveau
+                      </Button>
+                    </div>
+
+                    <Dialog open={isNewPatientOpen} onOpenChange={setIsNewPatientOpen}>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Ajouter un patient</DialogTitle>
+                          <CardDescription>Création rapide d'un patient pour la consultation</CardDescription>
+                        </DialogHeader>
+                        <form onSubmit={handleCreatePatient} className="space-y-4 pt-4">
+                          <div className="space-y-2">
+                            <Label>Nom *</Label>
+                            <Input required value={newPatient.name} onChange={e => setNewPatient({...newPatient, name: e.target.value})} placeholder="Ex: MBOUMBA" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Prénom</Label>
+                            <Input value={newPatient.firstName} onChange={e => setNewPatient({...newPatient, firstName: e.target.value})} placeholder="Ex: Jean" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-2">
+                              <Label>Sexe</Label>
+                              <Select value={newPatient.gender} onValueChange={v => setNewPatient({...newPatient, gender: v})}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="M">Masculin</SelectItem>
+                                  <SelectItem value="F">Féminin</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Téléphone</Label>
+                              <Input value={newPatient.phone} onChange={e => setNewPatient({...newPatient, phone: e.target.value})} placeholder="Ex: 06..." />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 pt-4">
+                            <Button type="button" variant="outline" onClick={() => setIsNewPatientOpen(false)}>Annuler</Button>
+                            <Button type="submit" disabled={isCreatingPatient}>{isCreatingPatient ? "Création..." : "Enregistrer"}</Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+
                     <Select value={form.patientId} onValueChange={v => setForm({...form, patientId: v})}>
                       <SelectTrigger className="bg-muted/50 font-medium">
                         <SelectValue placeholder="Rechercher un patient" />

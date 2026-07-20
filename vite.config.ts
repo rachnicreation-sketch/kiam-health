@@ -4,7 +4,7 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/kiam/',
+  base: '/kiam/dist/',
   publicDir: 'public',
   server: {
     host: "::",

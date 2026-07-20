@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, module }: ProtectedRouteProps) => {
-  const { user, can, isLoading } = useAuth();
+  const { user, clinic, can, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -53,6 +53,23 @@ export const ProtectedRoute = ({ children, module }: ProtectedRouteProps) => {
 
     // ── Vérification permission de rôle ────────────────────────────────────
     if (!can(module)) {
+      // Is it because the module is not in the subscription?
+      if (clinic?.modules_included && !clinic.modules_included.includes(module.toLowerCase())) {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-md w-full">
+              <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Module Non Inclus</h2>
+              <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
+                Le module "{module}" n'est pas inclus dans votre abonnement actuel.
+              </p>
+              <a href="#/subscription" className="inline-flex items-center justify-center h-10 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors w-full">
+                Mettre à niveau mon offre
+              </a>
+            </div>
+          </div>
+        );
+      }
+
       // Erreur spécifique pour le SaaS admin (ne devrait pas arriver)
       if (user.role === 'saas_admin' && module === 'saas') {
         return (

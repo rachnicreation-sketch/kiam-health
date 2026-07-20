@@ -31,6 +31,15 @@ if ($method === 'GET') {
             sendResponse(["status" => "error", "message" => "Données manquantes"], 400);
         }
 
+        // Vérification de la limite d'utilisateurs
+        if (!checkTenantUserLimit($clinicId)) {
+            sendResponse([
+                "status" => "error", 
+                "message" => "Limite d'utilisateurs atteinte. Veuillez passer à un forfait supérieur pour ajouter plus d'utilisateurs.",
+                "code" => "USER_LIMIT_REACHED"
+            ], 403);
+        }
+
         $id = "u" . time();
         $stmt = $pdo->prepare("INSERT INTO users (id, email, password_hash, role, clinic_id, name) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([
@@ -55,11 +64,12 @@ if ($method === 'GET') {
         sendResponse(["status" => "error", "message" => "ID manquant"], 400);
     }
 
-    $stmt = $pdo->prepare("UPDATE users SET name = ?, specialty = ?, phone = ? WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE users SET name = ?, specialty = ?, phone = ?, photo_url = ? WHERE id = ?");
     $stmt->execute([
         $data['name'],
         $data['specialty'] ?? '',
         $data['phone'] ?? '',
+        $data['photo_url'] ?? null,
         $data['id']
     ]);
 

@@ -65,7 +65,7 @@ const Customers    = React.lazy(() => import("./modules/erp/pages/Customers"));
 const Suppliers    = React.lazy(() => import("./modules/erp/pages/Suppliers"));
 const Expenses     = React.lazy(() => import("./modules/erp/pages/Expenses"));
 const Transactions = React.lazy(() => import("./modules/erp/pages/ErpTransactions"));
-const Reports      = React.lazy(() => import("./modules/erp/pages/Reports"));
+const ErpReports   = React.lazy(() => import("./modules/erp/pages/Reports"));
 const RegisterClosing = React.lazy(() => import("./modules/erp/pages/RegisterClosing"));
 const ErpAccounting   = React.lazy(() => import("./modules/erp/pages/ErpAccounting"));
 const PhysicalInventories = React.lazy(() => import("./modules/erp/pages/PhysicalInventories"));
@@ -336,7 +336,7 @@ const App = () => (
                 <Route path="/erp/customers"     element={<ProtectedRoute module="erp"><Customers /></ProtectedRoute>} />
                 <Route path="/erp/suppliers"     element={<ProtectedRoute module="erp"><Suppliers /></ProtectedRoute>} />
                 <Route path="/erp/expenses"      element={<ProtectedRoute module="erp"><Expenses /></ProtectedRoute>} />
-                <Route path="/erp/reports"       element={<ProtectedRoute module="erp"><Reports /></ProtectedRoute>} />
+                <Route path="/erp/reports"       element={<ProtectedRoute module="erp"><ErpReports /></ProtectedRoute>} />
                 <Route path="/erp/transactions"  element={<ProtectedRoute module="erp"><Transactions /></ProtectedRoute>} />
                 <Route path="/erp/closing"       element={<ProtectedRoute module="erp"><RegisterClosing /></ProtectedRoute>} />
                 <Route path="/erp/accounting"    element={<ProtectedRoute module="erp"><ErpAccounting /></ProtectedRoute>} />

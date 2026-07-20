@@ -5,7 +5,7 @@ require_once 'functions.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 $auth = requireAuth();
-$clinicId = $auth['tenant_id'];
+$clinicId = ensureClinicForTenant($pdo, $auth['tenant_id'] ?? null);
 
 if ($method === 'GET') {
     if ($action === 'list' && $clinicId) {
@@ -44,9 +44,8 @@ if ($method === 'GET') {
 
     $id = "APP-" . time();
     $stmt = $pdo->prepare("INSERT INTO appointments (id, clinic_id, patient_id, doctor_id, appointment_date, appointment_time, type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([
         $id,
-        $data['clinicId'],
+        $clinicId,
         $data['patientId'],
         $data['doctorId'],
         $data['date'],

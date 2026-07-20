@@ -5,7 +5,28 @@ require_once 'functions.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 $auth = requireAuth();
-$clinicId = $auth['tenant_id'];
+$clinicId = ensureClinicForTenant($pdo, $auth['tenant_id'] ?? null);
+
+function mapConsultation(array $c): array {
+    return [
+        "id" => $c['id'],
+        "clinicId" => $c['clinic_id'],
+        "patientId" => $c['patient_id'],
+        "doctorId" => $c['doctor_id'],
+        "reason" => $c['reason'],
+        "symptoms" => $c['symptoms'],
+        "temp" => $c['temp'],
+        "bp" => $c['bp'],
+        "weight" => $c['weight'],
+        "hr" => $c['hr'],
+        "diagnosis" => $c['diagnosis'],
+        "prescription" => $c['prescription'],
+        "notes" => $c['notes'],
+        "status" => $c['status'],
+        "consultationDate" => $c['consultation_date'],
+        "createdAt" => $c['created_at']
+    ];
+}
 
 if ($method === 'GET') {
     if ($action === 'list' && $clinicId) {
@@ -17,24 +38,26 @@ if ($method === 'GET') {
             $stmt = $pdo->prepare("SELECT * FROM consultations WHERE clinic_id = ? ORDER BY consultation_date DESC");
             $stmt->execute([$clinicId]);
         }
-        sendResponse($stmt->fetchAll());
+        sendResponse(array_map('mapConsultation', $stmt->fetchAll()));
     } elseif ($action === 'get' && isset($_GET['id'])) {
         $stmt = $pdo->prepare("SELECT * FROM consultations WHERE id = ?");
         $stmt->execute([$_GET['id']]);
-        sendResponse($stmt->fetch());
+        $row = $stmt->fetch();
+        if (!$row) sendResponse(['status' => 'error', 'message' => 'Consultation introuvable'], 404);
+        sendResponse(mapConsultation($row));
     }
 } elseif ($method === 'POST') {
     $data = getRequestData();
-    if (!$data['patientId'] || !$data['clinicId']) {
-        sendResponse(["status" => "error", "message" => "Données manquantes"], 400);
+    if (empty($data['patientId'])) {
+        sendResponse(["status" => "error", "message" => "Données manquantes (patientId)"], 400);
     }
 
-    $id = $data['id'] ?: "CONS-" . date("Ymd") . "-" . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT);
+    $id = empty($data['id']) ? "CONS-" . date("Ymd") . "-" . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT) : $data['id'];
     
     $stmt = $pdo->prepare("INSERT INTO consultations (id, clinic_id, patient_id, doctor_id, reason, symptoms, temp, bp, weight, hr, diagnosis, prescription, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([
         $id,
-        $data['clinicId'],
+        $clinicId,
         $data['patientId'],
         $data['doctorId'] ?? '',
         $data['reason'] ?? '',
@@ -51,5 +74,6 @@ if ($method === 'GET') {
 
     sendResponse(["status" => "success", "id" => $id]);
 }
+
 ?>
 

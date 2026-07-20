@@ -7,15 +7,41 @@ $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
 $clinicId = ensureClinicForTenant($pdo, $auth['tenant_id'] ?? null);
 
+function mapPatient(array $p): array {
+    return [
+        "id" => $p['id'],
+        "clinicId" => $p['clinic_id'],
+        "name" => $p['name'],
+        "firstName" => $p['first_name'],
+        "age" => (int)($p['age'] ?? 0),
+        "dob" => $p['dob'],
+        "gender" => $p['gender'],
+        "phone" => $p['phone'],
+        "address" => $p['address'],
+        "city" => $p['city'],
+        "idNumber" => $p['id_number'],
+        "bloodGroup" => $p['blood_group'],
+        "assurance" => $p['assurance'],
+        "emergencyContactName" => $p['emergency_name'],
+        "emergencyContactPhone" => $p['emergency_phone'],
+        "allergies" => $p['allergies'],
+        "history" => $p['medical_history'],
+        "status" => $p['status'],
+        "createdAt" => $p['created_at']
+    ];
+}
+
 if ($method === 'GET') {
     if ($action === 'list') {
         $stmt = $pdo->prepare("SELECT * FROM patients WHERE clinic_id = ? ORDER BY name ASC");
         $stmt->execute([$clinicId]);
-        sendResponse($stmt->fetchAll());
+        sendResponse(array_map('mapPatient', $stmt->fetchAll()));
     } elseif ($action === 'get' && isset($_GET['id'])) {
         $stmt = $pdo->prepare("SELECT * FROM patients WHERE id = ? AND clinic_id = ?");
         $stmt->execute([$_GET['id'], $clinicId]);
-        sendResponse($stmt->fetch());
+        $row = $stmt->fetch();
+        if (!$row) sendResponse(['status' => 'error', 'message' => 'Patient introuvable'], 404);
+        sendResponse(mapPatient($row));
     }
 } elseif ($method === 'POST') {
     $data = getRequestData() ?: [];

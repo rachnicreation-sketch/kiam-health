@@ -33,16 +33,12 @@ if ($action === 'login') {
                 "code" => "TENANT_SUSPENDED"
             ], 403);
         }
-        // Block if trial expired (Forfait Découverte expired after 45 days)
+        // Block if trial expired (Forfait Découverte)
         if ($globalUser['subscription_status'] === 'trial' && !empty($globalUser['trial_ends_at']) && $globalUser['global_role'] !== 'saas_admin') {
             if (strtotime($globalUser['trial_ends_at']) < time()) {
-                // Auto-suspend the tenant
-                $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'suspended' WHERE id = ?")->execute([$globalUser['tenant_id']]);
-                sendResponse([
-                    "status" => "error",
-                    "message" => "Votre période d'essai de 45 jours est expirée. Veuillez souscrire à un forfait payant pour continuer.",
-                    "code" => "TRIAL_EXPIRED"
-                ], 403);
+                // Set to expired, don't block login, but it will be read-only
+                $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'expired' WHERE id = ?")->execute([$globalUser['tenant_id']]);
+                $globalUser['subscription_status'] = 'expired';
             }
         }
         ensureClinicForTenant($pdo, $globalUser['tenant_id']);
@@ -59,6 +55,12 @@ if ($action === 'login') {
             default         => 'clinic_admin',
         };
         $frontendRole = $globalUser['global_role'] === 'saas_admin' ? 'saas_admin' : $sectorRole;
+
+        // Fetch modules
+        $modules = [];
+        if ($globalUser['tenant_id']) {
+            $modules = getTenantModules($globalUser['tenant_id']);
+        }
 
         // Issue JWT token
         $token = JWT::encode([
@@ -83,7 +85,9 @@ if ($action === 'login') {
             "clinic" => [
                 "id" => $globalUser['tenant_id'],
                 "name" => $globalUser['tenant_name'],
-                "sector" => $globalUser['sector']
+                "sector" => $globalUser['sector'],
+                "subscription_status" => $globalUser['subscription_status'],
+                "modules_included" => $modules
             ]
         ]);
         exit;
@@ -91,15 +95,15 @@ if ($action === 'login') {
 
     // 2. Fallback to Legacy/Local Users (Normal employees)
     $stmt = $pdo->prepare("
-        SELECT u.*, t.sector, t.subscription_status, t.trial_ends_at
+        SELECT u.*, t.sector, t.name as tenant_name, t.subscription_status, t.trial_ends_at
         FROM users u 
         LEFT JOIN kiam_tenants t ON u.tenant_id = t.id 
-        WHERE u.username = ?
+        WHERE u.username = ? OR u.email = ?
     ");
-    $stmt->execute([$username]);
+    $stmt->execute([$username, $username]);
     $user = $stmt->fetch();
 
-    if ($user && ($password === $user['password_hash'] || password_verify($password, $user['password_hash']))) {
+    if ($user && ($password === ($user['password_hash'] ?? '') || password_verify($password, $user['password_hash'] ?? $user['password'] ?? ''))) {
         // Block if suspended
         if ($user['subscription_status'] === 'suspended') {
             sendResponse([
@@ -111,47 +115,56 @@ if ($action === 'login') {
         // Block if trial expired
         if ($user['subscription_status'] === 'trial' && !empty($user['trial_ends_at'])) {
             if (strtotime($user['trial_ends_at']) < time()) {
-                $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'suspended' WHERE id = ?")->execute([$user['clinic_id']]);
-                sendResponse([
-                    "status" => "error",
-                    "message" => "Votre période d'essai de 45 jours est expirée. Veuillez souscrire à un forfait payant pour continuer.",
-                    "code" => "TRIAL_EXPIRED"
-                ], 403);
+                $pdo->prepare("UPDATE kiam_tenants SET subscription_status = 'expired' WHERE id = ?")->execute([$user['tenant_id']]);
+                $user['subscription_status'] = 'expired';
             }
         }
-        unset($user['password_hash']);
+        unset($user['password_hash'], $user['password']);
 
-        if (!empty($user['clinic_id'])) {
-            ensureClinicForTenant($pdo, $user['clinic_id']);
-        }
+        $tenantId = $user['tenant_id'] ?? '';
         
-        $clinic = null;
-        if ($user['clinic_id']) {
-            $stmt = $pdo->prepare("SELECT * FROM clinics WHERE id = ?");
-            $stmt->execute([$user['clinic_id']]);
-            $clinic = $stmt->fetch();
+        if (!empty($tenantId)) {
+            ensureClinicForTenant($pdo, $tenantId);
         }
 
-        // Issue JWT token (Legacy User context)
+        // Fetch modules
+        $modules = [];
+        if ($tenantId) {
+            $modules = getTenantModules($tenantId);
+        }
+
+        // Map role to frontend role
+        $sector = $user['sector'] ?? 'health';
+        $userRole = $user['role'] ?? 'user';
+        $frontendRole = in_array($userRole, ['admin', 'superadmin']) ? 'clinic_admin' : $userRole;
+        if ($sector === 'school' && $userRole === 'admin') $frontendRole = 'school_admin';
+        if ($sector === 'erp' && $userRole === 'admin') $frontendRole = 'erp_admin';
+
+        // Issue JWT token (Local User context)
         $token = JWT::encode([
             'id' => $user['id'],
             'username' => $user['username'],
-            'tenant_id' => $user['clinic_id'],
-            'role' => $user['role']
+            'tenant_id' => $tenantId,
+            'role' => $frontendRole
         ]);
         
         sendResponse([
             "status" => "success",
-            "token" => $token, 
+            "token" => $token,
             "user" => [
                 "id" => $user['id'],
                 "username" => $user['username'],
-                "name" => $user['name'],
-                "role" => $user['role'],
-                "clinicId" => $user['clinic_id'],
-                "sector" => $user['sector'] ?: 'health' // Dynamic sector from tenant table
+                "role" => $frontendRole,
+                "clinicId" => $tenantId,
+                "name" => $user['name']
             ],
-            "clinic" => $clinic
+            "clinic" => [
+                "id" => $tenantId,
+                "name" => $user['tenant_name'] ?? 'Clinique KIAM',
+                "sector" => $sector,
+                "subscription_status" => $user['subscription_status'] ?? 'active',
+                "modules_included" => $modules
+            ]
         ]);
     } else {
         sendResponse(["status" => "error", "message" => "Identifiants invalides"], 401);

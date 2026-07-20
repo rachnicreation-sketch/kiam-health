@@ -613,8 +613,17 @@ export function AppLayout() {
       </header>
 
       {/* Main Page Content */}
-      <main className={`flex-1 overflow-auto bg-slate-50 dark:bg-slate-900`}>
-        <div className={`${activeModule === 'erp' || activeModule === 'saas' ? 'p-6' : 'p-6'}`}>
+      <main className={`flex-1 overflow-auto bg-slate-50 dark:bg-slate-900 flex flex-col`}>
+        {clinic?.subscription_status === 'expired' && (
+          <div className="bg-rose-500 text-white px-4 py-3 text-center text-sm font-medium shadow-sm flex items-center justify-center gap-3">
+            <Zap className="h-4 w-4" />
+            Votre abonnement a expiré. L'application est en mode lecture seule.
+            <Link to="/subscription" className="underline font-bold ml-2 hover:text-rose-100 transition-colors">
+              Renouveler maintenant
+            </Link>
+          </div>
+        )}
+        <div className={`flex-1 ${activeModule === 'erp' || activeModule === 'saas' ? 'p-6' : 'p-6'}`}>
           <Outlet />
         </div>
       </main>

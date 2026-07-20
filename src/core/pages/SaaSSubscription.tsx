@@ -18,14 +18,16 @@ export default function SaaSSubscription() {
 
   const loadData = async () => {
     try {
-      const [plan, plans, invs] = await Promise.all([
+      const [planRes, plansRes, invsRes] = await Promise.all([
         apiRequest("tenant_billing.php?action=current_plan"),
-        apiRequest("tenant_billing.php?action=available_plans"),
+        fetch("/kiam/api/public_plans.php").then(r => r.json()),
         apiRequest("tenant_billing.php?action=my_invoices")
       ]);
-      setCurrentPlan(plan);
-      setAvailablePlans(plans);
-      setInvoices(invs);
+      setCurrentPlan(planRes.plan);
+      if (plansRes.status === 'success') {
+        setAvailablePlans(plansRes.plans.filter((p: any) => p.is_active));
+      }
+      setInvoices(invsRes.invoices || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -35,9 +37,9 @@ export default function SaaSSubscription() {
 
   const handleUpgrade = async (planId: string) => {
     try {
-      await apiRequest("tenant_billing.php?action=change_plan", {
+      await apiRequest("subscribe.php", {
         method: "POST",
-        body: JSON.stringify({ plan_id: planId })
+        body: JSON.stringify({ plan_id: planId, billing_frequency: 'monthly' })
       });
       toast.success("Demande de changement de forfait enregistrée !");
       loadData();

@@ -703,62 +703,113 @@ export function SolutionPage() {
 }
 
 export function PricingPage() {
-  const plans = [
-    { name: "Essentiel", price: "150 000", description: "Idéal pour lancer votre transformation digitale", features: ["1 site ou entité", "Modules de base", "Support standard"], cta: "/demo" },
-    { name: "Croissance", price: "450 000", description: "Pour les équipes qui souhaitent accélérer", features: ["Plusieurs entités", "Automatisations", "Rapports avancés"], cta: "/signup" },
-    { name: "Entreprise", price: "Sur devis", description: "Pour les groupes et structures complexes", features: ["Sécurité entreprise", "Intégrations avancées", "Support dédié"], cta: "/contact" },
-  ];
+  const [plans, setPlans] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+  useEffect(() => {
+    fetch('/kiam/api/public_plans.php')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === 'success') {
+          setPlans(data.plans.filter((p: any) => p.is_active));
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <PageShell title="Des abonnements transparents" description="Choisissez le niveau le plus adapté à votre maturité, votre taille et vos ambitions.">
-      <div className="mt-12 grid gap-6 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <div key={plan.name} className="rounded-[2rem] border border-[#D6D3C9] bg-white/80 p-8 shadow-sm">
-            <p className="text-sm uppercase tracking-[0.25em] text-[#4B5157] font-['IBM Plex Mono']">{plan.name}</p>
-            <p className="mt-4 text-4xl font-['Fraunces'] text-[#15181C]">{plan.price}</p>
-            <p className="mt-2 text-sm text-[#4B5157]">FCFA / mois</p>
-            <p className="mt-6 text-sm leading-7 text-[#4B5157]">{plan.description}</p>
-            <ul className="mt-6 space-y-3 text-sm text-[#15181C]">
-              {plan.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-3"><CheckCircle />{feature}</li>
-              ))}
-            </ul>
-            <Link to={plan.cta} className="mt-8 inline-flex rounded-full bg-[#15181C] px-5 py-3 text-sm font-medium text-[#EEEDE7]">
-              Choisir {plan.name}
-            </Link>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-12 overflow-hidden rounded-[2rem] border border-[#D6D3C9] bg-white/80 shadow-sm">
-        <div className="overflow-x-auto p-6">
-          <table className="min-w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-[#D6D3C9] text-[#4B5157]">
-                <th className="pb-4 pr-6">Fonctionnalités</th>
-                <th className="pb-4 pr-6">Essentiel</th>
-                <th className="pb-4 pr-6">Croissance</th>
-                <th className="pb-4">Entreprise</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ["Tableau de bord", "Oui", "Oui", "Oui"],
-                ["Modules avancés", "Non", "Oui", "Oui"],
-                ["Support prioritaire", "Non", "Oui", "Oui"],
-                ["Intégrations API", "Non", "Oui", "Oui"],
-              ].map((row) => (
-                <tr key={row[0]} className="border-b border-[#F0EEE8] text-[#15181C]">
-                  <td className="py-4 pr-6">{row[0]}</td>
-                  <td className="py-4 pr-6">{row[1]}</td>
-                  <td className="py-4 pr-6">{row[2]}</td>
-                  <td className="py-4">{row[3]}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      
+      {/* Billing toggle */}
+      <div className="mt-8 flex justify-center">
+        <div className="inline-flex rounded-full bg-[#D6D3C9] p-1">
+          <button
+            onClick={() => setBillingCycle('monthly')}
+            className={`rounded-full px-6 py-2 text-sm font-medium transition-all ${
+              billingCycle === 'monthly' ? 'bg-[#15181C] text-white shadow-sm' : 'text-[#4B5157] hover:text-[#15181C]'
+            }`}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setBillingCycle('yearly')}
+            className={`rounded-full px-6 py-2 text-sm font-medium transition-all ${
+              billingCycle === 'yearly' ? 'bg-[#15181C] text-white shadow-sm' : 'text-[#4B5157] hover:text-[#15181C]'
+            }`}
+          >
+            Annuel (Économisez 20%)
+          </button>
         </div>
       </div>
+
+      {loading ? (
+        <div className="flex justify-center mt-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0EA5E9]" /></div>
+      ) : (
+        <div className="mt-12 grid gap-6 lg:grid-cols-3 xl:grid-cols-4">
+          {plans.map((plan) => (
+            <div key={plan.id} className="rounded-[2rem] border border-[#D6D3C9] bg-white/80 p-6 xl:p-8 shadow-sm flex flex-col relative">
+              {plan.id === 'plan_decouverte' && (
+                <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#0EA5E9] text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                  Test Gratuit
+                </div>
+              )}
+              {plan.id === 'plan_professional' && (
+                <div className="absolute top-0 right-6 -translate-y-1/2 bg-[#10B981] text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                  Populaire
+                </div>
+              )}
+              
+              <p className="text-sm uppercase tracking-[0.25em] text-[#4B5157] font-['IBM Plex Mono'] min-h-[40px]">{plan.name}</p>
+              
+              <div className="mt-4">
+                {plan.id === 'plan_decouverte' ? (
+                  <p className="text-4xl font-['Fraunces'] text-[#15181C]">Gratuit</p>
+                ) : plan.id === 'plan_enterprise' ? (
+                  <p className="text-3xl font-['Fraunces'] text-[#15181C]">Sur devis</p>
+                ) : (
+                  <div className="flex items-baseline gap-1">
+                    <p className="text-4xl font-['Fraunces'] text-[#15181C]">
+                      {parseFloat(billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly).toLocaleString('fr-FR')}
+                    </p>
+                    <span className="text-xs font-medium text-[#4B5157]">
+                      FCFA / {billingCycle === 'monthly' ? 'mois' : 'an'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              <p className="mt-6 text-sm leading-6 text-[#4B5157] min-h-[72px]">{plan.description}</p>
+              
+              <ul className="mt-6 space-y-3 text-sm text-[#15181C] flex-1">
+                <li className="flex items-center gap-3"><CheckCircle />Jusqu'à {plan.max_users} utilisateurs</li>
+                {plan.id === 'plan_decouverte' && (
+                  <li className="flex items-center gap-3"><CheckCircle />35 jours d'essai</li>
+                )}
+                {plan.modules_included && plan.modules_included.split(',').slice(0, 5).map((module: string) => (
+                  <li key={module} className="flex items-center gap-3">
+                    <CheckCircle />{module.trim()}
+                  </li>
+                ))}
+                {plan.modules_included && plan.modules_included.split(',').length > 5 && (
+                  <li className="flex items-center gap-3 text-[#4B5157] italic">
+                    <span className="ml-8">+ {plan.modules_included.split(',').length - 5} autres modules</span>
+                  </li>
+                )}
+              </ul>
+              
+              <Link to={`/signup?plan=${plan.id}`} className={`mt-8 inline-flex justify-center rounded-full px-5 py-3 text-sm font-medium transition-colors w-full ${
+                plan.id === 'plan_professional' || plan.id === 'plan_decouverte' 
+                  ? 'bg-[#0EA5E9] text-white hover:bg-[#0284c7]' 
+                  : 'bg-[#15181C] text-[#EEEDE7] hover:bg-[#333]'
+              }`}>
+                {plan.id === 'plan_decouverte' ? 'Démarrer l\'essai' : plan.id === 'plan_enterprise' ? 'Contacter les ventes' : `Choisir ${plan.name}`}
+              </Link>
+            </div>
+          ))}
+        </div>
+      )}
     </PageShell>
   );
 }
