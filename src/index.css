@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -100,6 +100,15 @@
 }
 
 @layer utilities {
+  .font-\[\"Fraunces\"\] {
+    font-family: 'Fraunces', serif;
+  }
+  .font-\[\"IBM Plex Mono\"\] {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .font-\[\"IBM Plex Sans\"\] {
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
   .glass-card {
     @apply bg-card/80 backdrop-blur-md border border-white/20 shadow-xl;
   }

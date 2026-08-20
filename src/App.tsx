@@ -11,8 +11,22 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 // ─── Core Pages (always loaded) ───────────────────────────────────────────────
 import Login from "./core/pages/Login";
 import Register from "./core/pages/Register";
-import LandingPage from "./core/pages/LandingPage";
 import NotFound from "./core/pages/NotFound";
+import {
+  AboutPage,
+  BlogPage,
+  CareersPage,
+  ContactPage,
+  DemoPage,
+  DocsPage,
+  FaqPage,
+  HomePage,
+  PricingPage,
+  PrivacyPage,
+  SolutionPage,
+  SolutionsPage,
+  TermsPage,
+} from "./core/pages/marketing/MarketingSite";
 import { ModulePlaceholder } from "./core/pages/ModulePlaceholder";
 import ClinicLanding from "./modules/health/pages/ClinicLanding";
 import PatientPortal from "./modules/health/pages/PatientPortal";
@@ -87,6 +101,50 @@ import EnterpriseDashboard from "./modules/enterprise/pages/EnterpriseDashboard"
 import EnterpriseProjects from "./modules/enterprise/pages/Projects";
 import EnterpriseTasks from "./modules/enterprise/pages/Tasks";
 
+// ─── Newly Created Dynamic Modules Imports ────────────────────────────────────
+// Hotel
+const GuestCRM = React.lazy(() => import("./modules/hotel/pages/GuestCRM"));
+const Housekeeping = React.lazy(() => import("./modules/hotel/pages/Housekeeping"));
+const HotelRoomService = React.lazy(() => import("./modules/hotel/pages/HotelRoomService"));
+const ChannelManager = React.lazy(() => import("./modules/hotel/pages/ChannelManager"));
+const MultiProperty = React.lazy(() => import("./modules/hotel/pages/MultiProperty"));
+
+// Enterprise
+const EnterpriseHR = React.lazy(() => import("./modules/enterprise/pages/EnterpriseHR"));
+const TimeTracking = React.lazy(() => import("./modules/enterprise/pages/TimeTracking"));
+const DocumentVault = React.lazy(() => import("./modules/enterprise/pages/DocumentVault"));
+const EnterpriseInvoicing = React.lazy(() => import("./modules/enterprise/pages/EnterpriseInvoicing"));
+const EnterpriseAccounting = React.lazy(() => import("./modules/enterprise/pages/EnterpriseAccounting"));
+const EnterpriseReports = React.lazy(() => import("./modules/enterprise/pages/EnterpriseReports"));
+
+// Health
+const InsuranceManager = React.lazy(() => import("./modules/health/pages/InsuranceManager"));
+const Telemedicine = React.lazy(() => import("./modules/health/pages/Telemedicine"));
+const MedicalImaging = React.lazy(() => import("./modules/health/pages/MedicalImaging"));
+const CampaignManager = React.lazy(() => import("./modules/health/pages/CampaignManager"));
+const EpidemioStats = React.lazy(() => import("./modules/health/pages/EpidemioStats"));
+
+// ERP
+const CRMPipeline = React.lazy(() => import("./modules/erp/pages/CRMPipeline"));
+const EcommerceStore = React.lazy(() => import("./modules/erp/pages/EcommerceStore"));
+const MultiWarehouse = React.lazy(() => import("./modules/erp/pages/MultiWarehouse"));
+const LoyaltyProgram = React.lazy(() => import("./modules/erp/pages/LoyaltyProgram"));
+const EInvoicing = React.lazy(() => import("./modules/erp/pages/EInvoicing"));
+
+// School
+const Canteen = React.lazy(() => import("./modules/school/pages/Canteen"));
+const SchoolTransport = React.lazy(() => import("./modules/school/pages/SchoolTransport"));
+const Library = React.lazy(() => import("./modules/school/pages/Library"));
+const SchoolParentPortal = React.lazy(() => import("./modules/school/pages/ParentPortal"));
+const OnlineExams = React.lazy(() => import("./modules/school/pages/OnlineExams"));
+const StudentLife = React.lazy(() => import("./modules/school/pages/StudentLife"));
+
+// Pharmacy
+const ExpiryAlerts = React.lazy(() => import("./modules/pharmacy/pages/ExpiryAlerts"));
+const ElectronicPrescription = React.lazy(() => import("./modules/pharmacy/pages/ElectronicPrescription"));
+const NarcoticsRegister = React.lazy(() => import("./modules/pharmacy/pages/NarcoticsRegister"));
+const MultiPharmacy = React.lazy(() => import("./modules/pharmacy/pages/MultiPharmacy"));
+
 // ─── Hotel Extra Pages ────────────────────────────────────────────────────────
 import HotelReports from "./modules/hotel/pages/HotelReports";
 import HotelSettings from "./modules/hotel/pages/HotelSettings";
@@ -159,8 +217,21 @@ const App = () => (
           <React.Suspense fallback={<PageLoader />}>
             <Routes>
               {/* ── Public Routes ──────────────────────────────────── */}
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<HomePage />} />
+              <Route path="/solutions" element={<SolutionsPage />} />
+              <Route path="/solutions/:slug" element={<SolutionPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/demo" element={<DemoPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/faq" element={<FaqPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+              <Route path="/careers" element={<CareersPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/docs" element={<DocsPage />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Register />} />
               <Route path="/register" element={<Register />} />
               <Route path="/:clinicId" element={<ClinicLanding />} />
               <Route path="/patient/:clinicId/login" element={<PatientPortal />} />
@@ -170,7 +241,7 @@ const App = () => (
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/apps"            element={<AppSwitcher />} />
 
-                {/* Health */}
+                 {/* Health */}
                 <Route path="/health"          element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard"       element={<ProtectedRoute module="dashboard"><Dashboard /></ProtectedRoute>} />
                 <Route path="/patients"        element={<ProtectedRoute module="patients"><Patients /></ProtectedRoute>} />
@@ -191,6 +262,12 @@ const App = () => (
                 <Route path="/settings"        element={<ProtectedRoute module="settings"><SettingsPage /></ProtectedRoute>} />
                 <Route path="/subscription"    element={<SaaSSubscription />} />
                 <Route path="/logs"            element={<AuditLogs />} />
+                {/* Health new pages */}
+                <Route path="/health/insurance" element={<ProtectedRoute module="health"><InsuranceManager /></ProtectedRoute>} />
+                <Route path="/health/telemedicine" element={<ProtectedRoute module="health"><Telemedicine /></ProtectedRoute>} />
+                <Route path="/health/imaging" element={<ProtectedRoute module="health"><MedicalImaging /></ProtectedRoute>} />
+                <Route path="/health/campaigns" element={<ProtectedRoute module="health"><CampaignManager /></ProtectedRoute>} />
+                <Route path="/health/epidemio" element={<ProtectedRoute module="health"><EpidemioStats /></ProtectedRoute>} />
 
                 {/* SaaS Admin */}
                 <Route path="/saas/dashboard"    element={<ProtectedRoute module="saas"><SaaSAdminDashboard /></ProtectedRoute>} />
@@ -215,6 +292,12 @@ const App = () => (
                 <Route path="/hotel/billing"      element={<ProtectedRoute module="hotel"><HotelBilling /></ProtectedRoute>} />
                 <Route path="/hotel/reports"      element={<ProtectedRoute module="hotel"><HotelReports /></ProtectedRoute>} />
                 <Route path="/hotel/settings"     element={<ProtectedRoute module="hotel"><HotelSettings /></ProtectedRoute>} />
+                {/* Hotel new pages */}
+                <Route path="/hotel/guests"       element={<ProtectedRoute module="hotel"><GuestCRM /></ProtectedRoute>} />
+                <Route path="/hotel/housekeeping" element={<ProtectedRoute module="hotel"><Housekeeping /></ProtectedRoute>} />
+                <Route path="/hotel/room-service" element={<ProtectedRoute module="hotel"><HotelRoomService /></ProtectedRoute>} />
+                <Route path="/hotel/channels"     element={<ProtectedRoute module="hotel"><ChannelManager /></ProtectedRoute>} />
+                <Route path="/hotel/multi"        element={<ProtectedRoute module="hotel"><MultiProperty /></ProtectedRoute>} />
                 <Route path="/hotel/*"            element={<ProtectedRoute module="hotel"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* School (lazy) */}
@@ -235,6 +318,13 @@ const App = () => (
                 <Route path="/school/accounting"     element={<ProtectedRoute module="school"><SchoolAccounting /></ProtectedRoute>} />
                 {/* School RH — exclusif secteur École */}
                 <Route path="/school/hr"             element={<ProtectedRoute module="school_hr"><SchoolHumanResources /></ProtectedRoute>} />
+                {/* School new pages */}
+                <Route path="/school/canteen"        element={<ProtectedRoute module="school"><Canteen /></ProtectedRoute>} />
+                <Route path="/school/transport"      element={<ProtectedRoute module="school"><SchoolTransport /></ProtectedRoute>} />
+                <Route path="/school/library"        element={<ProtectedRoute module="school"><Library /></ProtectedRoute>} />
+                <Route path="/school/parent-portal"  element={<ProtectedRoute module="school"><SchoolParentPortal /></ProtectedRoute>} />
+                <Route path="/school/exams"          element={<ProtectedRoute module="school"><OnlineExams /></ProtectedRoute>} />
+                <Route path="/school/student-life"   element={<ProtectedRoute module="school"><StudentLife /></ProtectedRoute>} />
                 <Route path="/school/*"              element={<ProtectedRoute module="school"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* ERP Module */}
@@ -261,6 +351,12 @@ const App = () => (
                 <Route path="/erp/goods-receipts"     element={<ProtectedRoute module="erp"><GoodsReceipts /></ProtectedRoute>} />
                 <Route path="/erp/supplier-invoices"  element={<ProtectedRoute module="erp"><SupplierInvoices /></ProtectedRoute>} />
                 <Route path="/erp/supplier-payments"  element={<ProtectedRoute module="erp"><SupplierPayments /></ProtectedRoute>} />
+                {/* ERP new pages */}
+                <Route path="/erp/crm"                element={<ProtectedRoute module="erp"><CRMPipeline /></ProtectedRoute>} />
+                <Route path="/erp/ecommerce"          element={<ProtectedRoute module="erp"><EcommerceStore /></ProtectedRoute>} />
+                <Route path="/erp/warehouses"         element={<ProtectedRoute module="erp"><MultiWarehouse /></ProtectedRoute>} />
+                <Route path="/erp/loyalty"            element={<ProtectedRoute module="erp"><LoyaltyProgram /></ProtectedRoute>} />
+                <Route path="/erp/einvoicing"         element={<ProtectedRoute module="erp"><EInvoicing /></ProtectedRoute>} />
                 <Route path="/erp/*"             element={<ProtectedRoute module="erp"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* Pharmacy */}
@@ -280,12 +376,24 @@ const App = () => (
                 <Route path="/pharmacy/returns" element={<ProtectedRoute module="pharmacy"><PharmacyReturns /></ProtectedRoute>} />
                 <Route path="/pharmacy/promotions" element={<ProtectedRoute module="pharmacy"><PharmacyPromotions /></ProtectedRoute>} />
                 <Route path="/pharmacy/transfers" element={<ProtectedRoute module="pharmacy"><PharmacyTransfers /></ProtectedRoute>} />
+                {/* Pharmacy new pages */}
+                <Route path="/pharmacy/expiry-alerts" element={<ProtectedRoute module="pharmacy"><ExpiryAlerts /></ProtectedRoute>} />
+                <Route path="/pharmacy/e-prescription" element={<ProtectedRoute module="pharmacy"><ElectronicPrescription /></ProtectedRoute>} />
+                <Route path="/pharmacy/narcotics" element={<ProtectedRoute module="pharmacy"><NarcoticsRegister /></ProtectedRoute>} />
+                <Route path="/pharmacy/multi-pharmacy" element={<ProtectedRoute module="pharmacy"><MultiPharmacy /></ProtectedRoute>} />
                 <Route path="/pharmacy/*"         element={<ProtectedRoute module="pharmacy"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* Enterprise */}
                 <Route path="/enterprise/dashboard" element={<ProtectedRoute module="enterprise"><EnterpriseDashboard /></ProtectedRoute>} />
                 <Route path="/enterprise/projects"  element={<ProtectedRoute module="enterprise"><EnterpriseProjects /></ProtectedRoute>} />
                 <Route path="/enterprise/tasks"     element={<ProtectedRoute module="enterprise"><EnterpriseTasks /></ProtectedRoute>} />
+                {/* Enterprise new pages */}
+                <Route path="/enterprise/hr"        element={<ProtectedRoute module="enterprise"><EnterpriseHR /></ProtectedRoute>} />
+                <Route path="/enterprise/time-tracking" element={<ProtectedRoute module="enterprise"><TimeTracking /></ProtectedRoute>} />
+                <Route path="/enterprise/documents" element={<ProtectedRoute module="enterprise"><DocumentVault /></ProtectedRoute>} />
+                <Route path="/enterprise/invoicing" element={<ProtectedRoute module="enterprise"><EnterpriseInvoicing /></ProtectedRoute>} />
+                <Route path="/enterprise/accounting" element={<ProtectedRoute module="enterprise"><EnterpriseAccounting /></ProtectedRoute>} />
+                <Route path="/enterprise/reports"   element={<ProtectedRoute module="enterprise"><EnterpriseReports /></ProtectedRoute>} />
                 <Route path="/enterprise/*"         element={<ProtectedRoute module="enterprise"><ModulePlaceholder /></ProtectedRoute>} />
 
                 {/* GES — Gestion des Stocks */}
